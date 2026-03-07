@@ -1,4 +1,4 @@
-import mail from "../../shared-utils/src/mail.js";
+import mail from "@longrunner/shared-utils/mail.js";
 import PasswordUtils from "../utils/passwordUtils.js";
 import { loginUser, logoutUser } from "../utils/auth.js";
 
@@ -28,7 +28,7 @@ export function createUsersController(config = {}) {
 
         const { email, username, password } = req.body;
         const User = req.app.locals.User;
-        const user = await new User({ username, email });
+        const user = new User({ username, email });
         const registeredUser = await User.register(user, password);
 
         await loginUser(req, registeredUser);

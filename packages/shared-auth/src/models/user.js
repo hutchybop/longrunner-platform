@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 import { Buffer } from "buffer";
 import PasswordUtils from "../utils/passwordUtils.js";
-import mail from "../../shared-utils/src/mail.js";
+import mail from "@longrunner/shared-utils/mail.js";
 
 const Schema = mongoose.Schema;
 
@@ -186,7 +186,7 @@ export function createUserSchema(config = {}) {
     return this.save();
   };
 
-  return mongoose.model("User", UserSchema);
+  return mongoose.models.User || mongoose.model("User", UserSchema);
 }
 
 export default createUserSchema;

@@ -16,6 +16,7 @@
     "./controllers.js": "./src/controllers/users.js"
   },
   "dependencies": {
+    "@longrunner/shared-utils": "workspace:*",
     "bcrypt": "^6.0.0"
   },
   "peerDependencies": {

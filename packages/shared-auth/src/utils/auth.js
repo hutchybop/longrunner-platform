@@ -1,8 +1,7 @@
-import User from "../models/user.js";
-
 const authenticateUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
+    const User = req.app.locals.User;
     const user = await User.findOne({ username });
 
     const genericError = "Invalid username or password";
