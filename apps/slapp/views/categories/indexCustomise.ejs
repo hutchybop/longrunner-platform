@@ -1,0 +1,47 @@
+<% layout('layouts/boilerplate')%>
+
+
+<div class="container justify-content-center align-items-center">
+    <div class="row">
+        <div class="col-lg-6">
+            <!-- <div class="card mt-4 mb-3"> -->
+            <div class="card">
+                <div class="card-header d-flex">
+                    <div class="me-auto">
+                        <h3 class="card-title">Customise your Categories</h3>
+                    </div>
+                    <div>
+                        <a class='btn btn-primary btn-sm' href="/ingredients">Back to Ingredients</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p>Categories are used to order your shopping lists</p>
+                    <p>Each Ingredient is assigned a Category and will appear in the Shopping List, ordered according to the list below</p>
+                    <p>You can name each Category as required and drag the Categories to the order you desire</p>
+                    <hr>
+                    
+                    <ul class="list-group list-group-flush" id="orderCategories">
+                        <% for(cat in catObj){ %>
+                            <% if(catObj.hasOwnProperty(cat)){ %>
+                                <li class="list-group-item">
+                                    <div class="mb-3 row">
+                                        <input type="text" class="form-control cat" name=<%=cat%> value="<%=catObj[cat]%>">
+                                    </div>
+                                </li>
+                            <%}%>
+                        <%}%>
+                    </ul>
+                    <button class="btn btn-success btn-lg mt-3" form="info">Update Categories</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form action="/category/customise" method="POST" id="info">
+
+</form>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>

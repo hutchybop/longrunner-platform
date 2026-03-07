@@ -1,0 +1,16 @@
+.dayMeal {
+    color: #ff6f91;
+}
+
+input[type="checkbox"]:checked + label.strikethrough {
+    text-decoration: line-through;
+}
+
+#final-list {
+    font-size:25px;
+}
+
+input.form-check-input {
+    width: 20px;
+    height: 25px;
+}

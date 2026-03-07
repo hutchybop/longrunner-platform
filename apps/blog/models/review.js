@@ -1,0 +1,32 @@
+import mongoose from "mongoose";
+
+const Schema = mongoose.Schema;
+
+const ReviewSchema = new Schema({
+  body: String,
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+  blogIM: {
+    type: Schema.Types.ObjectId,
+    ref: "BlogIM",
+  },
+  isFlagged: {
+    type: Boolean,
+    default: false,
+  },
+  flagReason: String,
+  spamScore: {
+    type: Number,
+    default: 0,
+  },
+  ipAddress: String,
+  userAgent: String,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+export default mongoose.model("Review", ReviewSchema);

@@ -1,0 +1,14 @@
+{
+  "name": "@longrunner/shared-middleware",
+  "version": "1.0.0",
+  "description": "Shared middleware for longrunner apps",
+  "main": "src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "peerDependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.2.3"
+  }
+}

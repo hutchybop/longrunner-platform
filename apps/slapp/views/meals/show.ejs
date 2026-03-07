@@ -1,0 +1,97 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+            <h1><strong><%= meal.mealName %></strong> - <%= meal.mealType %> </h1>
+</div>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <form id="mealsShowDelete" action='/meals/<%=meal.id%>?_method=DELETE' method='post'>
+                <button class="btn btn-danger btn-lg me-2">Delete</button>
+            </form>
+        </div>
+        <div class="col-lg-6">
+            <div class="d-flex justify-content-lg-end">
+                <div class="me-3">
+                    <a class="btn btn-primary btn-lg mb-3" href="/meals/<%=meal.id%>/edit">Edit Meal</a>
+                </div>
+                <div>
+                    <a class='btn btn-secondary btn-lg' href='/meals'>Back to all Meals</a>
+                </div> 
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex">
+                <div class="me-auto">
+                    
+                </div>
+                <div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Ingredients required weekly</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <%for (let i of meal.weeklyItems) {%>
+                    <% if (i.weeklyIngredients !== null) { %>
+                    <li class="list-group-item">
+                        <%=i.qty%> - <span id="ingLink"><a href="/ingredients/<%= i.weeklyIngredients.id %>/edit"><%= i.weeklyIngredients.name %></a></span>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Ingredients to be replaced on use</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <%for (let i of meal.replaceOnUse) {%>
+                    <% if (i.replaceOnUseIngredients !== null) { %>
+                    <li class="list-group-item">
+                        <%=i.qty%> - <span id="ingLink"><a href="/ingredients/<%= i.replaceOnUseIngredients.id %>/edit"><%= i.replaceOnUseIngredients.name %></a></span>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Recipe <i class="fas fa-book-open"></i></h3>
+                </div>
+                <div class="card-body">
+                    <div id='recipe'>
+                        <p>
+                            <%= meal.mealRecipe %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

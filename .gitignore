@@ -1,0 +1,50 @@
+# dependencies
+node_modules/
+.pnpm-store
+
+# environment variables
+.env*
+
+# logs
+output*.txt
+output*.log
+server*.log
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# build output
+dist/
+build/
+coverage/
+
+# temporary files
+*.bak
+*.swp
+*.swo
+.cache/
+tmp/
+temp/
+
+# mongodb dumps
+dump/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# project folders
+Old_Versions/
+DB_Backups/
+Posts/
+newServerScripts/
+serverScripts/
+push.sh
+updateAll.sh

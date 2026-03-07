@@ -1,0 +1,21 @@
+{
+  "name": "@longrunner/shared-auth",
+  "version": "1.0.0",
+  "description": "Shared authentication for longrunner apps",
+  "main": "src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./auth": "./src/utils/auth.js",
+    "./passwordUtils": "./src/utils/passwordUtils.js",
+    "./user": "./src/models/user.js",
+    "./controllers": "./src/controllers/users.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0"
+  },
+  "peerDependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.2.3"
+  }
+}

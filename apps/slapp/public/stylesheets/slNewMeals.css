@@ -1,0 +1,11 @@
+.input-group-prepend {
+    width: 95px;
+  }
+  
+  .input-group-text {
+    width: 100%;
+  }
+  
+  #listName {
+    width: 170px;
+  }

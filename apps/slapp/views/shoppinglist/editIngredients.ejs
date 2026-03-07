@@ -1,0 +1,178 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Edit Your Shopping List</h1>
+        </div>
+        <div class="col-lg-6">
+            <div class="d-flex p-2 justify-content-lg-end">
+                <a class='btn btn-secondary btn-lg' href='/shoppinglist/<%=id%>'>Show Shopping List</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<form id='ingredientList' action="/shoppinglist/<%= id %>?_method=PUT" method='post'>
+
+
+    <div id="selection" class="container">
+        <div class="row">
+
+            <div class="col-lg-4">
+                <div class="card mt-4 mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Current Shopping list</h3>
+                    </div>
+                    <button class="btn btn-primary" form="ingredientList">Submit</button>
+                    <div class="card-body">
+
+                        <div id="listAlert" class="moveAlert alert alert-dismissible fade show">
+                            <span id='listMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        
+                            <div id="list">
+                                <% for (const [key, value] of Object.entries(current)) { %>
+                                <div>
+                                    <input class='qty' type="number" name='list[qty]' value='<%= value[0] %>'>
+                                    <input class='ingredientName' type="text" name='list[ingredient]' value='<%= key %>'
+                                        readOnly>
+                                    <input type="hidden" name='list[cat]' value='<%= value[1] %>'><i
+                                        class="fas fa-trash-alt"></i>
+                                </div>
+                                <% } %>
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mt-4 mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title ">Add Extra Items if required</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="addAlert" class="moveAlert alert alert-dismissible fade show">
+                            <span id='addMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div id='add'>
+                            <% for (const [key, value] of Object.entries(extra)) { %>
+                            <div>
+                                <input class="qty" type="number" name='extra[qty]' value='<%= value[0] %>'> 
+                                <input class="ingredientName" type="text" name='extra[ingredient]' value='<%= key %>'
+                                    readOnly>
+                                <input type="hidden" name='extra[cat]' value='<%= value[1] %>'><i class="fas fa-plus"></i>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mt-4 mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Add non food Items if required</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="nonFoodAlert" class="moveAlert alert alert-dismissible fade show">
+                            <span id='nonFoodMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div id='nonFood'>
+                            <% for (const [key, value] of Object.entries(nonFood)) { %>
+                            <div class='nonFood'>
+                                <input class="qty" type="number" name='nonFood[qty]' value='<%= value[0] %>'>
+                                <input class="ingredientName" type="text" name='nonFood[ingredient]' value='<%= key %>'
+                                    readOnly>
+                                <input type="hidden" name='nonFood[cat]' value='<%= value[1] %>'><i class="fas fa-plus"></i>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div id="selection" class="col-lg-4 order-1">
+                <div class="card mt-4 mb-3">
+                    <div class="card-header">
+                        <h4 class="card-title">Items Deleted</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="deletedItemAlert" class="moveAlert alert alert-dismissible fade show">
+                            <span id='deletedItemMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div id="deleted">
+                            <% for (const [key, value] of Object.entries(removed)) { %>
+                                <div>
+                                    <input class="qty" type="number" name='removed[qty]' value='<%= value[0] %>'>
+                                    <input class="ingredientName" type="text" name='removed[ingredient]' value='<%= key %>'
+                                        readOnly>
+                                    <input type="hidden" name='removed[cat]' value='<%= value[1] %>'><i class="fas fa-plus"></i>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+</form>
+
+        <div class="col-lg-8 order-0">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">Enter any additional items required:</h4>
+                </div>
+                <div class="card-body">
+                    <div id="addItemAlert" class="moveAlert alert alert-dismissible fade show">
+                        <span id='addItemMsg'></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+
+                    <form id="addItem" action="" novalidate>
+
+                        <div class="mb-3">
+                            <label for="itemName" class="form-label">Enter the item name</label>
+                            <input type="text" id="itemName" name="itemName" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Please provide an item name.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="itemQty" class="form-label">Enter the required quantity</label>
+                            <input type="number" id="itemQty" name="itemQty" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Please enter the quantity.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="itemCat">Choose a category (used to help organise the final
+                                list)</label>
+                            <select name="itemCat" id="itemCat" class="form-select">
+                                <% for(let c = 0; c < catArray.length; c++){ %>
+                                <option value="<%= catArray[c] %>"> <%= catArray[c] %> </option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <button class="btn btn-success">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

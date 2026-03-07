@@ -1,0 +1,94 @@
+<header class="footer bg-dark py-3" id="authNav">
+    <div class="container">
+        <div class="d-flex justify-content-between">
+            <span><a class="me-2" href="/policy/tandc">T&Cs</a></span>
+            <span><a href="/policy/cookie-policy">Cookie Policy</a></span>
+            <span><a href="/policy/tandc#contactForm">Contact</a></span>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="row">
+        <nav class="navbar fixed-bottom navbar-dark bg-dark">
+            <ul class="nav nav-pills justify-content-center">
+                <li class="nav-item">
+                  <a class="nav-link active" id="meals" href="/meals">Meals</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="lists" href="/">Lists</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="ingredients" href="/ingredients">Ingredients</a>
+                </li>
+                <li class="nav-item">
+                    <% if(typeof currentUser === 'undefined') {%>
+                        <a class="nav-link" id="auth" href="/auth/login">Login</a>
+                        <% } else {%>
+                            <a class="nav-link" id="auth" href='/auth/details'>Account</a>
+                    <% } %>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+
+    const pathname = window.location.pathname;
+    const pathArry = pathname.split('/');
+    const mealsEle = document.getElementById("meals");
+    const listsEle = document.getElementById("lists");
+    const ingredientsEle = document.getElementById("ingredients");
+    const authEle = document.getElementById("auth");
+    const authNavEle = document.getElementById("authNav")
+
+    if(pathArry[1] === 'meals'){
+        listsEle.classList.remove("active")
+        ingredientsEle.classList.remove("active")
+        authEle.classList.remove("active")
+        mealsEle.classList.add("active")
+        authNavEle.style.display= "none"
+    }else if(pathArry[1] === 'shoppinglist'){
+        mealsEle.classList.remove("active")
+        ingredientsEle.classList.remove("active")
+        authEle.classList.remove("active")
+        listsEle.classList.add("active")
+        authNavEle.style.display= "none"
+    }else if(pathArry[1] === 'ingredients'){
+        mealsEle.classList.remove("active")
+        listsEle.classList.remove("active")
+        authEle.classList.remove("active")
+        ingredientsEle.classList.add("active")
+        authNavEle.style.display= "none"
+    }else if(pathArry[1] === 'category'){
+        mealsEle.classList.remove("active")
+        listsEle.classList.remove("active")
+        authEle.classList.remove("active")
+        ingredientsEle.classList.add("active")
+        authNavEle.style.display= "none"
+    }else if(pathArry[1] === 'auth'){
+        mealsEle.classList.remove("active")
+        listsEle.classList.remove("active")
+        ingredientsEle.classList.remove("active")
+        authEle.classList.add("active")
+    }else if(pathArry[1] === "policy"){
+        listsEle.classList.remove("active")
+        ingredientsEle.classList.remove("active")
+        authEle.classList.add("active")
+        mealsEle.classList.remove("active")
+    }else if(pathArry[1] === ''){
+        mealsEle.classList.remove("active")
+        ingredientsEle.classList.remove("active")
+        authEle.classList.remove("active")
+        listsEle.classList.add("active")
+        authNavEle.style.display= "none"
+    }else{
+        listsEle.classList.remove("active")
+        ingredientsEle.classList.remove("active")
+        authEle.classList.remove("active")
+        mealsEle.classList.remove("active")
+        authNavEle.style.display= "none"
+    }
+
+</script>

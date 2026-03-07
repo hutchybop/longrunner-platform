@@ -1,0 +1,54 @@
+<% layout('layouts/boilerplate')%>
+
+<!-- TODO - Re-design, looks ulgy on mobile -->
+
+<div class="container mb-3">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Create a shopping list</h1>
+        </div>
+        <div class="col-lg-6">
+            <div class="d-flex p-2 justify-content-lg-end">
+                <a class='btn btn-secondary btn-lg' href='/shoppinglist'>Cancel</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="create" class="form-inline validated-form" action="/shoppinglist" method="post" novalidate>
+
+    <%- include('../partials/mealSelect') %>
+
+    <div>
+        <div class="input-group mb-3">
+            <div id="listName" class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1 listNameSpan">Enter the shopping List Name:</span>
+            </div>
+            <input type="text" id="name" name="name" class="form-control" required>
+            <div class="invalid-feedback">
+                Please provide a name for your shopping list.
+            </div>
+        </div>
+    </div>
+    <!-- Divs required at the end do not delete -->
+    </div>
+    </div>
+    </div>
+    <!-- Divs required at the end do not delete -->
+
+</form>
+
+<div class="container mb-3">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex">
+                <div class="me-auto">
+                    <button form="create" class="btn btn-primary btn-lg">Submit</button>
+                </div>
+                <div>
+                    <a class="btn btn-success btn-lg" href="/shoppinglist/default">Setup Default</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

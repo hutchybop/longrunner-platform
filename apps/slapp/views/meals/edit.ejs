@@ -1,0 +1,224 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Edit <%= meal.mealName %> </h1>
+        </div>
+        <div class="col-lg-6">
+            <div class="d-flex p-2 justify-content-lg-end">
+                <a class='btn btn-secondary btn-lg' href='/meals/<%=meal.id%>'>Cancel</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <form id='editMeal' action="/meals/<%= meal._id %>?_method=PUT" method='post' class='validated-form' novalidate>
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="card mt-4 mb-3">
+                    <div class="card-header">
+                        <h4 class="card-title">Enter the basic details:</h4>
+                    </div>
+                    <div class="card-body">
+
+                        <div id="nameAlert" class="nameAlert alert alert-dismissible fade show">
+                            <span id='nameMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label for="mealName" class="form-label">Enter the Name of your Meal</label>
+                            <input type="text" id="mealName" name="mealName" class="form-control"
+                                value='<%= meal.mealName %>' required>
+                            <div class="invalid-feedback">
+                                Please provide a meal name.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mealType">Choose meal type:</label>
+                            <select class="form-select" name="mealType" id="mealType">
+                                <% for(let t of mealType){ %>
+                                <% if(t == meal.mealType){ %>
+                                <option value="<%= t %>" selected> <%= t %></option>
+                                <% }else{ %>
+                                <option value="<%= t %>"> <%= t %></option>
+                                <% } %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mealRecipe" class="form-label">Recipe (optional)</label>
+                            <textarea name="mealRecipe" id="mealRecipe" cols="30" rows="10"
+                                class="form-control"><%= meal.mealRecipe %></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mt-4 mb-3">
+                    <div class=" card-header">
+                        <h4 class="card-title">The ingrdients you have added:</h4>
+                    </div>
+                    <div id=added class="card-body">
+                        <div id="removeAlert" class="removeAlert alert alert-dismissible fade show">
+                            <span id='removeMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <%for (let i of meal.weeklyItems) {%>
+                            <% if (i.weeklyIngredients !== null) { %>
+                                <div>
+                                    <input class='qty' type='number' name='ingredient[qty]' value='<%= i.qty %>'>
+                                    <input class='ingredientName' type='text' name='ingredient[name]'
+                                        value='<%= i.weeklyIngredients.name %>' readOnly>
+                                    <input type="hidden" readOnly>
+                                    <input type='hidden' name='ingredient[addTo]' value='W'><i class="fas fa-trash-alt"></i>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <%for (let i of meal.replaceOnUse) {%>
+                            <% if (i.replaceOnUseIngredients !== null) { %>
+                                <div>
+                                    <input class='qty' type='number' name='ingredient[qty]' value='<%= i.qty %>'>
+                                    <input class='ingredientName' type='text' name='ingredient[name]'
+                                        value='<%= i.replaceOnUseIngredients.name %>' readOnly>
+                                    <input type="hidden" class='cat' readOnly>
+                                    <input type='hidden' name='ingredient[addTo]' value='R'><i class="fas fa-trash-alt"></i>
+                                </div>
+                            <% } %>
+                        <% } %>
+                        <hr class='m-1'>
+                        <h4 class='card-subtitle text-muted m-1'>New ingredients:</h4>
+                        <hr class='m-1'>
+                    </div>
+                    <button class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="card mt-4 mb-3">
+                <form id="ing" action="" novalidate>
+                    <div class="card-header">
+                        <h4 class="card-title">Add from avaliable ingredients:</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="ingAlert" class="ingAlert alert alert-dismissible fade show">
+                            <span id='ingMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ingredient" class="form-label">Choose an ingredient:</label>
+                            <select name="ingredient" id="ingredient" class="form-select">
+                                <% for(let i of items){ %>
+                                <option value="<%= i.name %>"> <%= i.name %> </option>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="qty" class="form-label">Enter the required quantity</label>
+                            <input type="number" id="qty" name="qty" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Please enter the quantity.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="addTo">Add to:</label>
+                            <select name="addTo" id="addTo" class="form-select">
+                                <option value="W">Weekly Items</option>
+                                <option value="R">Replace on Use Items</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="col-md-6">
+            <div class="card mt-4 mb-3">
+                <form id="newIng" action="" novalidate>
+                    <div class="card-header">
+                        <h4 class="card-title">Add a new ingredient:</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="newIngAlert" class="newIngAlert alert alert-dismissible fade show">
+                            <span id='newIngMsg'></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newIngredient" class="form-label">Enter the ingredient name</label>
+                            <input type="text" id="newIngredient" name="newIngredient" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Please provide an ingredient name.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newQty" class="form-label">Enter the required quantity</label>
+                            <input type="number" id="newQty" name="newQty" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Please enter the quantity.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class='form-label' for="newCat">
+                                Choose a category (used to help organise the final list):
+                            </label>
+                            <select name="newCat" id="newCat" class="form-select">
+                                <% for(let c = 0; c < catArray.length; c++){ %>
+                                <option value="<%= catArray[c] %>"> <%= catArray[c] %> </option>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class='form-label' for="newAddTo">Add to:</label>
+                            <select name="newAddTo" id="newAddTo" class="form-select">
+                                <option value="W(n)">Weekly Items</option>
+                                <option value="R(n)">Replace on Use Items</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    // Required here as won't load in .js file
+    let itemsArray = []
+    <% for (let i of items) { %>
+        itemsArray.push('<%=i.name%>')
+    <%}%>;
+    let mealNames = {}
+    <% for (let key in mealNames) { %>
+        mealNames["<%- key %>"] = "<%- mealNames[key] %>"
+    <% } %>;
+
+</script>

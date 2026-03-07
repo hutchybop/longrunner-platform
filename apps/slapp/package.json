@@ -1,0 +1,48 @@
+{
+  "name": "shoppinglist",
+  "version": "1.0.0",
+  "description": "Shopping list app for weekly shopping",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "author": "hutchyBop",
+  "license": "ISC",
+  "dependencies": {
+    "@codecorn/connect-flash-new": "^1.0.4",
+    "async": "^3.2.6",
+    "axios": "^1.13.6",
+    "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
+    "connect-mongo": "^6.0.0",
+    "dotenv": "^17.3.1",
+    "ejs": "^4.0.1",
+    "ejs-mate": "^4.0.0",
+    "express": "^5.2.1",
+    "express-back": "0.0.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.2.1",
+    "express-recaptcha": "^5.1.0",
+    "express-session": "^1.19.0",
+    "fs": "0.0.1-security",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.2",
+    "method-override": "^3.0.0",
+    "micro-geoip-lite": "^1.0.1",
+    "mongoose": "^9.2.3",
+    "nodemailer": "^8.0.1",
+    "path": "^0.12.7",
+    "sanitize-html": "^2.17.1",
+    "serve-favicon": "^2.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.3",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1"
+  }
+}

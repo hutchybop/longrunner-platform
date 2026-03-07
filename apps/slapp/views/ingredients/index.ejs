@@ -1,0 +1,42 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>All Ingredients</h1>
+        </div>
+        <div class="col-lg-6">
+            <div class="d-flex justify-content-lg-end">
+                <a class='btn btn-primary mt-2 me-2' href='/category/customise'>Customise your Categories</a>
+                <a class='btn btn-secondary mt-2 me-2' href='/shoppinglist'>Back to Shopping Lists</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <% for(let c = 0; c < catArray.length; c++){ %>
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title"><%= catArray[c] %></h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                    <% for (let i of ingredients) { %>
+                    <% if (i.cat === catArray[c]) { %>
+                    <li class="list-group-item">
+                        <div>
+                            <a href="/ingredients/<%= i.id %>/edit"><%= i.name %></a>
+                        </div>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+</div>

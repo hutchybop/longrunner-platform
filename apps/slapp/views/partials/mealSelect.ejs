@@ -1,0 +1,229 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Friday</span>
+                </div>
+                <select class="form-select" name="friday" id="friday">
+                    <% let defaultCountFri = 0 %>
+                    <% for(let m of meals){ %>
+                        <% if(m.default.includes('friday')) { %>
+                            <% defaultCountFri++ %>
+                            <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                        <% }else if(m.mealType === 'Main') { %>
+                            <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                        <% } %>
+                    <% } %>
+                    <% if(defaultCountFri === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Saturday</span>
+                </div>
+                <select class="form-select" name="saturday" id="saturday">
+                    <% let defaultCountSatMon = 0 %>
+                    <% for(let m of meals){ %>
+                    <% if(m.default.includes('saturday')) { %>
+                        <% defaultCountSatMon++ %>
+                    <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                    <% }else if(m.mealType === 'Main') { %>
+                    <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                    <% } %>
+                    <% } %>
+                    <% if(defaultCountSatMon === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Sunday</span>
+                </div>
+                <select class="form-select" name="sunday" id="sunday">
+                    <% let defaultCountSun = 0 %>
+                    <% for(let m of meals){ %>
+                    <% if(m.default.includes('sunday')) { %>
+                        <% defaultCountSun++ %>
+                    <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                    <% }else if(m.mealType === 'Main') { %>
+                    <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                    <% } %>
+                    <% } %>
+                    <% if(defaultCountSun === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Monday</span>
+                </div>
+                <select class="form-select" name="monday" id="monday">
+                    <% let defaultCountMon = 0 %>
+                    <% for(let m of meals){ %>
+                    <% if(m.default.includes('monday')) { %>
+                        <% defaultCountMon++ %>
+                    <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                    <% }else if(m.mealType === 'Main') { %>
+                    <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                    <% } %>
+                    <% } %>
+                    <% if(defaultCountMon === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Tuesday</span>
+                </div>
+                <select class="form-select" name="tuesday" id="tuesday">
+                    <% let defaultCountTues = 0 %>
+                    <% for(let m of meals){ %>
+                    <% if(m.default.includes('tuesday')) { %>
+                        <% defaultCountTues++ %>
+                    <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                    <% }else if(m.mealType === 'Main') { %>
+                    <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                    <% } %>
+                    <% } %>
+                    <% if(defaultCountTues === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Wednesday</span>
+                </div>
+                <select class="form-select" name="wednesday" id="wednesday">
+                    <% let defaultCountWed = 0 %>
+                    <% for(let m of meals){ %>
+                    <% if(m.default.includes('wednesday')) { %>
+                        <% defaultCountWed++ %>
+                    <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                    <% }else if(m.mealType === 'Main') { %>
+                    <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                    <% } %>
+                    <% } %>
+                    <% if(defaultCountWed === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Thursday</span>
+                </div>
+                <select class="form-select" name="thursday" id="thursday">
+                    <% let defaultCountThurs = 0 %>
+                    <% for(let m of meals){ %>
+                    <% if(m.default.includes('thursday')) { %>
+                        <% defaultCountThurs++ %>
+                    <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                    <% }else if(m.mealType === 'Main') { %>
+                    <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                    <% } %>
+                    <% } %>
+                    <% if(defaultCountThurs === 0){ %>
+                        <option value="none" selected>None</option>
+                    <% }else{ %>
+                        <option value="none">None</option>
+                    <% } %>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-6 d-flex flex-column">
+            <div>
+                <div class=" input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">Lunch Weekday</span>
+                    </div>
+                    <select class="form-select" name="lunchWeekday" id="lunchWeekday">
+                        <% let defaultCountDay = 0 %>
+                        <% for(let m of meals){ %>
+                        <% if(m.default.includes('lunchWeekday')) { %>
+                            <% defaultCountDay++ %>
+                        <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                        <% }else if(m.mealType === 'Lunch') { %>
+                        <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                        <% } %>
+                        <% } %>
+                        <% if(defaultCountDay === 0){ %>
+                            <option value="none" selected>None</option>
+                        <% }else{ %>
+                            <option value="none">None</option>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">Lunch Weekend</span>
+                    </div>
+                    <select class="form-select" name="lunchWeekend" id="lunchWeekend">
+                        <% let defaultCountEnd = 0 %>
+                        <% for(let m of meals){ %>
+                        <% if(m.default.includes('lunchWeekend')) { %>
+                            <% defaultCountEnd++ %>S
+                        <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                        <% }else if(m.mealType === 'Lunch') { %>
+                        <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                        <% } %>
+                        <% } %>
+                        <% if(defaultCountEnd === 0){ %>
+                            <option value="none" selected>None</option>
+                        <% }else{ %>
+                            <option value="none">None</option>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-auto">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">Breakfast</span>
+                    </div>
+                    <select class="form-select" name="breakfast" id="breakfast">
+                        <% let defaultCountBreaky = 0 %>
+                        <% for(let m of meals){ %>
+                        <% if(m.default.includes('breakfast')) { %>
+                            <% defaultCountBreaky++ %>
+                        <option value="<%= m._id %>" selected> <%= m.mealName %> </option>
+                        <% }else if(m.mealType === 'Breakfast') { %>
+                        <option value="<%= m._id %>"> <%= m.mealName %> </option>
+                        <% } %>
+                        <% } %>
+                        <% if(defaultCountBreaky === 0){ %>
+                            <option value="none" selected>None</option>
+                        <% }else{ %>
+                            <option value="none">None</option>
+                        <% } %>
+                    </select>
+                </div>
+            </div>

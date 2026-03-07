@@ -1,0 +1,9 @@
+{
+  "name": "longrunner",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/blog",
+    "apps/slapp"
+  ]
+}

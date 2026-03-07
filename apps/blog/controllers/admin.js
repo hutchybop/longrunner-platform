@@ -1,0 +1,209 @@
+import BlogIM from "../models/blogIM.js";
+import Review from "../models/review.js";
+import mail from "../utils/mail.js";
+
+export const dashboard = async (req, res) => {
+  const posts = await BlogIM.find().sort({ createdAt: -1 });
+  const flaggedReviews = await Review.find({ isFlagged: true });
+  const allReviews = await Review.find({});
+
+  const recentPosts = posts.slice(0, 5);
+
+  res.render("admin/dashboard", {
+    title: "Admin Dashboard",
+    posts,
+    recentPosts,
+    flaggedReviewsCount: flaggedReviews.length,
+    allReviewsCount: allReviews.length,
+  });
+};
+
+export const posts = async (req, res) => {
+  const posts = await BlogIM.find().sort({ createdAt: -1 });
+  const flaggedReviews = await Review.find({ isFlagged: true });
+  const allReviews = await Review.find({});
+
+  const sortOrder = req.query.sort || "newest";
+
+  if (sortOrder === "oldest") {
+    posts.sort((a, b) => a.num.toString().localeCompare(b.num.toString()));
+  } else if (sortOrder === "newest") {
+    posts.sort((a, b) => b.num.toString().localeCompare(a.num.toString()));
+  } else {
+    posts.sort((a, b) => a.num.toString().localeCompare(b.num.toString()));
+  }
+
+  res.render("admin/posts", {
+    title: "Admin - Post Management",
+    posts,
+    sortOrder,
+    flaggedReviewsCount: flaggedReviews.length,
+    allReviewsCount: allReviews.length,
+  });
+};
+
+export const newPost = async (req, res) => {
+  const posts = await BlogIM.find().sort({ createdAt: -1 });
+  const flaggedReviews = await Review.find({ isFlagged: true });
+  const allReviews = await Review.find({});
+
+  let nums = [];
+  for (let post of posts) {
+    nums.push(post.num);
+  }
+  let num = Math.max.apply(Math, nums);
+
+  res.render("admin/new", {
+    title: "Admin - Create Post",
+    num,
+    posts,
+    flaggedReviewsCount: flaggedReviews.length,
+    allReviewsCount: allReviews.length,
+  });
+};
+
+export const createPost = async (req, res) => {
+  await BlogIM.create(req.body);
+  req.flash("success", "Post created successfully!");
+  res.redirect("/admin/posts");
+};
+
+export const editPost = async (req, res) => {
+  const posts = await BlogIM.find().sort({ createdAt: -1 });
+  const flaggedReviews = await Review.find({ isFlagged: true });
+  const allReviews = await Review.find({});
+
+  const { id } = req.params;
+  const post = await BlogIM.findById(id);
+
+  res.render("admin/edit", {
+    title: "Admin - Edit Post",
+    post,
+    posts,
+    flaggedReviewsCount: flaggedReviews.length,
+    allReviewsCount: allReviews.length,
+    formAction: `/admin/posts/${id}?_method=PUT`,
+  });
+};
+
+export const updatePost = async (req, res) => {
+  const { id } = req.params;
+  await BlogIM.findByIdAndUpdate(id, req.body);
+  req.flash("success", "Post updated successfully!");
+  res.redirect("/admin/posts");
+};
+
+export const deletePost = async (req, res) => {
+  const { id } = req.params;
+  await BlogIM.findByIdAndDelete(id);
+  req.flash("success", "Post deleted successfully!");
+  res.redirect("/admin/posts");
+};
+
+export const flaggedReviews = async (req, res) => {
+  const posts = await BlogIM.find().sort({ createdAt: -1 });
+  const allReviews = await Review.find({});
+  const flaggedReviews = await Review.find({ isFlagged: true })
+    .populate("author", "username email")
+    .sort({ createdAt: -1 });
+
+  res.render("admin/flaggedReviews", {
+    flaggedReviews,
+    posts,
+    flaggedReviewsCount: flaggedReviews.length,
+    allReviewsCount: allReviews.length,
+    title: "Flagged Reviews - Admin",
+    js_page: "flaggedReviews",
+  });
+};
+
+export const updateFlaggedReview = async (req, res) => {
+  const { reviewId, action } = req.params;
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    req.flash("error", "Review not found");
+    return res.redirect("/admin/flagged-reviews");
+  }
+
+  if (action === "approve") {
+    review.isFlagged = false;
+    review.flagReason = undefined;
+    await review.save();
+
+    await BlogIM.findByIdAndUpdate(review.blogIM, {
+      $push: { reviews: review._id },
+    });
+
+    req.flash("success", "Review approved and added to post");
+  } else if (action === "delete") {
+    await Review.findByIdAndDelete(reviewId);
+    await BlogIM.updateMany(
+      { reviews: reviewId },
+      { $pull: { reviews: reviewId } },
+    );
+    req.flash("success", "Review deleted");
+  }
+
+  res.redirect("/admin/flagged-reviews");
+};
+
+export const allReviews = async (req, res) => {
+  const flaggedReviews = await Review.find({ isFlagged: true });
+  const posts = await BlogIM.find();
+  const allReviews = await Review.find({})
+    .populate("author", "username email")
+    .populate("blogIM", "title")
+    .sort({ createdAt: -1 });
+
+  res.render("admin/allReviews", {
+    allReviews,
+    posts,
+    flaggedReviewsCount: flaggedReviews.length,
+    allReviewsCount: allReviews.length,
+    title: "All Reviews - Admin",
+    js_page: "allReviews",
+    css_page: "allReviews",
+  });
+};
+
+export const deleteReviewWithReason = async (req, res) => {
+  const { reviewId } = req.params;
+  const { reason } = req.body;
+
+  const review = await Review.findById(reviewId)
+    .populate("author", "username email")
+    .populate("blogIM", "title");
+
+  if (!review) {
+    req.flash("error", "Review not found");
+    return res.redirect("/admin/all-reviews");
+  }
+
+  if (
+    review.author &&
+    review.author._id.toString() !== "618ae270defe900f7f2980d5"
+  ) {
+    const postTitle = review.blogIM ? review.blogIM.title : "Unknown Post";
+    const emailSubject = "Your review has been removed";
+    const emailText =
+      `Hello ${review.author.username},\n\n` +
+      `Your review on the post "${postTitle}" has been removed by an administrator.\n\n` +
+      `Review content: "${review.body}"\n\n` +
+      `Reason for removal: ${reason || "No specific reason provided"}\n\n` +
+      `If you have any questions, please contact us.\n\n` +
+      `Thank you,\n` +
+      `The Admin Team`;
+
+    await mail(emailSubject, emailText, review.author.email);
+  }
+
+  await Review.findByIdAndDelete(reviewId);
+  await BlogIM.updateMany(
+    { reviews: reviewId },
+    { $pull: { reviews: reviewId } },
+  );
+
+  req.flash("success", "Review deleted successfully");
+  res.redirect("/admin/all-reviews");
+};

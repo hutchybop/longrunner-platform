@@ -1,0 +1,237 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+    <h1><%= shoppingListFinal.name %></h1>
+    <h4>Click Copy list to copy the shopping list to your clipboard</h4>
+</div>
+
+<div class="container">
+    <div class="row">
+
+        <div class="col lg-6">
+            <div class="d-flex">
+                <div class="p-2">
+                    <a class='btn btn-primary' href='/shoppinglist/new'>Create New</a>
+                </div>
+                <div class="p-2">
+                    <a class='btn btn-secondary' href='/shoppinglist'>History</a>
+                </div>
+                <div class="p-2">
+                    <button class='btn btn-info' id="copyToClipBtn">Copy list</button>
+                </div>
+            </div>    
+        </div>
+
+        <div class="col lg-6">
+            <div class="d-flex justify-content-lg-end">
+                <div class="p-2">
+                    <a class='btn btn-success' href="/shoppinglist/edit/<%=shoppingListFinal.id%>">Edit</a>
+                </div>
+                <div class="p-2">
+                    <form id="slShowAlertDelete" action="/shoppinglist/<%=shoppingListFinal.id%>?_method=DELETE" method='post'>
+                        <button form="slShowAlertDelete" class='btn btn-danger' type="submit">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 col-lg-6">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Main Meals</h3>
+                </div>
+                <div id="meals" class="card-body">
+                    <h4>
+                        Friday:
+                        <% if(shoppingListFinal.friday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.friday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.friday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.friday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Saturday:
+                        <% if(shoppingListFinal.saturday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.saturday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.saturday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.saturday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Sunday:
+                        <% if(shoppingListFinal.sunday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.sunday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.sunday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.sunday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Monday:
+                        <% if(shoppingListFinal.monday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.monday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.monday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.monday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Tuesday:
+                        <% if(shoppingListFinal.tuesday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.tuesday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.tuesday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.tuesday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Wednesday:
+                        <% if(shoppingListFinal.wednesday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.wednesday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.wednesday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.wednesday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Thursday:
+                        <% if(shoppingListFinal.thursday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.thursday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.thursday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.thursday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 col-lg-6">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Breakfast/Lunch Meals</h3>
+                </div>
+                <div class="card-body">
+                    <h4>
+                        Lunch Weekend:
+                        <% if(shoppingListFinal.lunchWeekend.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.lunchWeekend.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.lunchWeekend.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.lunchWeekend.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Lunch Weekday:
+                        <% if(shoppingListFinal.lunchWeekday.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.lunchWeekday.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.lunchWeekday.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.lunchWeekday.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                    <h4>
+                        Breakfast:
+                        <% if(shoppingListFinal.breakfast.mealName === 'None'){ %>
+                            <span class="dayMeal"><%= shoppingListFinal.breakfast.mealName %></span>
+                        <%}else{%>
+                        <a href="/meals/<%=shoppingListFinal.breakfast.id%>">
+                            <span class="dayMeal"><%= shoppingListFinal.breakfast.mealName %></span>
+                        </a>
+                        <% } %>
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Your Shopping List</h3>
+                </div>
+                <div class="card-body pb-0" id="final-list">
+                    <% if(Object.keys(shoppingListFinal.items[0]).length !== 0){ %>
+                        <% for(let i of shoppingListFinal.items ) { %>
+                            <% for(let c = 0; c < catArray.length; c++) { %>
+                            <% for (const [key, value] of Object.entries(i)) { %>
+                            <% if(catArray[c] === value[1]) { %>
+                            <div class="mb-3 row ms-3">
+                                <% if(value[0] == 1){ %>
+                                <input class="form-check-input" type="checkbox" value="" id="<%= key %>">
+                                <label class="form-check-label strikethrough ps-2" for="<%= key %>">
+                                    <%= key %>
+                                </label>
+                                <% }else{ %>
+                                <input class="form-check-input" type="checkbox" value="" id="<%= key %>">
+                                <label class="form-check-label strikethrough ps-2" for="<%= key %>">
+                                    <%= value[0] %> <%= key %>
+                                </label>
+                                <% } %>
+                            </div>
+                            <% } %>
+                            <% } %>
+                            <br>
+                            <% } %>
+                            <% } %>
+                    <% }else{ %>
+                        <p>'Please re-edit your shoppinglist and submit your choosen items'</p>
+                    <% }%>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Text area to be copied to clipboard (hidden from view) -->
+<textarea id='copybtn' style='display: none;'><%= shoppingListFinal.name %>
+
+Fri:           <%= shoppingListFinal.friday.mealName %> 
+Sat:          <%= shoppingListFinal.saturday.mealName %>
+Sun:         <%= shoppingListFinal.sunday.mealName %>
+Mon:        <%= shoppingListFinal.monday.mealName %>
+Tues:       <%= shoppingListFinal.tuesday.mealName %>
+Wed:        <%= shoppingListFinal.wednesday.mealName %>
+Thurs:      <%= shoppingListFinal.thursday.mealName %>
+
+Lunch Weekday:      <%= shoppingListFinal.lunchWeekday.mealName %>
+Lunch Weekend:      <%= shoppingListFinal.lunchWeekend.mealName %>
+Breakfast:                <%= shoppingListFinal.breakfast.mealName %>
+
+
+<%= copyList %>
+</textarea>
+
+
+<script type="text/javascript">
+
+    // Required here as won't load in .js file
+    let shoppingListFinal = '<%=shoppingListFinal.id%>'
+    let showAllShoppingListIds = <%-showAllShoppingListIds%>
+
+</script>
+

@@ -1,0 +1,48 @@
+.ingAlert {
+  display: none;
+}
+
+.newIngAlert {
+  display: none;
+}
+
+.removeAlert {
+  display: none;
+}
+
+.nameAlert {
+  display: none;
+}
+
+#added input {
+  border: 0;
+}
+
+.qty {
+  width: 17%;
+  margin-right: 7px;
+}
+
+.ingredientName {
+  width: 62%;
+  margin-right: 3px;
+}
+
+.userIng .qty {
+  width: 17%;
+  margin-right: 10px;
+}
+
+.userIng .ingredientName {
+  width: 62%;
+  margin-right: 6px;
+}
+
+.fas {
+  color: red;
+  margin-left: 3px;
+}
+
+.fas:hover {
+  font-size: 1.3em;
+}

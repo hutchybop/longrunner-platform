@@ -1,0 +1,31 @@
+import BlogIM from "../models/blogIM.js";
+
+export const index = async (req, res) => {
+  let posts = await BlogIM.find();
+  const sortOrder = req.query.sort || "oldest";
+
+  if (sortOrder === "newest") {
+    posts.sort((a, b) => b.num.toString().localeCompare(a.num.toString()));
+  } else {
+    posts.sort((a, b) => a.num.toString().localeCompare(b.num.toString()));
+  }
+
+  res.render("blogim/index", {
+    js_page: "home",
+    css_page: "home",
+    title: "My Ironman Blog",
+    posts,
+    sortOrder,
+  });
+};
+
+export const show = async (req, res) => {
+  const post = await BlogIM.findById(req.params.id).populate({
+    path: "reviews",
+    populate: {
+      path: "author",
+      select: "username email",
+    },
+  });
+  res.render("blogim/show", { css_page: "blog", title: post.title, post });
+};

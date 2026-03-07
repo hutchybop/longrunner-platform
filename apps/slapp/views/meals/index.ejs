@@ -1,0 +1,115 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>All Meals</h1>
+        </div>
+        <div class="col-lg-6">
+            <div class="d-flex justify-content-lg-end">
+                <a class='btn btn-primary me-2 mt-1' href='/meals/new'>Create New Meal</a>
+                <a class='btn btn-secondary ms-2 mt-1' href='/shoppinglist'>Back to Shopping Lists</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">Main Meals</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <% for (let i of items) { %>
+                    <% if (i.mealType === 'Main') { %>
+                    <li class="list-group-item">
+                        <a href="/meals/<%= i.id %>"><%= i.mealName %></a>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">Lunch Meals</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <% for (let i of items) { %>
+                    <% if (i.mealType === 'Lunch') { %>
+                    <li class="list-group-item">
+                        <a href="/meals/<%= i.id %>"><%= i.mealName %></a>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">Breakfast Meals</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <% for (let i of items) { %>
+                    <% if (i.mealType === 'Breakfast') { %>
+                    <li class="list-group-item">
+                        <a href="/meals/<%= i.id %>"><%= i.mealName %></a>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">'Utlility' Meals</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <% for (let i of items) { %>
+                    <% if (i.mealType === 'Nonfood Items' || i.mealType === 'Constant Weekly Items') { %>
+                    <li class="list-group-item">
+                        <a href="/meals/<%= i.id %>"><%= i.mealName %></a>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">Archived Meals</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush"></ul>
+                    <% for (let i of items) { %>
+                    <% if (i.mealType === 'Archive') { %>
+                    <li class="list-group-item">
+                        <a href="/meals/<%= i.id %>"><%= i.mealName %></a>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

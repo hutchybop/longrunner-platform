@@ -1,0 +1,79 @@
+<% layout('layouts/adminBoilerplate') %>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Posts</h5>
+            </div>
+            <div class="card-body">
+                <% if (recentPosts.length === 0) { %>
+                    <p class="text-muted">No posts yet.</p>
+                <% } else { %>
+                    <% recentPosts.slice(0, 5).forEach(post => { %>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong><%= post.title %></strong>
+                                <br>
+                                <small class="text-muted"><%= post.createdAt ? post.createdAt.toLocaleDateString() : 'Legacy post' %></small>
+                            </div>
+                            <div>
+                                <a href="/admin/posts/<%= post._id %>/edit" class="btn btn-sm btn-outline-warning">Edit</a>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Admin Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <!-- Admin Dashboard -->
+                    <div class="list-group-item bg-light">
+                        <h6 class="mb-0 text-muted">Admin Dashboard</h6>
+                    </div>
+                    <a href="/admin" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    
+                    <!-- Content Management -->
+                    <div class="list-group-item bg-light">
+                        <h6 class="mb-0 text-muted">Content Management</h6>
+                    </div>
+                    <a href="/admin/posts" class="list-group-item list-group-item-action">
+                        <i class="fas fa-blog"></i> Manage Posts
+                    </a>
+                    <a href="/admin/posts/new" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus"></i> Create New Post
+                    </a>
+                    
+                    <!-- Review Management -->
+                    <div class="list-group-item bg-light">
+                        <h6 class="mb-0 text-muted">Review Management</h6>
+                    </div>
+                    <a href="/admin/flagged-reviews" class="list-group-item list-group-item-action">
+                        <i class="fas fa-flag text-warning"></i> Flagged Reviews
+                        <% if (flaggedReviewsCount > 0) { %>
+                            <span class="badge bg-warning float-end"><%= flaggedReviewsCount %></span>
+                        <% } %>
+                    </a>
+                    <a href="/admin/all-reviews" class="list-group-item list-group-item-action">
+                        <i class="fas fa-comments"></i> All Reviews
+                        <% if (allReviewsCount > 0) { %>
+                            <span class="badge bg-info float-end"><%= allReviewsCount %></span>
+                        <% } %>
+                    </a>
+                    
+                    <a href="/" class="list-group-item list-group-item-action">
+                        <i class="fas fa-home"></i> Back to Blog
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
