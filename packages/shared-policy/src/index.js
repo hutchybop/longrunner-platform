@@ -1,14 +1,44 @@
 import mail from "@longrunner/shared-utils/mail.js";
 
 export function createPolicyController(config = {}) {
-  const { domain = "longrunner.co.uk", tandcTitle = `${domain} Information Page` } =
-    config;
+  const {
+    domain = "longrunner.co.uk",
+    tandcTitle = `${domain} Information Page`,
+    assetsPrefix = "shared-policy",
+    policyContent = {},
+  } = config;
+
+  const defaultPolicyContent = {
+    intro: `Welcome to ${domain}. By accessing and using our website, you agree to comply with and be bound by these Terms and Conditions. Please read them carefully.`,
+    aboutWebsite:
+      "This website provides user account functionality and app-specific features. Please use it responsibly and in accordance with these terms.",
+    appropriateUse:
+      "Use the website responsibly and respect other users. You agree not to engage in any behavior that disrupts the experience for others or compromises the security and integrity of the website.",
+    contentDisclaimerPrimary:
+      "Content is provided for informational purposes only. We make no warranties or representations regarding accuracy, completeness, or suitability.",
+    contentDisclaimerSecondary:
+      "You are responsible for how you use information and features provided on this website.",
+    intellectualProperty:
+      `The content, design, and code of ${domain} are owned by the website creator. You may not reproduce, distribute, or use any part of the website or its content without prior written consent.`,
+    limitationOfLiability:
+      `${domain} is provided on an "as is" basis. We make no warranties or representations, express or implied, regarding the website's availability, functionality, or accuracy of content. We are not liable for any direct, indirect, incidental, or consequential damages arising from your use of the website. Additionally, the website may be taken down or modified at any time without prior notice, and you should not rely on its continued availability.`,
+    cookieName: "session",
+    cookiePurpose:
+      "This cookie keeps the user logged in and maintains their session across different pages.",
+  };
+
+  const resolvedPolicyContent = {
+    ...defaultPolicyContent,
+    ...policyContent,
+  };
 
   return {
     cookiePolicy: (req, res) => {
       res.render("policy/cookiePolicy", {
         title: "cookiePolicy",
-        css_page: "cookiePolicy",
+        css_page: `${assetsPrefix}/cookiePolicy`,
+        domain,
+        policyContent: resolvedPolicyContent,
       });
     },
 
@@ -16,8 +46,10 @@ export function createPolicyController(config = {}) {
       res.render("policy/tandc", {
         captcha: res.recaptcha,
         title: tandcTitle,
-        js_page: "tandc",
-        css_page: "tandc",
+        js_page: `${assetsPrefix}/tandc`,
+        css_page: `${assetsPrefix}/tandc`,
+        domain,
+        policyContent: resolvedPolicyContent,
       });
     },
 

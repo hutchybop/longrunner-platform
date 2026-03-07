@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import { mongoose } from "mongoose";
 import { MongoStore } from "connect-mongo";
 import mongoSanitize from "express-mongo-sanitize";
@@ -16,6 +17,16 @@ import favicon from "serve-favicon";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const sharedAuthRoot = path.resolve(
+  path.dirname(require.resolve("@longrunner/shared-auth/user.js")),
+  "..",
+  "..",
+);
+const sharedPolicyRoot = path.resolve(
+  path.dirname(require.resolve("@longrunner/shared-policy")),
+  "..",
+);
 
 const { RecaptchaV2: Recaptcha } = await import("express-recaptcha");
 const recaptcha = new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
@@ -70,6 +81,21 @@ app.locals.User = User;
 const policy = createPolicyController({
   domain: "slapp.longrunner.co.uk",
   tandcTitle: "slapp.longrunner.co.uk Information Page",
+  policyContent: {
+    aboutWebsite:
+      "slapp.longrunner.co.uk is a personal meal and recipe management application where users can manage their meals, recipes, ingredients, and shopping lists. The website offers a personalized experience by storing and displaying your information, such as account details, meal plans, and related data.",
+    contentDisclaimerPrimary:
+      "When you create an account on slapp.longrunner.co.uk, we may provide you with recipes as part of our service. Please note that these recipes are provided for your convenience and personal use. We make no warranties or representations regarding the quality, edibility, or suitability of the recipes or food prepared from them.",
+    contentDisclaimerSecondary:
+      "You are solely responsible for ensuring that any food prepared from the recipes is safe and suitable for consumption. We do not accept any liability for any issues or concerns arising from the use of these recipes, including but not limited to health or safety concerns.",
+    intellectualProperty:
+      "The content, design, and code of slapp.longrunner.co.uk are owned by the website creator. You may not reproduce, distribute, or use any part of the website or its content without prior written consent.",
+    limitationOfLiability:
+      'slapp.longrunner.co.uk is provided on an "as is" basis. We make no warranties or representations, express or implied, regarding the website\'s availability, functionality, or accuracy of content. We are not liable for any direct, indirect, incidental, or consequential damages arising from your use of the website. Additionally, the website may be taken down or modified at any time without prior notice, and you should not rely on its continued availability.',
+    cookieName: "slapp",
+    cookiePurpose:
+      "This cookie keeps the user logged in and loads their personal information, including meals, recipes, ingredients, shopping lists, and account details. It ensures a seamless user experience by maintaining your session across different pages.",
+  },
 });
 
 if (process.env.NODE_ENV === "production") {
@@ -93,11 +119,31 @@ app.use("/favicon.ico", (req, res) => {
 
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", [
+  path.join(__dirname, "views"),
+  path.join(sharedAuthRoot, "src", "views"),
+  path.join(sharedPolicyRoot, "src", "views"),
+]);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
+app.use(
+  "/stylesheets/shared-auth",
+  express.static(path.join(sharedAuthRoot, "public")),
+);
+app.use(
+  "/javascripts/shared-auth",
+  express.static(path.join(sharedAuthRoot, "public")),
+);
+app.use(
+  "/stylesheets/shared-policy",
+  express.static(path.join(sharedPolicyRoot, "public")),
+);
+app.use(
+  "/javascripts/shared-policy",
+  express.static(path.join(sharedPolicyRoot, "public")),
+);
 
 app.use((req, res, next) => {
   if (req.body)

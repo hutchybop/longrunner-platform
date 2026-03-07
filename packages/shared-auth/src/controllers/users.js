@@ -5,6 +5,7 @@ import { loginUser, logoutUser } from "../utils/auth.js";
 export function createUsersController(config = {}) {
   const {
     domain = "longrunner.co.uk",
+    assetsPrefix = "shared-auth",
     onRegister = async () => {},
     onDelete = async (userId) => {},
     protectedUsername = null
@@ -14,8 +15,8 @@ export function createUsersController(config = {}) {
     register: (req, res) => {
       res.render("users/register", {
         title: `Register at ${domain}`,
-        css_page: "users",
-        js_page: "register",
+        css_page: `${assetsPrefix}/users`,
+        js_page: `${assetsPrefix}/register`,
       });
     },
 
@@ -57,7 +58,7 @@ export function createUsersController(config = {}) {
     login: (req, res) => {
       res.render("users/login", {
         title: `Login to ${domain}`,
-        css_page: "users",
+        css_page: `${assetsPrefix}/users`,
       });
     },
 
