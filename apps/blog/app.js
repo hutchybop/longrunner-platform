@@ -28,6 +28,7 @@ import {
   passwordResetLimiter,
   formSubmissionLimiter,
 } from "@longrunner/shared-utils/rateLimiter.js";
+import { createMongoDbUrl, createSessionConfig } from "@longrunner/shared-config";
 import { authenticateUser, loginUser } from "@longrunner/shared-auth/auth.js";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
@@ -61,13 +62,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const dbName = "blog";
-const dbUrl = [
-  "mongodb+srv://hutch:",
-  process.env.MONGODB,
-  "@hutchybop.kpiymrr.mongodb.net/",
-  dbName,
-  "?retryWrites=true&w=majority&appName=hutchyBop",
-].join("");
+const dbUrl = createMongoDbUrl({ dbName });
 mongoose.connect(dbUrl);
 
 const db = mongoose.connection;
@@ -191,21 +186,11 @@ function configureHelmet() {
 }
 configureHelmet();
 
-const sessionConfig = {
+const sessionConfig = createSessionConfig({
   name: "blog_longrunner",
-  secret: process.env.SESSION_KEY,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 7 * 2,
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-  },
-  store: MongoStore.create({
-    mongoUrl: dbUrl,
-  }),
-};
+  mongoUrl: dbUrl,
+  MongoStore,
+});
 app.use(session(sessionConfig));
 
 app.use(flash());

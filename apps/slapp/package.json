@@ -13,6 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "@longrunner/shared-auth": "workspace:*",
+    "@longrunner/shared-config": "workspace:*",
+    "@longrunner/shared-middleware": "workspace:*",
     "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",

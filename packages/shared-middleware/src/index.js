@@ -1,7 +1,7 @@
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 
 export function createMiddleware(config = {}) {
-  const { schemas = {} } = config;
+  const { schemas = {}, routePaths = {} } = config;
 
   const {
     tandcSchema,
@@ -12,6 +12,16 @@ export function createMiddleware(config = {}) {
     detailsSchema,
     deleteSchema
   } = schemas;
+
+  const {
+    tandc = "/policy/tandc",
+    login = "/auth/login",
+    register = "/auth/register",
+    forgot = "/auth/forgot",
+    reset = (req) => `/auth/reset/${req.params.token}`,
+    details = "/auth/details",
+    deletePath = "/auth/details",
+  } = routePaths;
 
   const JoiFlashError = (error, req, res, next, url) => {
     if (error) {
@@ -37,49 +47,50 @@ export function createMiddleware(config = {}) {
   if (tandcSchema) {
     middleware.validateTandC = catchAsync(async (req, res, next) => {
       const { error } = tandcSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, "/policy/tandc");
+      JoiFlashError(error, req, res, next, tandc);
     });
   }
 
   if (loginSchema) {
     middleware.validateLogin = (req, res, next) => {
       const { error } = loginSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, "/auth/login");
+      JoiFlashError(error, req, res, next, login);
     };
   }
 
   if (registerSchema) {
     middleware.validateRegister = (req, res, next) => {
       const { error } = registerSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, "/auth/register");
+      JoiFlashError(error, req, res, next, register);
     };
   }
 
   if (forgotSchema) {
     middleware.validateForgot = (req, res, next) => {
       const { error } = forgotSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, "/auth/forgot");
+      JoiFlashError(error, req, res, next, forgot);
     };
   }
 
   if (resetSchema) {
     middleware.validateReset = (req, res, next) => {
       const { error } = resetSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, `/auth/reset/${req.params.token}`);
+      const resetPath = typeof reset === "function" ? reset(req) : reset;
+      JoiFlashError(error, req, res, next, resetPath);
     };
   }
 
   if (detailsSchema) {
     middleware.validateDetails = (req, res, next) => {
       const { error } = detailsSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, "/auth/details");
+      JoiFlashError(error, req, res, next, details);
     };
   }
 
   if (deleteSchema) {
     middleware.validateDelete = (req, res, next) => {
       const { error } = deleteSchema.validate(req.body);
-      JoiFlashError(error, req, res, next, "/auth/details");
+      JoiFlashError(error, req, res, next, deletePath);
     };
   }
 

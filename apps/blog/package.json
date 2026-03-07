@@ -14,6 +14,7 @@
   "dependencies": {
     "@eslint/js": "^10.0.1",
     "@longrunner/shared-auth": "workspace:*",
+    "@longrunner/shared-config": "workspace:*",
     "@longrunner/shared-middleware": "workspace:*",
     "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",

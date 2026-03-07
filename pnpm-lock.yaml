@@ -16,6 +16,9 @@ importers:
       '@longrunner/shared-auth':
         specifier: workspace:*
         version: link:../../packages/shared-auth
+      '@longrunner/shared-config':
+        specifier: workspace:*
+        version: link:../../packages/shared-config
       '@longrunner/shared-middleware':
         specifier: workspace:*
         version: link:../../packages/shared-middleware
@@ -119,6 +122,12 @@ importers:
       '@longrunner/shared-auth':
         specifier: workspace:*
         version: link:../../packages/shared-auth
+      '@longrunner/shared-config':
+        specifier: workspace:*
+        version: link:../../packages/shared-config
+      '@longrunner/shared-middleware':
+        specifier: workspace:*
+        version: link:../../packages/shared-middleware
       '@longrunner/shared-policy':
         specifier: workspace:*
         version: link:../../packages/shared-policy
