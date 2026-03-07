@@ -2,3 +2,4 @@ packages:
   - 'packages/*'
   - 'apps/blog'
   - 'apps/slapp'
+  - 'apps/landing'

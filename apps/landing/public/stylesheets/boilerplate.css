@@ -1,0 +1,23 @@
+body {
+  font-family: "Yanone Kaffeesatz", sans-serif;
+  font-size: 1.3em;
+  /* color: #0c345d; */
+  color:white;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    url("/images/BackGround.jpg");
+  background-size: cover;
+  background-position: center;
+}
+.navbar {
+  display: block;
+}
+.card-header {
+  color: #0063ce
+}
+.card-body {
+  color: #007bff
+}
+
+#cookieAlertBtn {
+  color: green;
+}

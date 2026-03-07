@@ -6,7 +6,29 @@ export function createPolicyController(config = {}) {
     tandcTitle = `${domain} Information Page`,
     assetsPrefix = "shared-policy",
     policyContent = {},
+    backLinks = {},
+    backLabels = {},
   } = config;
+
+  const resolvedBackLinks = {
+    guest: "/auth/login",
+    user: "/auth/details",
+    ...backLinks,
+  };
+
+  const resolvedBackLabels = {
+    guest: "Back to Login",
+    user: "Back to Account",
+    ...backLabels,
+  };
+
+  const resolveBackButton = (req) => {
+    const isLoggedIn = Boolean(req.user);
+    return {
+      backHref: isLoggedIn ? resolvedBackLinks.user : resolvedBackLinks.guest,
+      backLabel: isLoggedIn ? resolvedBackLabels.user : resolvedBackLabels.guest,
+    };
+  };
 
   const defaultPolicyContent = {
     intro: `Welcome to ${domain}. By accessing and using our website, you agree to comply with and be bound by these Terms and Conditions. Please read them carefully.`,
@@ -34,15 +56,19 @@ export function createPolicyController(config = {}) {
 
   return {
     cookiePolicy: (req, res) => {
+      const { backHref, backLabel } = resolveBackButton(req);
       res.render("policy/cookiePolicy", {
         title: "cookiePolicy",
         css_page: `${assetsPrefix}/cookiePolicy`,
         domain,
         policyContent: resolvedPolicyContent,
+        backHref,
+        backLabel,
       });
     },
 
     tandc: (req, res) => {
+      const { backHref, backLabel } = resolveBackButton(req);
       res.render("policy/tandc", {
         captcha: res.recaptcha,
         title: tandcTitle,
@@ -50,6 +76,8 @@ export function createPolicyController(config = {}) {
         css_page: `${assetsPrefix}/tandc`,
         domain,
         policyContent: resolvedPolicyContent,
+        backHref,
+        backLabel,
       });
     },
 

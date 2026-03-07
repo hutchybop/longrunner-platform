@@ -198,11 +198,7 @@
                         </li>
                     </ul>
                 </div>
-                <% if(typeof currentUser === 'undefined') {%>
-                    <a id="backBtn" class="btn btn-primary" href="/auth/login">Back to Login</a>
-                <% }else{ %>
-                    <a id="backBtn" class="btn btn-primary" href="/auth/details">Back to Account</a>
-                <% } %>
+                <a id="backBtn" class="btn btn-primary" href="<%= backHref %>"><%= backLabel %></a>
             </div>
         </div>
     </div>

@@ -1,0 +1,36 @@
+{
+  "name": "landing",
+  "version": "1.0.0",
+  "description": "Longrunner landing page application",
+  "main": "app.js",
+  "type": "module",
+  "dependencies": {
+    "@longrunner/shared-config": "workspace:*",
+    "@longrunner/shared-middleware": "workspace:*",
+    "@longrunner/shared-policy": "workspace:*",
+    "@longrunner/shared-schemas": "workspace:*",
+    "@longrunner/shared-utils": "workspace:*",
+    "compression": "^1.8.1",
+    "dotenv": "^17.3.1",
+    "ejs": "^4.0.1",
+    "ejs-mate": "^4.0.0",
+    "express": "^5.2.1",
+    "express-back": "0.0.2",
+    "express-recaptcha": "^5.1.0",
+    "express-session": "^1.19.0",
+    "helmet": "^8.1.0",
+    "serve-favicon": "^2.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  }
+}

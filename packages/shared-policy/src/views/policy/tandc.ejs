@@ -116,11 +116,7 @@
 
                     </ul>
                 </div>
-                    <% if(typeof currentUser === 'undefined') {%>
-                        <a id="backBtn" class="btn btn-primary" href="/auth/login">Back to Login</a>
-                    <% }else{ %>
-                        <a id="backBtn" class="btn btn-primary" href="/auth/details">Back to Account</a>
-                    <% } %>
+                    <a id="backBtn" class="btn btn-primary" href="<%= backHref %>"><%= backLabel %></a>
             </div>
         </div>
     </div>
@@ -167,11 +163,7 @@
                         </div>
                         <button class="btn btn-success btn-block" id="submitBtn" disabled>Send</button>
                     </form>
-                    <% if(typeof currentUser === 'undefined') {%>
-                        <a id="backBtn" class="btn btn-primary mt-2" href="/auth/login">Back to Login</a>
-                    <% }else{ %>
-                        <a id="backBtn" class="btn btn-primary mt-2" href="/auth/details">Back to Account</a>
-                    <% } %>
+                    <a id="backBtn" class="btn btn-primary mt-2" href="<%= backHref %>"><%= backLabel %></a>
                 </div>
             </div>
         </div>

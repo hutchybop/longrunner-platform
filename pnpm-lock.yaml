@@ -93,6 +93,70 @@ importers:
         specifier: ^3.8.1
         version: 3.8.1
 
+  apps/landing:
+    dependencies:
+      '@longrunner/shared-config':
+        specifier: workspace:*
+        version: link:../../packages/shared-config
+      '@longrunner/shared-middleware':
+        specifier: workspace:*
+        version: link:../../packages/shared-middleware
+      '@longrunner/shared-policy':
+        specifier: workspace:*
+        version: link:../../packages/shared-policy
+      '@longrunner/shared-schemas':
+        specifier: workspace:*
+        version: link:../../packages/shared-schemas
+      '@longrunner/shared-utils':
+        specifier: workspace:*
+        version: link:../../packages/shared-utils
+      compression:
+        specifier: ^1.8.1
+        version: 1.8.1
+      dotenv:
+        specifier: ^17.3.1
+        version: 17.3.1
+      ejs:
+        specifier: ^4.0.1
+        version: 4.0.1
+      ejs-mate:
+        specifier: ^4.0.0
+        version: 4.0.0
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
+      express-back:
+        specifier: 0.0.2
+        version: 0.0.2
+      express-recaptcha:
+        specifier: ^5.1.0
+        version: 5.1.0
+      express-session:
+        specifier: ^1.19.0
+        version: 1.19.0
+      helmet:
+        specifier: ^8.1.0
+        version: 8.1.0
+      serve-favicon:
+        specifier: ^2.5.1
+        version: 2.5.1
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.0.0
+        version: 9.39.4
+      eslint:
+        specifier: ^10.0.2
+        version: 10.0.3
+      eslint-config-prettier:
+        specifier: ^10.1.8
+        version: 10.1.8(eslint@10.0.3)
+      eslint-plugin-prettier:
+        specifier: ^5.5.5
+        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.3))(eslint@10.0.3)(prettier@3.8.1)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
+
   apps/slapp:
     dependencies:
       '@longrunner/shared-auth':

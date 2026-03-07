@@ -4,6 +4,7 @@
   "workspaces": [
     "packages/*",
     "apps/blog",
-    "apps/slapp"
+    "apps/slapp",
+    "apps/landing"
   ]
 }
