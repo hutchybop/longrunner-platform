@@ -1,170 +1,112 @@
-# AGENTS.md - Longrunner Repository
+# AGENTS.md — Longrunner Platform
 
-This repository contains multiple Express.js applications. Each app lives in `apps/` with its own dependencies and configuration.
+This repository is a pnpm monorepo hosting two Express/Node.js applications (`blog` and `slapp`) plus shared workspaces that contain every reusable policy, auth, middleware, schema, config, and utility piece. Everything now runs as ES modules (`type": "module"`) and relies on shared packages under `packages/@longrunner/*` to avoid duplication between apps.
 
-## Repository Structure
+## Workspace Layout
 
 ```
-apps/
-├── blog/app-blog/      # Ironman blog (port 3004)
-├── slapp/app-slapp/    # Shopping list app (port 3001)
-├── quiz/app-quiz/      # Quiz application (port 3002)
-├── voxmate_api/        # Voxmate API (port 3003)
-└── landing/app-landing # Landing page (port 3000)
+longrunner-platform/
+├── apps/
+│   ├── blog/      # Ironman training blog (port 3004)
+│   └── slapp/      # Shopping list planner (port 3001)
+├── packages/       # Shared logic packages
+│   ├── shared-auth/
+│   ├── shared-policy/
+│   ├── shared-middleware/
+│   ├── shared-schemas/
+│   ├── shared-config/
+│   └── shared-utils/
+├── package.json    # root workspace config
+├── pnpm-lock.yaml
+└── pnpm-workspace.yaml
 ```
 
-## Commands
+Both apps import shared packages via explicit workspace aliases (e.g. `@longrunner/shared-auth/auth.js`). Shared views/assets are served from packages and mounted with prefixed static routes (`/stylesheets/shared-auth`, etc.). The apps keep only domain-specific logic and layout overrides.
 
-### Running Applications
+## Build / Lint / Test Commands
 
-Each app can be started from its directory:
-- **app-blog**: `node app.js` (port 3004)
-- **app-slapp**: `node app.js` (port 3001)
-- **app-quiz**: `node app.js` (port 3002)
-- **app-voxmate_api**: `node app.js` (port 3003)
-- **app-landing**: `node app.js` (port 3000)
+- `pnpm install` — install dependencies across all workspaces.
+- `pnpm --filter ironman-blog lint` — run ESLint inside the blog app (port 3004). Emulates the usual `npm run lint` but scoped via `pnpm` to the workspace.
+- `pnpm --filter shoppinglist lint` — run ESLint for the slapp app (port 3001).
+- `pnpm --filter <package> exec node app.js` — start a single app in development mode (replace `<package>` with `ironman-blog` or `shoppinglist`). Example: `pnpm --filter shoppinglist exec node app.js`.
+- **Running a single command**: there is no automated test framework; use the lint command as your discrete verification step for a single project.
+- Manual scenarios (register/login/logout/forgot/reset/delete/policy) are performed via the browser or API calls while the app is running.
 
-### Linting
-
-- **Lint**: `npm run lint` (ESLint with Prettier integration)
-- **Lint and fix**: `npm run lint:fix`
-
-Each app has its own ESLint configuration. Run from the specific app directory.
-
-### Testing
-
-**No test framework configured** in any app. Manual testing required.
-
----
+> Note: Shared packages have no standalone lint/test scripts; run app-specific commands that depend on them.
 
 ## Code Style Guidelines
 
-These guidelines apply to all apps in this repository.
+These rules guide contributors and automated agents during edits.
 
-### Import Organization
+### Module System & Imports
 
-Order imports as follows:
-1. Node.js built-in modules (path, fs, crypto, etc.)
-2. Third-party packages (express, mongoose, etc.)
-3. Local modules (controllers, models, utils)
-
-```javascript
-// Good import order
-const path = require('path');
-const express = require('express');
-const mongoose = require('mongoose');
-const catchAsync = require('./utils/catchAsync');
-const User = require('./models/user');
-```
-
-### Module System
-
-- **Server files**: Use CommonJS (`require()` / `module.exports`)
-- **Public/browser files**: Use ES modules (`import` / `export`)
-- EJS templates are ignored by the linter
-
-### File Structure
-
-All apps follow MVC-like patterns:
-```
-app.js              # Main entry point
-/controllers/        # Route handlers
-/models/            # Mongoose schemas
-/utils/             # Middleware and helpers
-/views/             # EJS templates
-/public/            # Static assets (CSS, JS, images)
-```
-
-### Naming Conventions
-
-| Type | Convention | Examples |
-|------|------------|----------|
-| Files | kebab-case | `user-routes.js`, `auth-middleware.js` |
-| Variables | camelCase | `currentUser`, `isAuthenticated` |
-| Constants | UPPER_SNAKE_CASE | `MAX_LOGIN_ATTEMPTS` |
-| Models/Schemas | PascalCase | `UserSchema`, `BlogPost` |
-| Functions | camelCase, descriptive | `getUserById`, `createPost` |
-| Controllers | camelCase | `index`, `new`, `create` |
+1. All server code uses **ES modules** with `import`/`export` and `type": "module"` at the package level.
+2. Prefer absolute workspace imports for shared code: `@longrunner/shared-auth/auth.js`, `@longrunner/shared-utils/mail.js`, etc.
+3. Order imports as: (1) Node built-ins (`path`, `url`), (2) third-party packages, (3) workspace/shared imports, (4) local modules.
+4. Keep import paths clean and avoid `../..` when a workspace alias exists.
 
 ### Formatting
 
-- ESLint + Prettier integration enabled
-- ES2021 syntax
-- 2-space indentation (Prettier default)
-- No semicolons (follows existing codebase pattern)
+- Use Prettier defaults: 2 spaces, single quotes for JS strings (escape inner single quotes), trailing commas where allowed, and no semicolons.
+- Keep lines under ~120 characters when possible; use template literals or helper variables when strings become long.
+- Re-run the appropriate lint command after formatting changes to ensure the ESLint + Prettier pipeline is satisfied.
 
-### Error Handling
+### Naming Conventions
 
-All apps use consistent error handling patterns:
+| Kind | Convention |
+|------|------------|
+| Files/dirs | kebab-case (`auth-middleware.js`, `shared-auth`, `policy/cookiePolicy.ejs`) |
+| Modules | PascalCase for models (`User`, `Meal`), camelCase for controllers/middleware (`createPolicyController`) |
+| Constants | UPPER_SNAKE_CASE when exported/config values |
+| Functions | descriptive camelCase (`validateReset`, `loginUser`) |
 
-1. **catchAsync wrapper** for async route handlers:
-```javascript
-module.exports.catchAsync = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
-```
+### Error Handling & Async Flow
 
-2. **Custom ExpressError class**:
-```javascript
-class ExpressError extends Error {
-    constructor(message, statusCode) {
-        super(message);
-        this.statusCode = statusCode;
-    }
-}
-```
+1. Wrap every async route handler with `catchAsync` from `@longrunner/shared-utils/catchAsync.js`. Shared middleware factories already expose `catchAsync` when needed.
+2. Use the shared `ExpressError` class in `@longrunner/shared-utils/ExpressError.js` when you need a custom status code/message.
+3. Always `return next(err)` / `next(e)` once errors occur; never swallow Promise rejections.
+4. In controllers, handle `req.session` carefully and avoid `res.redirect` without a flash message for UX clarity.
 
-3. **Usage in routes**:
-```javascript
-router.get('/posts', catchAsync(async (req, res) => {
-    const posts = await Post.find();
-    res.render('posts/index', { posts });
-}));
-```
+### Shared Views & Static Assets
 
-4. **Centralized error handler** in `utils/errorHandler.js`
+- Shared XSS-sensitive templates live inside `@longrunner/shared-auth/src/views/users/` and `@longrunner/shared-policy/src/views/policy/`.
+- When rendering, pass consistent locals: `title`, `css_page`, `js_page`, and `domain` to hook into shared partials.
+- Serve shared assets from Express `static` middleware with explicit prefixes (`/stylesheets/shared-auth`, `/javascripts/shared-policy`).
 
-### Database & Security
+### Shared Packages Usage
 
-- **ODM**: Mongoose for MongoDB
-- **Input validation**: Joi validation
-- **Sanitization**: `express-mongo-sanitize` and `sanitize-html`
-- **Security headers**: Helmet.js
-- **Rate limiting**: `express-rate-limit`
-- **Sessions**: `express-session` with MongoStore
+1. Prefer shared factories over app-specific duplication:
+   - Use `createUserSchema({ hasRole, hasResetPasswordUsed, roleEnum })` for each app.
+   - Generate controllers via `createUsersController({ domain, assetsPrefix, onRegister, onDelete })`.
+2. When adding validators/middleware, update `@longrunner/shared-middleware` and re-export in apps.
+3. Shared configuration (DB url, session settings, helmet CSP) come from `@longrunner/shared-config`.
 
-Always sanitize user input:
-```javascript
-const mongoSanitize = require('express-mongo-sanitize');
-app.use(mongoSanitize());
-```
+### Security & Validation
 
-### Async/Await Patterns
+- Always validate user input via shared Joi schemas from `@longrunner/shared-schemas`.
+- Sanitize user-generated HTML/text; the shared schema extension already enforces `escapeHTML` for string fields.
+- Sessions rely on `MongoStore` via `createSessionConfig`; do not bypass or rebuild session objects manually.
 
-- Always use async/await, avoid callbacks
-- Wrap async operations in try/catch or use catchAsync
-- Handle null/undefined values explicitly:
-```javascript
-const count = posts && posts.length ? posts.length : 0;
-```
+### Documentation & Readme
 
-### Template Rendering
+- App-level README files now highlight their place in the monorepo (ESM, shared packages, ports 3004/3001).
+- Update the root `README.md` if you add new apps/packages or change the shared-package contract.
 
-- Use EJS templating with ejs-mate for layouts
-- Pass consistent locals to all templates
-- Handle undefined variables safely
+### Git / Workspace Hygiene
 
-### Environment Variables
+- Keep `apps/*/views/users` and `apps/*/views/policy` empty (shared views should be consumed via runtime stacking).
+- Prefer workspace scripts when updating dependencies to keep `pnpm-lock.yaml` consistent.
+- Don’t check in `.env` files; use `.env.example` if needed.
 
-- Store sensitive data in `.env` files
-- Never commit `.env` files to version control
-- Use `.env.example` for required variables
+## Cursor and Copilot Rules
 
----
+- No `.cursor` or `.cursorrules` directories exist in the repo.
+- There is no `.github/copilot-instructions.md`, so nothing further is required for Copilot.
 
-## Important Notes
+## Summary for Agents
 
-- Each app has its own `package.json` - manage dependencies within the specific app directory
-- Each app has its own ESLint configuration (eslint.config.mjs or .eslintrc*)
-- Each app has its own port - check the app.js or AGENTS.md in each app's docs/ folder
-- No automated tests - all testing is manual
+1. Run `pnpm --filter <app> lint` as your single-command verification after edits.
+2. Always import shared logic via `@longrunner/...` aliases and avoid repeating shared templates/assets inside apps.
+3. Follow the schema/middleware factories so new validation rules remain centralized.
+4. Every change should keep lint passing and apps bootable (use `pnpm --filter ... exec node app.js`).
+5. When documenting, mention the monorepo and ES modules status so future agents stay aligned.

@@ -1,9 +1,8 @@
-# Architecture Reference - Longrunner
+# Architecture Reference - Longrunner Platform
 
-This document provides a comprehensive technical reference for the Longrunner project, a monorepo containing multiple Express.js applications.
+This document keeps a birds-eye view of the `longrunner-platform` pnpm workspace that now hosts the `ironman-blog` and `shoppinglist` apps plus shared workspaces under `packages/@longrunner`. Everything runs as ES modules, reuses shared controllers, middleware, schemas, and serves the shared auth/policy views from the shared packages so that the apps remain focused on their domain logic.
 
 ## Table of Contents
-
 1. [System Overview](#system-overview)
 2. [Architecture Flow](#architecture-flow)
 3. [File/Module Inventory](#filemodule-inventory)
@@ -16,542 +15,271 @@ This document provides a comprehensive technical reference for the Longrunner pr
 
 ## System Overview
 
-Longrunner is a monorepo hosting **five independent Express.js applications** that share similar patterns and conventions but serve different purposes:
+| App | Directory | Port | Focus |
+|-----|-----------|------|-------|
+| `ironman-blog` | `apps/blog` | 3004 | Ironman training blog, reviews, admin moderation, IP tracking. |
+| `shoppinglist` | `apps/slapp` | 3001 | Meal planner, ingredient catalog, weekly shopping list generator. |
 
-| App | Directory | Port | Purpose |
-|-----|-----------|------|---------|
-| **app-blog** | `apps/blog/app-blog` | 3004 | Ironman blog with user reviews, admin dashboard, IP blocking |
-| **app-slapp** | `apps/slapp/app-slapp` | 3001 | Shopping list app with meals, ingredients, categories |
-| **app-quiz** | `apps/quiz/app-quiz` | 3002 | Real-time quiz application with Socket.io |
-| **app-landing** | `apps/landing/app-landing` | 3000 | Static landing page |
-| **app-voxmate_api** | `apps/voxmate_api/app-voxmate_api` | 3003 | Smart speaker API integration |
+### Shared Workspace Packages
+- `@longrunner/shared-auth` – user schema factory, bcrypt password helpers, and reusable auth controllers that plug into each app's `User` model and session system.
+- `@longrunner/shared-policy` – policy/cookie controllers, shared policy views, and static assets mounted under `/stylesheets/shared-policy` and `/javascripts/shared-policy`.
+- `@longrunner/shared-middleware` – validation middleware generators plus `isLoggedIn` / `populateUser` helpers powered by shared Joi schemas.
+- `@longrunner/shared-schemas` – Joi schema collection (auth, reviews, meals, ingredients, shopping lists), includes a custom `escapeHTML` string extension.
+- `@longrunner/shared-config` – helpers for building MongoDB URLs, session configs, and Helmet CSP settings.
+- `@longrunner/shared-utils` – rate limiters, flash middleware, ExpressError, centralized error handler, mailer, and `catchAsync`.
 
 ### Core Technologies
+- `express@5.x` running as the web framework with middleware chains in each `app.js`.
+- `mongoose` ODM talking to per-app MongoDB databases (`blog`, `slapp`).
+- `pnpm` workspaces with `type": "module"` packages.
+- `EJS` templating (with `ejs-mate`) and shared EJS partials/views from `shared-auth` and `shared-policy`.
+- Authentication via session cookies (MongoStore) + bcrypt/hash migration.
+- Security stack: `helmet` (with CSP from `shared-config`), `express-mongo-sanitize`, `compression`, `express-rate-limit`, `express-recaptcha`, `sanitize-html`.
+- Mail delivery via Zoho SMTP configured in `@longrunner/shared-utils/mail.js`.
+- Environment variables: `MONGODB`, `SESSION_KEY`, `SITEKEY`, `SECRETKEY`, `EMAIL_USER`, `ALIAS_EMAIL`, `ZOHOPW`, plus `DEFAULT_USER_ID` for seeding on registration.
 
-- **Framework**: Express.js 5.x
-- **Database**: MongoDB with Mongoose ODM
-- **Templating**: EJS with ejs-mate for layouts
-- **Authentication**: Custom session-based auth with bcrypt password hashing
-- **Security**: helmet, express-mongo-sanitize, sanitize-html, express-rate-limit
-- **Sessions**: express-session with MongoStore
+Verification: prefer `pnpm --filter ironman-blog lint` or `pnpm --filter shoppinglist lint` after edits and start apps with `pnpm --filter <app> exec node app.js`.
 
 ---
 
 ## Architecture Flow
 
-### Request-Response Flow
+### HTTP request lifecycle (common pattern)
 
 ```mermaid
-flowchart TD
-    Client[Client Browser] -->|HTTP Request| Express[Express Server]
-    
-    subgraph Middleware_Chain ["Middleware Chain"]
-        Direction TB
-        Favicon[Favicon Handler]
-        Helmet[Helmet Security Headers]
-        MongoSanitize[Mongo Sanitize]
-        Session[Session Middleware]
-        Flash[Flash Messages]
-        Auth[Auth Middleware]
-        RateLimit[Rate Limiter]
-        Compression[Compression]
-    end
-    
-    Express --> Middleware_Chain
-    
-    subgraph Router ["Router"]
-        Route1[Route Matching]
-        Validate[Validation Middleware]
-        Controller[Controller Handler]
-    end
-    
-    Middleware_Chain --> Router
-    
-    subgraph Data_Layer ["Data Layer"]
-        Model[Mongoose Models]
-        DB[(MongoDB)]
-    end
-    
-    Router --> Model
-    Model --> DB
-    
-    DB -->|Response Data| View[View/Template Rendering]
-    Model -->|JSON/API Response| Client
-    
-    View -->|HTML Response| Client
+flowchart LR
+    Client[Browser / API client]
+    BlogApp[apps/blog/app.js]
+    SlappApp[apps/slapp/app.js]
+    SharedMiddleware[/utils + shared packages/]
+    SharedAuth[@longrunner/shared-auth]
+    SharedPolicy[@longrunner/shared-policy]
+    SharedConfig[@longrunner/shared-config]
+    SharedUtils[@longrunner/shared-utils]
+    SharedMiddleware --> SharedConfig
+    SubControllers[controllers/ + models/]
+    Database[(MongoDB)]
+    Views[EJS views + shared partials]
+
+    Client -->|HTTP / forms / AJAX| BlogApp
+    Client -->|HTTP / forms / AJAX| SlappApp
+
+    BlogApp --> SharedConfig
+    SlappApp --> SharedConfig
+    BlogApp --> SharedUtils
+    SlappApp --> SharedUtils
+    BlogApp --> SharedAuth
+    SlappApp --> SharedAuth
+    BlogApp --> SharedPolicy
+    SlappApp --> SharedPolicy
+
+    BlogApp --> SubControllers
+    SlappApp --> SubControllers
+    SubControllers --> Database
+    SubControllers --> SharedUtils
+    SubControllers --> Views
+    Views --> Client
+    Database --> SharedUtils
 ```
 
-### Application Structure Pattern
+Each `app.js` boots `express`, resolves shared view roots, serves static assets from both local `public/` and `shared-*` packages, sanitizes inputs, mounts session/cookie helpers, registers Recaptcha for `/policy/tandc`, wires rate limiters, and then wires routes for shared auth plus app-specific controllers.
 
-All apps follow MVC-like patterns:
-
-```
-app.js              # Entry point, middleware setup, routes
-/controllers/       # Route handlers (logic)
-/models/            # Mongoose schemas
-/utils/             # Middleware and helpers
-/views/             # EJS templates
-/public/            # Static assets (CSS, JS, images)
-```
+Shared assets are served with explicit prefixes (`/stylesheets/shared-auth`, `/javascripts/shared-auth`, `/stylesheets/shared-policy`, `/javascripts/shared-policy`), so the apps can render the shared templates without copying them.
 
 ---
 
 ## File/Module Inventory
 
-### Core Entry Points
+### `apps/blog`
+- `app.js` – entry point (port 3004). Imports shared config/middleware/auth/policy, configures MongoStore sessions, helmet CSP, compression, Recaptcha, general/auth/forgot rate limiters, and wires the blog routes. Sets multi-root views array to include shared auth/policy templates.
+- `controllers/`
+  - `users.js` – wraps `@longrunner/shared-auth/controllers` for blog-specific `onDelete` cleanup (removes `Review` docs) and exposes the standard register/login/forgot/reset/details/delete handlers.
+  - `blogsIM.js` – renders blog home and detail pages, populates reviews via `BlogIM.find().populate('reviews.author')`.
+  - `reviews.js` – review CRUD, spam detection (`ContentFilter`), `mail` notifications for flagged deletions, routes `/blogim/:id/reviews` and deletion paths.
+  - `admin.js` – admin dashboards and moderation logic, handles flagged review approvals/deletions, post CRUD, and email notifications via `@longrunner/shared-utils/mail.js`.
+- `models/`
+  - `BlogIM` – post metadata with `reviews` array.
+  - `Review` – body, author, spam score, IP metadata, flagging status.
+  - `User` – factory from `@longrunner/shared-auth` enabling role-aware and reset-password-used fields.
+- `utils/`
+  - `middleware.js` – wraps `@longrunner/shared-middleware` with Joi schemas, adds `validateReview`, `isAdmin`, `isReviewAuthor` guards, and standard flash messaging helpers.
+  - `contentFilter.js` – spam scoring rules, HTML sanitization, CSP/regex-based scoring used by `reviews.create`.
+  - `deleteUser.js` – CLI utility (references the slapp database) for interactive cleanup of users/meals/shopping lists.
+  - static assets under `public/` (CSS/JS/images) feeding the blog UI.
 
-| File | App | Purpose |
-|------|-----|---------|
-| `app.js` | blog | Main entry, 389 lines - full middleware stack, all routes |
-| `app.js` | slapp | Main entry, 466 lines - shopping list with meals |
-| `app.js` | quiz | Main entry, 303 lines - includes Socket.io setup |
-| `app.js` | landing | Main entry, 165 lines - minimal static site |
-| `app.js` | voxmate_api | Main entry, 187 lines - API endpoints |
+### `apps/slapp`
+- `app.js` – entry point (port 3001) with the same shared middleware wiring as the blog app, plus controllers for meals/ingredients/shopping lists/categories. Mounts Recaptcha-protected `/policy/tandc` and user auth routes from shared controllers.
+- `controllers/`
+  - `users.js` – wraps `@longrunner/shared-auth` while seeding setup data (`newUserSeed`) when a new user registers and cleaning domain models on delete.
+  - `meals.js` – CRUD over `Meal`, handles ingredient lookups, weekly/replace-on-use logic, renders `meals/new`, `meals/edit`, `meals/show`.
+  - `ingredients.js` – ingredient catalog maintenance plus cascade deletions from `Meal` documents.
+  - `shoppingLists.js` – landing page for visitors, list generation, editing, default meal assignments, and `copyListFunc` for clipboard-ready output.
+  - `categories.js` – lets users rename categories while synchronizing associated ingredients.
+- `models/`
+  - `User` – `createUserSchema({ hasResetPasswordUsed: true })` for password token tracking.
+  - `Meal` – complex schema with `weeklyItems`, `replaceOnUse`, `default` flags, meal types/enums, references to ingredients.
+  - `Ingredient` – name/category link to a user.
+  - `ShoppingList` – stores named lists, daily meal slots, `items`, `editVer`, and author references.
+  - `Category` – per-user categorical labels stored as an array.
+- `utils/`
+  - `middleware.js` – extends `@longrunner/shared-middleware` with Joi validators from `@longrunner/shared-schemas` for meals, ingredients, shopping lists, categories, plus ownership guards (`isAuthorMeal`, etc.).
+  - `copyToClip.js` – helper used by `shoppingLists.show` to format shopping list items per category.
+  - `toUpperCase.js` – normalizes meal/ingredient names.
+  - `newUserSeed.js` – seeds categories, ingredients, and meals from the default user when a new account is created.
+  - `copydb.js` – Mongo shell script to clone the source `shoppinglist` database into the active `slapp` database.
+  - `deleteUser.js` – CLI to remove a user and all related assets (mirrors the `onDelete` cleanup).
 
-### Models (by App)
-
-#### app-blog/models/
-| File | Purpose | Key Exports |
-|------|---------|--------------|
-| `user.js` | User schema with password auth | `User` model, `register()`, `authenticate()`, `setPassword()` |
-| `blogIM.js` | Blog posts | `BlogIM` model |
-| `review.js` | Blog post reviews | `Review` model |
-| `blockedIP.js` | IP blocking | `BlockedIP` model |
-| `tracker.js` | Request tracking | `Tracker` model |
-| `schemas.js` | Reusable schema portions | Various Schema helpers |
-
-#### app-slapp/models/
-| File | Purpose | Key Exports |
-|------|---------|--------------|
-| `user.js` | User schema | `User` model |
-| `shoppingList.js` | Weekly shopping lists | `ShoppingList` model |
-| `meal.js` | Meal definitions with ingredients | `Meal` model, `mealType`, `defaults` |
-| `ingredient.js` | Ingredients | `Ingredient` model |
-| `category.js` | Ingredient categories | `Category` model |
-| `Log.js` | Activity logging | `Log` model |
-| `schemas.js` | Reusable schemas | Schema helpers |
-
-#### app-quiz/models/
-| File | Purpose | Key Exports |
-|------|---------|--------------|
-| `quiz.js` | Quiz sessions | `Quiz` model |
-| `question.js` | Quiz questions | `Question` model |
-| `schemas.js` | Reusable schemas | Schema helpers |
-
-#### app-voxmate_api/models/
-| File | Purpose | Key Exports |
-|------|---------|--------------|
-| `user.js` | User schema | `User` model |
-| `vox.js.js` | Vox data | `Vox` model |
-
-### Controllers (by App)
-
-#### app-blog/controllers/
-| File | Routes | Purpose |
-|------|--------|---------|
-| `users.js` | `/auth/*` | Registration, login, password reset, account management |
-| `reviews.js` | `/blogim/:id/reviews` | Review CRUD |
-| `blogsIM.js` | `/blogim` | Blog post display |
-| `admin.js` | `/admin/*` | Admin dashboard, posts, IP management |
-| `policy.js` | `/policy/*` | T&C, cookie policy |
-
-#### app-slapp/controllers/
-| File | Routes | Purpose |
-|------|--------|---------|
-| `users.js` | `/auth/*` | User management |
-| `meals.js` | `/meals/*` | Meal CRUD |
-| `ingredients.js` | `/ingredients/*` | Ingredient CRUD |
-| `shoppingLists.js` | `/shopping-lists/*` | Shopping list CRUD |
-| `categories.js` | `/categories/*` | Category management |
-| `policy.js` | `/policy/*` | Policy pages |
-
-#### app-quiz/controllers/
-| File | Routes | Purpose |
-|------|--------|---------|
-| `quiz.js` | `/quiz/*` | Quiz gameplay |
-| `api.js` | `/api/*` | REST API endpoints |
-| `policy.js` | `/policy/*` | Policy pages |
-
-#### app-landing/controllers/
-| File | Routes | Purpose |
-|------|--------|---------|
-| `longrunner.js` | `/*` | Landing page routes |
-| `policy.js` | `/policy/*` | Policy pages |
-
-#### app-voxmate_api/controllers/
-| File | Routes | Purpose |
-|------|--------|---------|
-| `users.js` | `/users/*` | User management |
-| `voxSpotify.js` | `/vox/*` | Spotify integration |
-
-### Utilities (Shared Patterns)
-
-| File | Purpose |
-|------|---------|
-| `utils/catchAsync.js` | Async error wrapper for route handlers |
-| `utils/ExpressError.js` | Custom error class with status codes |
-| `utils/errorHandler.js` | Central error handling middleware |
-| `utils/passwordUtils.js` | Bcrypt password hashing/comparison |
-| `utils/mail.js` | Nodemailer email sending |
-| `utils/middleware.js` | Validation & auth middleware |
-| `utils/auth.js` | Authentication helpers |
-
-### App-Specific Utilities
-
-#### app-blog/utils/
-- `rateLimiter.js` - Rate limiting configuration
-- `flash.js` - Flash message helpers
-- `ipMiddleware.js` - IP info lookup
-- `blockedIPMiddleware.js` - IP blocking
-- `tracker.js` - Request tracking
-- `contentFilter.js` - Content sanitization
-
-#### app-slapp/utils/
-- `logger.js` - Logging configuration
-- `deleteUser.js` - User deletion with cleanup
-
-#### app-quiz/utils/
-- `quizChecks.js` - Quiz validation
-- `middleware.js` - Quiz-specific middleware
-- `logger.js` - Quiz logging
+### Shared packages
+- `packages/shared-auth`
+  - `createUserSchema()` – builds the shared `User` schema with optional role/`resetPasswordUsed` flags, includes old Passport hash migration that emails progress updates via `@longrunner/shared-utils/mail`.
+  - `createUsersController()` – renders shared auth views, handles registration/login/logout/forgot/reset/details/delete flows, flashes, and ensures the protected user (`defaultMeals`) cannot be deleted.
+  - `./auth.js`, `./passwordUtils.js`, `./user.js`, `./controllers.js` – aliased exports for the apps.
+- `packages/shared-policy`
+  - `createPolicyController()` – renders cookie policy and T&C, wires Recaptcha for `/policy/tandc`, and sends copy of contact submission emails through `@longrunner/shared-utils/mail.js`.
+  - Includes shared policy views (`src/views/policy/*`) and CSS/JS assets under `public/`.
+- `packages/shared-middleware`
+  - `createAuthMiddleware()` – builds Joi-based validators plus `isLoggedIn`/`populateUser`; used by both apps to ensure consistent flash messaging on validation errors.
+- `packages/shared-schemas`
+  - `Joi` extension with `escapeHTML`, plus exported schema bundles (`createAuthSchemas`, `createBlogSchemas`, `createSlappSchemas`) consumed by controllers and middleware.
+- `packages/shared-config`
+  - `createMongoDbUrl()` – centralizes MongoDB login strings (app-specific DB names passed from `app.js`).
+  - `createSessionConfig()` – builds session cookies (cookie name, secret, MongoStore) and enforces secure/same-site settings.
+  - `createHelmetConfig()` – CSP builder for production/development along with helper `createCspSources()`.
+- `packages/shared-utils`
+  - `catchAsync` – wraps async handlers.
+  - `mail` – Nodemailer mailer using Zoho SMTP and environment vars.
+  - `ExpressError`, `errorHandler` – standard error class/middleware.
+  - `flash` – session-based flash helper.
+  - Rate limiters (`generalLimiter`, `authLimiter`, `passwordResetLimiter`, `formSubmissionLimiter`) used in both apps.
 
 ---
 
 ## Dependency Map
 
-### Core Dependencies (All Apps)
+### Core dependencies (workspace-wide)
+- `express`, `mongoose`, `express-session`, `connect-mongo`, `express-mongo-sanitize`, `helmet`, `compression`, `method-override`, `express-back`, `ejs-mate`, `express-rate-limit`, `express-recaptcha`, `cors` (if used transitively).
+- `dotenv/config` (ESM import) for environment variables, `sanitize-html` for shared schema validation and `ContentFilter`, `nodemailer` for mail.
 
-```
-express
-mongoose
-ejs-mate
-helmet
-dotenv
-serve-favicon
-method-override
-express-mongo-sanitize
-sanitize-html
-express-session → connect-mongo
-express-rate-limit (most apps)
-joi (validation)
-bcrypt (password hashing)
-nodemailer (email)
-```
-
-### Per-App Dependencies
-
-#### app-blog
-- express-recaptcha (CAPTCHA)
-- geoip-lite (IP geolocation)
-- country-list
-- express-back (navigation)
-- compression
-
-#### app-slapp
-- express-recaptcha
-- micro-geoip-lite
-- async
-- express-back
-- compression
-
-#### app-quiz
-- socket.io (real-time)
-- express-recaptcha
-- micro-geoip-lite
-- compression
-- node-fetch
-
-#### app-landing
-- (minimal dependencies only)
-
-#### app-voxmate_api
-- mongoose only (API-focused)
-
-### Dependency Graph (app-blog example)
+### Graph view (entry points and imports)
 
 ```mermaid
-flowchart TD
-    app[app.js] --> express[express]
-    app --> mongoose[mongoose]
-    app --> ejsMate[ejs-mate]
-    app --> helmet[helmet]
-    app --> session[express-session]
-    app --> mongoSanitize[express-mongo-sanitize]
-    
-    app --> controllers
-    controllers --> models
-    models --> mongoose
-    
-    app --> utils
-    utils --> catchAsync
-    utils --> ExpressError
-    utils --> errorHandler
-    utils --> passwordUtils
-    utils --> mail
-    
-    models --> user[models/user.js]
-    user --> passwordUtils
-    user --> mail
+graph TD
+    BlogApp[apps/blog/app.js] --> SharedConfig[@longrunner/shared-config]
+    BlogApp --> SharedAuth[@longrunner/shared-auth]
+    BlogApp --> SharedPolicy[@longrunner/shared-policy]
+    BlogApp --> SharedUtils[@longrunner/shared-utils]
+    SlappApp[apps/slapp/app.js] --> SharedConfig
+    SlappApp --> SharedAuth
+    SlappApp --> SharedPolicy
+    SlappApp --> SharedUtils
+    BlogApp --> BlogControllers[controllers/*.js]
+    SlappApp --> SlappControllers
+    BlogControllers --> BlogModels[models/*.js]
+    SlappControllers --> SlappModels
+    BlogControllers --> SharedUtils
+    SlappControllers --> SharedUtils
+    SharedMiddleware[@longrunner/shared-middleware] --> SharedSchemas
+    SharedAuth --> SharedUtils
+    SharedPolicy --> SharedUtils
+
+    BlogApp --> SharedMiddleware
+    SlappApp --> SharedMiddleware
+
+    SharedMiddleware --> SharedSchemas
 ```
+
+Core entry points: `apps/blog/app.js` and `apps/slapp/app.js` boot the server, wire middleware, and mount routes. `packages/*` are utility entry points (e.g., `@longrunner/shared-auth/controllers.js`, `@longrunner/shared-utils/rateLimiter.js`).
+
+### Circular dependencies
+None detected in the current file graph. Shared packages are unidirectional utilities that apps consume, and controllers only import their models and shared utilities (no mutual imports).
 
 ---
 
 ## Data Flow
 
-### Authentication Flow
+### General request-response loop
+1. Browser or API client issues GET/POST to `/auth/*`, `/policy/*`, `/meals`, `/shoppinglist`, or `/blogim`.
+2. `app.js` sanitizes `req.body`/`req.params`, trusts proxy in production, attaches flash/session middleware from `@longrunner/shared-utils`, sets `res.locals.currentUser`, and enforces rate limits.
+3. Request enters route-specific validator (`@longrunner/shared-middleware`) and, if valid, hits the appropriate controller.
+4. Controller reads/writes Mongoose models, possibly populates references, uses shared mailer/rate limiters, and either renders an EJS view (with shared policy/auth partials) or redirects.
+5. MongoDB responds via Mongoose; results get formatted for the client and sent back with `res.render` or JSON.
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Browser
-    participant Express
-    participant MongoDB
-    
-    User->>Browser: Submit login form
-    Browser->>Express: POST /auth/login
-    Express->>Express: Validate input (Joi)
-    Express->>MongoDB: Find user by email
-    MongoDB->>Express: User document
-    Express->>Express: bcrypt.compare(password, hash)
-    alt Password valid
-        Express->>Express: Create session
-        Express->>MongoDB: Store session in MongoStore
-        Express->>Browser: Set session cookie + redirect
-        Browser->>User: Show dashboard
-    else Password invalid
-        Express->>Browser: Flash error + redirect to login
-    end
+    participant U as User
+    participant B as Browser
+    participant A as Express App
+    participant C as Controller
+    participant M as Mongoose
+    participant DB as MongoDB
+    B->>A: POST /auth/login
+    A->>A: sanitize + rate limit + populateUser
+    A->>M: find user & validate password
+    M->>DB: query users
+    DB-->>M: user doc
+    M-->>A: auth result
+    A->>C: shared auth controller (loginPost)
+    C->>A: set session + redirect
+    A-->>B: 302 to /
 ```
 
-### Blog Post Viewing Flow
+### Blog review creation flow
 
 ```mermaid
 flowchart LR
-    subgraph Request
-        R1[Browser Request<br/>/blogim/:id]
-    end
-    
-    subgraph Middleware
-        M1[Session]
-        M2[Auth Check]
-        M3[Rate Limit]
-    end
-    
-    subgraph Controller
-        C1[blogsIM.show]
-    end
-    
-    subgraph Model
-        M4[BlogIM.findById]
-    end
-    
-    subgraph Database
-        D1[(MongoDB)]
-    end
-    
-    R1 --> M1 --> M2 --> M3 --> C1 --> M4 --> D1
-    
-    D1 --> M4 --> C1
-    C1 -->|render blogim/show| View
-    View --> Browser
+    Client -->|POST /blogim/:id/reviews| Express
+    Express --> validateReview
+    Express --> ContentFilter
+    ContentFilter --> ReviewModel
+    ReviewModel --> BlogIMModel
+    BlogIMModel --> MongoDB
+    ReviewModel --> MongoDB
+    MongoDB --> mail[@longrunner/shared-utils/mail]
+    MongoDB --> Express
+    Express -->|render| Client
 ```
 
-### Shopping List Generation Flow
-
-```mermaid
-flowchart TD
-    User[User Request<br/>/shopping-lists/generate] --> Auth[Auth Middleware]
-    Auth --> Validate[Validate Input]
-    Validate --> Controller[shoppingLists controller]
-    
-    Controller --> SL[Find ShoppingList]
-    SL --> ME[Find all Meals]
-    ME --> MI[Find Meal Ingredients]
-    
-    MI --> Aggregate[Aggregate Items]
-    Aggregate --> Format[Format by Category]
-    Format --> Render[Render EJS Template]
-    Render --> Response[HTTP Response]
-```
+### Shopping list generation flow
+1. User selects meals (protected by `isLoggedIn` and `validateshoppingListMeals`).
+2. `shoppingLists.createMeals` loads `Meal` docs (including weekly/replace-on-use populations), aggregates ingredient quantities by category, merges constant/non-food meals, and saves a `ShoppingList` document with `editVer` metadata.
+3. Response redirects to `/shoppinglist/edit/:id`, where the list is reformatted via `copyListFunc` and categories from the `Category` model.
 
 ---
 
 ## Key Interactions
 
-### User Registration (All Apps)
+### 1. User registration (both apps)
+1. `GET /auth/register` renders the shared form (`@longrunner/shared-auth` views).
+2. `POST /auth/register` runs `validateRegister`, `authLimiter`, then `users.registerPost` from `@longrunner/shared-auth/controllers`.
+3. Handler hashes the password (`PasswordUtils`), saves the user, seeds domain data (`newUserSeed` for `/apps/slapp`), logs the user in (`loginUser`), and flashes success.
 
-1. **Route**: `GET /auth/register` → renders registration form
-2. **Validation**: Joi schema validates email, username, password
-3. **Controller**: `users.registerPost` creates user with `User.register()`
-4. **Model**: Hashes password with bcrypt, saves to MongoDB
-5. **Session**: Auto-login after registration
-6. **Response**: Redirect to homepage with success flash
+### 2. Password reset
+1. `POST /auth/forgot` validates email, generates a token (`PasswordUtils.generateResetToken()`), sets expires fields on the `User` model, and mails the reset link via `@longrunner/shared-utils/mail`.
+2. `GET /auth/reset/:token` ensures the token is still valid and renders the reset view.
+3. `POST /auth/reset/:token` hashes the new password, marks `resetPasswordUsed`, clears legacy hash fields, logs the user in, and emails confirmation.
 
-### Password Reset Flow
+### 3. Blog review moderation
+1. Visitor hits `/blogim/:id` → `blogsIM.show` loads the post with populated reviews.
+2. `POST /blogim/:id/reviews` runs `validateReview`, uses `ContentFilter` to decide if the review is spam or flagged, stores metadata on the `Review` model, and optionally pushes the review ID into the `BlogIM` document.
+3. Spam/flagged reviews notify admins via shared mailer; admins operate through `admin.flaggedReviews` and `/admin/all-reviews` to approve/delete from `admin.js`.
 
-1. `GET /auth/forgot` → renders forgot password form
-2. `POST /auth/forgot` → validates email, generates reset token
-3. **Model**: Stores `resetPasswordToken` (crypto) and `resetPasswordExpires`
-4. **Mail**: Sends reset link via nodemailer
-5. `GET /auth/reset/:token` → validates token, renders reset form
-6. `POST /auth/reset/:token` → validates password, updates hash
-7. **Model**: `user.setPassword()` hashes new password
+### 4. Shopping list creation
+1. Authenticated user posts `/shoppinglist` with meal IDs; `validateshoppingListMeals` confirms payload.
+2. Controller `shoppingLists.createMeals` aggregates quantities, saves `ShoppingList`, limits saved lists to ten per user, and redirects to edit.
+3. Editors update via `/shoppinglist/:id` with `validateshoppingListIngredients`; `copyListFunc` formats the final list for clipboard or print.
 
-### Admin IP Blocking (app-blog)
-
-1. Admin accesses `/admin/blocked-ips`
-2. Submits IP to block
-3. Controller creates `BlockedIP` document
-4. `blockedIPMiddleware` checks all requests against blocked list
-5. Blocked IPs get 403 response before reaching routes
-
-### Real-time Quiz (app-quiz)
-
-1. Socket.io connection established on page load
-2. User creates/joins lobby
-3. Controller creates `Quiz` document in MongoDB
-4. Socket broadcasts state to all participants
-5. Questions served via REST API
-6. Scores updated via Socket events
+### 5. Policy/contact form
+1. `/policy/tandc` renders a Recaptcha-protected form from `@longrunner/shared-policy`.
+2. Submissions go through rate limiting, `validateTandC`, and `shared-policy.tandcPost`, which uses `@longrunner/shared-utils/mail` to notify both submitter and owner.
 
 ---
 
 ## Extension Points
 
-### Adding New Features
+1. **New domain feature** – Add `models/<feature>.js`, export Mongoose schema, and wire to the existing controller structure.
 
-#### 1. New Model
-**Files to create**: `models/newfeature.js`
-**Files to modify**: `app.js` (import if needed)
-
-```javascript
-// models/newfeature.js
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-
-const NewFeatureSchema = new Schema({
-  name: String,
-  // ... fields
-});
-
-module.exports = mongoose.model('NewFeature', NewFeatureSchema);
-```
-
-#### 2. New Controller
-**Files to create**: `controllers/newfeature.js`
-**Files to modify**: `app.js` (require and mount routes)
-
-```javascript
-// controllers/newfeature.js
-const NewFeature = require('../models/newfeature');
-const catchAsync = require('../utils/catchAsync');
-
-module.exports.index = catchAsync(async (req, res) => {
-  const items = await NewFeature.find();
-  res.render('newfeature/index', { items });
-});
-```
-
-#### 3. New Route
-**Files to modify**: `app.js`
-
-```javascript
-// Add route
-const newfeature = require('./controllers/newfeature');
-app.get('/newfeature', newfeature.index);
-```
-
-#### 4. New Validation Middleware
-**Files to create**: `utils/middleware.js` (add Joi schema)
-**Files to modify**: Route definition
-
-```javascript
-// utils/middleware.js
-module.exports.validateNewFeature = (req, res, next) => {
-  const schema = Joi.object({
-    name: Joi.string().required(),
-  });
-  const { error } = schema.validate(req.body);
-  if (error) {
-    throw new ExpressError(error.details[0].message, 400);
-  }
-  next();
-};
-```
-
-#### 5. New Utility
-**Files to create**: `utils/newutility.js`
-**Files to modify**: Any file needing the utility
-
-### Common Extension Patterns
-
-| Feature Type | Create | Modify |
-|--------------|--------|--------|
-| New database entity | `models/*.js` | `app.js` (if needed) |
-| New page/route | `controllers/*.js` | `app.js` (routes) |
-| New validation | `utils/middleware.js` | Route definition |
-| New helper | `utils/helper.js` | Import where needed |
-| New public assets | `public/` | (no code changes) |
-| New template | `views/` | Controller renders it |
-
-### Database Extension (Multi-Tenant)
-
-Each app uses its own MongoDB database:
-- **blog**: `blog` database
-- **slapp**: (check `.env` or app.js)
-- **quiz**: (check `.env` or app.js)
-- **voxmate_api**: `voxMate_api` database
-
-To add a new database connection in an app:
-
-```javascript
-// app.js
-const dbName = "new_database";
-const dbUrl = `mongodb+srv://user:${process.env.MONGODB}@host.mongodb.net/${dbName}`;
-mongoose.connect(dbUrl);
-```
+Before pushing changes, run the relevant `pnpm --filter <app> lint` command, and verify the app boots with `pnpm --filter <app> exec node app.js`.
 
 ---
 
-## Configuration
-
-### Environment Variables (.env)
-
-Common variables across apps:
-- `NODE_ENV` - production/development
-- `MONGODB` - MongoDB connection string
-- `SESSION_KEY` - Session secret
-- `SITEKEY` - reCAPTCHA site key
-- `SECRETKEY` - reCAPTCHA secret key
-- `EMAIL_USER` - SMTP username
-- `EMAIL_PASS` - SMTP password
-
-### Running Apps
-
-```bash
-# Individual apps
-cd apps/blog/app-blog && node app.js      # port 3004
-cd apps/slapp/app-slapp && node app.js    # port 3001
-cd apps/quiz/app-quiz && node app.js      # port 3002
-cd apps/landing/app-landing && node app.js # port 3000
-cd apps/voxmate_api/app-voxmate_api && node app.js # port 3003
-
-# Linting
-npm run lint      # check code style
-npm run lint:fix # fix issues
-```
-
----
-
-## Security Notes
-
-- All user input is sanitized with `express-mongo-sanitize` and `sanitize-html`
-- Passwords hashed with bcrypt (with migration support from older format)
-- Rate limiting on auth routes prevents brute force
-- CSRF protection via same-site cookies
-- Helmet provides security headers
-- reCAPTCHA on registration/login forms
-
----
-
-*Last Updated: 2026-03-01*
+*Last Updated: 2026-03-07*

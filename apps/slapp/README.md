@@ -1,18 +1,18 @@
-# 🏃‍♂️ Ironman Training Blog
+# 🛒 Shopping List App
 
-Express app for long-form Ironman training content at `blog.longrunner.co.uk`, now running inside the Longrunner pnpm monorepo with ES modules and shared workspace packages.
+Express app for meal planning and shopping list generation at `slapp.longrunner.co.uk`, now running in the Longrunner pnpm monorepo with ES modules and shared workspace packages.
 
-🔗 Live at: [https://blog.longrunner.co.uk](https://blog.longrunner.co.uk)
+🔗 Live at: [https://slapp.longrunner.co.uk](https://slapp.longrunner.co.uk)
 
 ---
 
 ## ✨ Features
 
 - ✅ User auth flow: register, login, logout, forgot/reset password, account delete
-- 📝 Blog post and review system with moderation and admin workflows
-- 👥 Role-aware behavior (`user`/`admin`) via shared auth model factory config
-- 🛡️ Security stack: helmet, sanitization, rate limiting, secure sessions
-- 📈 Tracking and moderation helpers for suspicious review activity
+- 🍽️ Meal creation and recipe/ingredient management
+- 📅 Weekly planning and shopping list generation
+- 🗂️ Category-based shopping list organization
+- 🔒 Shared security and validation stack across apps
 
 ---
 
@@ -38,11 +38,11 @@ From repo root:
 
 ```bash
 pnpm install
-pnpm --filter ironman-blog lint
-pnpm --filter ironman-blog exec node app.js
+pnpm --filter shoppinglist lint
+pnpm --filter shoppinglist exec node app.js
 ```
 
-App runs on port `3004` by default.
+App runs on port `3001` by default.
 
 ### Required Environment Variables
 
@@ -59,7 +59,7 @@ App runs on port `3004` by default.
 ## 📁 App Structure
 
 ```text
-apps/blog/
+apps/slapp/
 ├── app.js
 ├── controllers/
 ├── models/
@@ -76,4 +76,4 @@ Note: auth and policy templates/assets are now consumed from shared packages at 
 ## 📄 Notes
 
 - This app is part of the Longrunner monorepo migration from duplicated app logic to shared packages.
-- Keep app-specific code in this app; put reusable auth/policy/config/middleware logic in `packages/*`.
+- Keep app-specific domain logic (meals/shopping/categories) here; keep reusable cross-app logic in `packages/*`.
