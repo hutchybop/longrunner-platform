@@ -11,7 +11,13 @@
     "./ExpressError": "./src/ExpressError.js",
     "./rateLimiter": "./src/rateLimiter.js",
     "./flash": "./src/flash.js",
-    "./errorHandler": "./src/errorHandler.js"
+    "./errorHandler": "./src/errorHandler.js",
+    "./rateLimiter.js": "./src/rateLimiter.js",
+    "./flash.js": "./src/flash.js",
+    "./errorHandler.js": "./src/errorHandler.js",
+    "./catchAsync.js": "./src/catchAsync.js",
+    "./mail.js": "./src/mail.js",
+    "./ExpressError.js": "./src/ExpressError.js"
   },
   "dependencies": {
     "express-rate-limit": "^8.2.1",

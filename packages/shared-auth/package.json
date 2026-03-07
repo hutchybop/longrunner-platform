@@ -9,7 +9,11 @@
     "./auth": "./src/utils/auth.js",
     "./passwordUtils": "./src/utils/passwordUtils.js",
     "./user": "./src/models/user.js",
-    "./controllers": "./src/controllers/users.js"
+    "./controllers": "./src/controllers/users.js",
+    "./auth.js": "./src/utils/auth.js",
+    "./passwordUtils.js": "./src/utils/passwordUtils.js",
+    "./user.js": "./src/models/user.js",
+    "./controllers.js": "./src/controllers/users.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0"

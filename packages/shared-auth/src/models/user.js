@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
 import { Buffer } from "buffer";
-import PasswordUtils from "./passwordUtils.js";
+import PasswordUtils from "../utils/passwordUtils.js";
 import mail from "../../shared-utils/src/mail.js";
 
 const Schema = mongoose.Schema;

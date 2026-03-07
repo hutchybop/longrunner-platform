@@ -27,13 +27,13 @@ import {
   authLimiter,
   passwordResetLimiter,
   formSubmissionLimiter,
-} from "./utils/rateLimiter.js";
-import { authenticateUser, loginUser } from "./utils/auth.js";
-import flash from "./utils/flash.js";
+} from "@longrunner/shared-utils/rateLimiter.js";
+import { authenticateUser, loginUser } from "@longrunner/shared-auth/auth.js";
+import flash from "@longrunner/shared-utils/flash.js";
+import catchAsync from "@longrunner/shared-utils/catchAsync.js";
+import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
 import * as users from "./controllers/users.js";
-import catchAsync from "./utils/catchAsync.js";
-import { errorHandler } from "./utils/errorHandler.js";
 import * as reviews from "./controllers/reviews.js";
 import * as blogsIM from "./controllers/blogsIM.js";
 import * as admin from "./controllers/admin.js";
