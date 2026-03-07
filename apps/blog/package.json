@@ -15,6 +15,7 @@
     "@eslint/js": "^10.0.1",
     "@longrunner/shared-auth": "workspace:*",
     "@longrunner/shared-middleware": "workspace:*",
+    "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
     "axios": "^1.13.6",

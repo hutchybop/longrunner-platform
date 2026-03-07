@@ -1,4 +1,3 @@
-import User from "../models/user.js";
 import catchAsync from "./catchAsync.js";
 import {
   tandcSchema,
@@ -81,6 +80,10 @@ export const isLoggedIn = (req, res, next) => {
 
 export const populateUser = async (req, res, next) => {
   if (req.session && req.session.userId) {
+    const User = req.app.locals.User;
+    if (!User) {
+      return next();
+    }
     await User.findById(req.session.userId)
       .then((user) => {
         if (!user) {
