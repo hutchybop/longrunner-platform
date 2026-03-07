@@ -113,6 +113,12 @@ importers:
       '@codecorn/connect-flash-new':
         specifier: ^1.0.4
         version: 1.0.4
+      '@longrunner/shared-auth':
+        specifier: workspace:*
+        version: link:../../packages/shared-auth
+      '@longrunner/shared-utils':
+        specifier: workspace:*
+        version: link:../../packages/shared-utils
       async:
         specifier: ^3.2.6
         version: 3.2.6
@@ -217,14 +223,28 @@ importers:
         specifier: ^9.2.3
         version: 9.2.4
 
+  packages/shared-config: {}
+
   packages/shared-middleware:
     dependencies:
+      '@longrunner/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
       express:
         specifier: ^5.2.1
         version: 5.2.1
       mongoose:
         specifier: ^9.2.3
         version: 9.2.4
+
+  packages/shared-policy:
+    dependencies:
+      '@longrunner/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
 
   packages/shared-schemas:
     dependencies:

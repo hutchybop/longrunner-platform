@@ -1,0 +1,11 @@
+{
+  "name": "@longrunner/shared-config",
+  "version": "1.0.0",
+  "description": "Shared runtime configuration helpers for longrunner apps",
+  "main": "src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js"
+  }
+}

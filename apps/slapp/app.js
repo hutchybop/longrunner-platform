@@ -38,6 +38,7 @@ import * as meals from "./controllers/meals.js";
 import * as ingredients from "./controllers/ingredients.js";
 import * as shoppingLists from "./controllers/shoppingLists.js";
 import * as categories from "./controllers/categories.js";
+import User from "./models/user.js";
 import {
   validateTandC,
   validateLogin,
@@ -60,6 +61,7 @@ import {
 } from "./utils/middleware.js";
 
 const app = express();
+app.locals.User = User;
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);

@@ -12,6 +12,8 @@
   "author": "hutchyBop",
   "license": "ISC",
   "dependencies": {
+    "@longrunner/shared-auth": "workspace:*",
+    "@longrunner/shared-utils": "workspace:*",
     "@codecorn/connect-flash-new": "^1.0.4",
     "async": "^3.2.6",
     "axios": "^1.13.6",

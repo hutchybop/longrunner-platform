@@ -1,7 +1,7 @@
 {
-  "name": "@longrunner/shared-middleware",
+  "name": "@longrunner/shared-policy",
   "version": "1.0.0",
-  "description": "Shared middleware for longrunner apps",
+  "description": "Shared policy controller for longrunner apps",
   "main": "src/index.js",
   "type": "module",
   "exports": {
@@ -12,7 +12,6 @@
     "@longrunner/shared-utils": "workspace:*"
   },
   "peerDependencies": {
-    "express": "^5.2.1",
-    "mongoose": "^9.2.3"
+    "express": "^5.2.1"
   }
 }

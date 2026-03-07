@@ -37,6 +37,7 @@ import * as users from "./controllers/users.js";
 import * as reviews from "./controllers/reviews.js";
 import * as blogsIM from "./controllers/blogsIM.js";
 import * as admin from "./controllers/admin.js";
+import User from "./models/user.js";
 import {
   validateTandC,
   validateLogin,
@@ -53,6 +54,7 @@ import {
 } from "./utils/middleware.js";
 
 const app = express();
+app.locals.User = User;
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);

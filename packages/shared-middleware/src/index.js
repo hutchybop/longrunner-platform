@@ -1,10 +1,7 @@
-import catchAsync from "../../shared-utils/src/catchAsync.js";
+import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 
 export function createMiddleware(config = {}) {
-  const {
-    schemas = {},
-    userModelPath = "../models/user.js"
-  } = config;
+  const { schemas = {} } = config;
 
   const {
     tandcSchema,
@@ -123,5 +120,7 @@ export function createMiddleware(config = {}) {
 
   return middleware;
 }
+
+export const createAuthMiddleware = createMiddleware;
 
 export default createMiddleware;
