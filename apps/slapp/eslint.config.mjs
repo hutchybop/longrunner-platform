@@ -26,7 +26,7 @@ export default [
   {
     files: ["public/**/*.js"],
     languageOptions: {
-      ecmaVersion: 2021,
+      ecmaVersion: "latest",
       sourceType: "script",
       globals: {
         document: "readonly",
@@ -42,7 +42,7 @@ export default [
     files: ["**/*.js"],
     ignores: ["public/**/*.js"], // prevent overlap
     languageOptions: {
-      ecmaVersion: 2021,
+      ecmaVersion: "latest",
       sourceType: "module",
       globals: {
         __dirname: "readonly",

@@ -26,11 +26,7 @@ export default class ContentFilter {
         /\b(whatsapp|telegram|signal|viber|wechat|line|kik|snapchat|instagram|facebook|twitter|youtube|tiktok|linkedin|pinterest|reddit)\b/gi,
       ],
 
-      repetitive: [
-        /(.)\1{4,}/g,
-        /\b(\w+)(\s+\1){2,}/gi,
-        /[!@#$%^&*]{3,}/g,
-      ],
+      repetitive: [/(.)\1{4,}/g, /\b(\w+)(\s+\1){2,}/gi, /[!@#$%^&*]{3,}/g],
 
       suspicious: [
         /\b(hello|hi|dear|friend|sir|madam|attention|notice|important|congratulations|winner|lottery|prize|reward|bonus|gift|claim|collect|receive)\b.*\b(money|cash|dollar|euro|pound|currency|payment|transfer|deposit|investment|profit|income|earn|make|get)\b/gi,

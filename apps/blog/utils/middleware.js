@@ -1,5 +1,4 @@
 import { createAuthMiddleware } from "@longrunner/shared-middleware";
-import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import {
   tandcSchema,
   loginSchema,
@@ -9,7 +8,7 @@ import {
   detailsSchema,
   deleteSchema,
   reviewSchema,
-} from "../models/schemas.js";
+} from "@longrunner/shared-schemas";
 import Review from "../models/review.js";
 
 const authMiddleware = createAuthMiddleware({

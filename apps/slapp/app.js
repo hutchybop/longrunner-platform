@@ -33,11 +33,11 @@ import {
   createSessionConfig,
   createHelmetConfig,
 } from "@longrunner/shared-config";
+import { createPolicyController } from "@longrunner/shared-policy";
 import { authenticateUser, loginUser } from "@longrunner/shared-auth/auth.js";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
-import * as policy from "./controllers/policy.js";
 import * as users from "./controllers/users.js";
 import * as meals from "./controllers/meals.js";
 import * as ingredients from "./controllers/ingredients.js";
@@ -67,6 +67,10 @@ import {
 
 const app = express();
 app.locals.User = User;
+const policy = createPolicyController({
+  domain: "slapp.longrunner.co.uk",
+  tandcTitle: "slapp.longrunner.co.uk Information Page",
+});
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
@@ -186,7 +190,12 @@ app.put(
   isAuthorMeal,
   catchAsync(meals.update),
 );
-app.delete("/meals/:id", isLoggedIn, isAuthorMeal, catchAsync(meals.deleteMeal));
+app.delete(
+  "/meals/:id",
+  isLoggedIn,
+  isAuthorMeal,
+  catchAsync(meals.deleteMeal),
+);
 
 app.get("/ingredients", isLoggedIn, catchAsync(ingredients.index));
 app.get(

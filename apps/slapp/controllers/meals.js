@@ -19,7 +19,11 @@ export const index = async (req, res) => {
   items.sort((a, b) => a.mealName.localeCompare(b.mealName));
   items.sort((a, b) => b.mealType.localeCompare(a.mealType));
 
-  res.render("meals/index", { items, title: "All Meals", css_page: "mealsIndex" });
+  res.render("meals/index", {
+    items,
+    title: "All Meals",
+    css_page: "mealsIndex",
+  });
 };
 
 export const newMeal = async (req, res) => {
@@ -214,7 +218,12 @@ export const show = async (req, res) => {
     })
     .populate("author");
 
-  res.render("meals/show", { meal, title: meal.mealName, js_page: "mealsShow", css_page: "mealsShow" });
+  res.render("meals/show", {
+    meal,
+    title: meal.mealName,
+    js_page: "mealsShow",
+    css_page: "mealsShow",
+  });
 };
 
 export const edit = async (req, res) => {

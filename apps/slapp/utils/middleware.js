@@ -14,7 +14,7 @@ import {
   shoppingListMealsSchema,
   categorySchema,
   shoppingListIngredientsSchema,
-} from "../models/schemas.js";
+} from "@longrunner/shared-schemas";
 import { Meal } from "../models/meal.js";
 import { Ingredient } from "../models/ingredient.js";
 import { ShoppingList } from "../models/shoppingList.js";

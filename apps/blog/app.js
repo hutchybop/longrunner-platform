@@ -33,11 +33,11 @@ import {
   createSessionConfig,
   createHelmetConfig,
 } from "@longrunner/shared-config";
+import { createPolicyController } from "@longrunner/shared-policy";
 import { authenticateUser, loginUser } from "@longrunner/shared-auth/auth.js";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
-import * as policy from "./controllers/policy.js";
 import * as users from "./controllers/users.js";
 import * as reviews from "./controllers/reviews.js";
 import * as blogsIM from "./controllers/blogsIM.js";
@@ -60,6 +60,10 @@ import {
 
 const app = express();
 app.locals.User = User;
+const policy = createPolicyController({
+  domain: "blog.longrunner.co.uk",
+  tandcTitle: "blog.longrunner.co.uk Information Page",
+});
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
