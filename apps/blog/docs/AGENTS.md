@@ -11,16 +11,16 @@
 
 ### Imports & Structure
 
-- Use CommonJS: `const express = require('express')`
+- Use ES modules: `import express from "express"`
 - Follow MVC pattern: controllers/, models/, views/, utils/
-- Export individual functions: `module.exports.functionName = async (req, res) => {}`
-- ESLint config: ES2021, CommonJS for Node.js, ES modules for public assets
+- Export named functions: `export const functionName = async (req, res) => {}`
+- ESLint config: ES modules for server and public assets
 - Import order: Node.js built-ins → third-party → local modules
 
 ### Error Handling
 
-- Wrap async routes with `catchAsync` wrapper from utils/catchAsync.js
-- Use custom `ExpressError` class for custom errors
+- Wrap async routes with `catchAsync` from `@longrunner/shared-utils/catchAsync.js`
+- Use shared `ExpressError` class from `@longrunner/shared-utils/ExpressError.js` when custom status errors are needed
 - Always handle async operations with try/catch or catchAsync
 - Use flash messages for user feedback: `req.flash('success', 'message')`
 

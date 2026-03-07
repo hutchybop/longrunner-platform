@@ -288,25 +288,25 @@ graph LR
 - **Security**: Session validation with userId matching, resource ownership verification
 - **Population**: Author middleware includes deep population for complex relationships (weeklyItems.weeklyIngredients, replaceOnUse.replaceOnUseIngredients)
 
-#### `utils/catchAsync.js` - Async Error Wrapper
+#### `@longrunner/shared-utils/catchAsync.js` - Async Error Wrapper
 
 - **Purpose**: Eliminates try-catch blocks in async route handlers
 - **Key Functions**: Wrapper function that catches errors and passes to next()
 - **Usage**: Applied to all async route handlers for consistent error handling
 
-#### `utils/ExpressError.js` - Custom Error Class
+#### `@longrunner/shared-utils/ExpressError.js` - Custom Error Class
 
 - **Purpose**: Enhanced error handling with status codes
 - **Key Functions**: Error class with message and statusCode properties
 - **Features**: Standardized error format across the application
 
-#### `utils/errorHandler.js` - Centralized Error Handler
+#### `@longrunner/shared-utils/errorHandler.js` - Centralized Error Handler
 
 - **Purpose**: Global error processing and user feedback
 - **Key Functions**: Error type detection, flash messages, error rendering
 - **Features**: Development vs production error handling, logging, user-friendly messages
 
-#### `utils/auth.js` - Custom Authentication System
+#### `@longrunner/shared-auth/auth.js` - Custom Authentication System
 
 - **Purpose**: Custom authentication replacing passport-local-mongoose
 - **Key Functions**: authenticateUser, loginUser, logoutUser
@@ -317,7 +317,7 @@ graph LR
   - Promise-based API for async/await compatibility
 - **Security**: Session regeneration on login, complete session destruction on logout
 
-#### `utils/passwordUtils.js` - Password Management
+#### `@longrunner/shared-auth/passwordUtils.js` - Password Management
 
 - **Purpose**: Password hashing and comparison utilities
 - **Key Functions**: hashPassword, comparePassword
@@ -334,7 +334,7 @@ graph LR
   - Complex population handling for weeklyItems and replaceOnUse arrays
 - **Process**: Creates categories → copies ingredients → copies meals with ingredient mapping → populates complex relationships
 
-#### `utils/mail.js` - Email Service
+#### `@longrunner/shared-utils/mail.js` - Email Service
 
 - **Purpose**: Email notifications for user actions and system events
 - **Key Functions**: mail - sends emails via nodemailer
@@ -452,10 +452,10 @@ graph LR
     A --> E[Express Session]
     A --> F[Helmet Security]
     A --> G[Connect-Mongo Store]
-    A --> H[Joi Validation]
-    A --> I[Nodemailer]
-    A --> J[Bcrypt Password Hashing]
-    A --> K[Rate Limiting]
+    A --> H[Shared Schemas Validation]
+    A --> I[Shared Mail Service]
+    A --> J[Shared Auth Password Hashing]
+    A --> K[Shared Rate Limiting]
     A --> L[Compression]
     A --> M[Sanitize HTML]
 ```
@@ -466,18 +466,17 @@ graph LR
 - **mongoose**: MongoDB ODM
 - **ejs**: Template engine
 - **ejs-mate**: Layout engine for EJS
-- **bcrypt**: Password hashing
 - **express-session**: Session management
 - **connect-mongo**: MongoDB session store
 - **helmet**: Security middleware
-- **express-rate-limit**: Rate limiting
+- **@longrunner/shared-utils**: Shared rate limiting, flash, async handling, mail, errors
 - **express-mongo-sanitize**: MongoDB injection protection
-- **joi**: Input validation
+- **@longrunner/shared-schemas**: Input validation
 - **sanitize-html**: HTML sanitization
-- **nodemailer**: Email sending
+- **@longrunner/shared-auth**: Shared auth and password utilities
 - **compression**: Response compression
 - **method-override**: HTTP method override
-- **@codecorn/connect-flash-new**: Flash messages
+- **@longrunner/shared-config**: Shared DB/session/helmet configuration
 - **express-back**: Back button functionality
 - **express-recaptcha**: reCAPTCHA integration
 - **dotenv**: Environment variables
@@ -505,13 +504,8 @@ graph LR
 │   └── Log.js (system logging)
 └── utils/
     ├── middleware.js (auth, validation, authorization)
-    ├── catchAsync.js (async error handling)
-    ├── ExpressError.js (custom error class)
-    ├── errorHandler.js (centralized error handling)
-    ├── auth.js (custom authentication system)
-    ├── passwordUtils.js (password management)
+    ├── middleware.js (auth/validation + app-specific authorization)
     ├── logger.js (request logging)
-    ├── mail.js (email service)
     ├── newUserSeed.js (user data seeding)
     ├── toUpperCase.js (string utilities)
     ├── copyToClip.js (clipboard functionality)
@@ -528,38 +522,38 @@ controllers/users.js
 ├── models/ingredient.js (user ingredient access)
 ├── models/shoppingList.js (user shopping lists)
 ├── models/category.js (user categories)
-├── utils/catchAsync.js (error handling)
-├── utils/mail.js (email notifications)
+├── @longrunner/shared-utils/catchAsync.js (error handling)
+├── @longrunner/shared-utils/mail.js (email notifications)
 ├── utils/newUserSeed.js (user initialization)
-├── utils/passwordUtils.js (password management)
-└── utils/auth.js (login/logout functions)
+├── @longrunner/shared-auth/passwordUtils.js (password management)
+└── @longrunner/shared-auth/auth.js (login/logout functions)
 
 controllers/meals.js
 ├── models/meal.js (meal CRUD operations)
 ├── models/ingredient.js (ingredient population)
 ├── models/category.js (category integration)
 ├── utils/toUpperCase.js (text formatting)
-└── utils/catchAsync.js (error handling)
+└── @longrunner/shared-utils/catchAsync.js (error handling)
 
 controllers/shoppingLists.js
 ├── models/meal.js (meal selection and population)
 ├── models/shoppingList.js (list management)
 ├── models/category.js (category organization)
 ├── utils/copyToClip.js (clipboard functionality)
-└── utils/catchAsync.js (error handling)
+└── @longrunner/shared-utils/catchAsync.js (error handling)
 
 controllers/ingredients.js
 ├── models/ingredient.js (ingredient CRUD)
 ├── models/category.js (category management)
-└── utils/catchAsync.js (error handling)
+└── @longrunner/shared-utils/catchAsync.js (error handling)
 
 controllers/categories.js
 ├── models/category.js (category CRUD)
-└── utils/catchAsync.js (error handling)
+└── @longrunner/shared-utils/catchAsync.js (error handling)
 
 controllers/policy.js
 ├── models/Log.js (system logs)
-└── utils/catchAsync.js (error handling)
+└── @longrunner/shared-utils/catchAsync.js (error handling)
 ```
 
 **Model Dependencies**
@@ -568,8 +562,8 @@ controllers/policy.js
 models/user.js
 ├── mongoose (ODM)
 ├── crypto (password migration)
-├── utils/passwordUtils.js (bcrypt operations)
-└── utils/mail.js (migration notifications)
+├── @longrunner/shared-auth/passwordUtils.js (bcrypt operations)
+└── @longrunner/shared-utils/mail.js (migration notifications)
 
 models/meal.js
 └── mongoose (ODM with references)
@@ -584,7 +578,7 @@ models/category.js
 └── mongoose (ODM)
 
 models/schemas.js
-├── joi (validation)
+├── @longrunner/shared-schemas (validation)
 └── sanitize-html (HTML sanitization)
 
 models/Log.js
@@ -599,9 +593,9 @@ utils/middleware.js
 ├── models/meal.js (authorization checks)
 ├── models/ingredient.js (authorization checks)
 ├── models/shoppingList.js (authorization checks)
-└── utils/catchAsync.js (async handling)
+└── @longrunner/shared-utils/catchAsync.js (async handling)
 
-utils/auth.js
+@longrunner/shared-auth/auth.js
 ├── models/user.js (authentication)
 └── express-session (session management)
 
@@ -619,10 +613,10 @@ utils/logger.js
 
 - **Primary**: `app.js` - Express application setup and configuration (port 3001)
 - **Database**: MongoDB Atlas connection via Mongoose (slapp database)
-- **Authentication**: Custom bcrypt-based system with passport migration
+- **Authentication**: Shared auth package with passport migration support
 - **Templates**: EJS rendering engine with ejs-mate layouts
 - **Session**: MongoDB-backed session store with 14-day cookie expiry
-- **Security**: Helmet CSP configuration with environment-specific settings and rate limiting
+- **Security**: Shared helmet/session/rate-limiter configuration with app-specific route controls
 
 ### Route Configuration
 
@@ -668,10 +662,10 @@ utils/logger.js
 
 ### Critical Dependencies
 
-- **Authentication Flow**: app.js → utils/auth.js → models/user.js → utils/passwordUtils.js
+- **Authentication Flow**: app.js → @longrunner/shared-auth/auth.js → models/user.js → @longrunner/shared-auth/passwordUtils.js
 - **Data Seeding**: controllers/users.js → utils/newUserSeed.js → all models
 - **Validation Chain**: utils/middleware.js → models/schemas.js → controllers
-- **Error Handling**: utils/catchAsync.js → utils/errorHandler.js → views/policy/error.ejs
+- **Error Handling**: @longrunner/shared-utils/catchAsync.js → @longrunner/shared-utils/errorHandler.js → views/policy/error.ejs
 
 ### Middleware Chains by Route Type
 
@@ -919,14 +913,14 @@ sequenceDiagram
 
 #### Authentication Extensions
 
-1. **OAuth Providers**: Extend `utils/auth.js` for Google, Facebook, etc.
+1. **OAuth Providers**: Extend `@longrunner/shared-auth/auth.js` for Google, Facebook, etc.
 2. **Multi-Factor Auth**: Add 2FA support to user model and authentication flow
 3. **Role-Based Access**: Extend user schema with roles and update authorization middleware
 4. **Social Login**: Integrate passport strategies while maintaining custom auth system
 
 #### Email Enhancements
 
-1. **Templates**: Enhance `utils/mail.js` for HTML email templates
+1. **Templates**: Enhance `@longrunner/shared-utils/mail.js` for HTML email templates
 2. **Attachments**: Add file attachment support for receipts, recipes
 3. **Email Queue**: Implement queue system for bulk email sending
 4. **Transactional Emails**: Add email tracking and delivery confirmation

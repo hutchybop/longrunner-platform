@@ -1,6 +1,6 @@
 import BlogIM from "../models/blogIM.js";
 import Review from "../models/review.js";
-import mail from "../utils/mail.js";
+import mail from "@longrunner/shared-utils/mail.js";
 
 export const dashboard = async (req, res) => {
   const posts = await BlogIM.find().sort({ createdAt: -1 });

@@ -188,7 +188,7 @@ graph TD
 
 ### Utilities Layer (`utils/`)
 
-#### `utils/auth.js` - Authentication Utilities
+#### `@longrunner/shared-auth/auth.js` - Authentication Utilities
 
 - **Purpose**: Custom authentication logic
 - **Key Responsibilities**:
@@ -205,7 +205,7 @@ graph TD
   - User population from session
 - **Main Functions**: Validation functions, authorization middleware
 
-#### `utils/passwordUtils.js` - Password Security
+#### `@longrunner/shared-auth/passwordUtils.js` - Password Security
 
 - **Purpose**: Password security utilities with bcrypt
 - **Key Responsibilities**:
@@ -232,7 +232,7 @@ graph TD
 - **Main Functions**: validateReview, detectSpam, sanitizeContent, getSpamErrorMessage
 - **Scoring**: URLs (3pts), Promotional (2pts), Contact (4pts), Repetitive (1pts), Suspicious (5pts), Obscure websites (8pts)
 
-#### `utils/rateLimiter.js` - Multi-Tier Rate Limiting
+#### `@longrunner/shared-utils/rateLimiter.js` - Multi-Tier Rate Limiting
 
 - **Purpose**: Comprehensive API rate limiting system
 - **Key Responsibilities**:
@@ -247,7 +247,7 @@ graph TD
   - registrationLimiter: 5 attempts/hour (registration)
   - reviewLimiter: 3 reviews/15min (content submission)
 
-#### `utils/mail.js` - Email Service
+#### `@longrunner/shared-utils/mail.js` - Email Service
 
 - **Purpose**: Email notification system via Zoho SMTP
 - **Key Responsibilities**:
@@ -277,19 +277,19 @@ graph TD
   - Blocked IP checking
 - **Main Functions**: getIpInfoMiddleware
 
-#### `utils/catchAsync.js` - Async Error Handling
+#### `@longrunner/shared-utils/catchAsync.js` - Async Error Handling
 
 - **Purpose**: Async function error wrapper
 - **Key Responsibilities**:
   - Catch async errors and pass to error handler
 
-#### `utils/ExpressError.js` - Custom Error Class
+#### `@longrunner/shared-utils/ExpressError.js` - Custom Error Class
 
 - **Purpose**: Custom error handling
 - **Key Responsibilities**:
   - Structured error creation
 
-#### `utils/errorHandler.js` - Error Handler
+#### `@longrunner/shared-utils/errorHandler.js` - Error Handler
 
 - **Purpose**: Centralized error handling
 - **Key Responsibilities**:
@@ -315,10 +315,10 @@ graph TD
   - Project metadata
 - **Key Dependencies**:
   - **Runtime**: Express.js v5.2.1, Mongoose v9.0.0, EJS v3.1.6
-  - **Security**: Helmet v8.1.0, bcrypt v6.0.0, express-rate-limit v8.2.1
-  - **Validation**: Joi v18.0.2, sanitize-html v2.3.3
+  - **Security**: Helmet v8.1.0 with shared auth and shared rate limiting
+  - **Validation**: Shared schemas package with sanitize-html
   - **Session**: express-session v1.18.2, connect-mongo v6.0.0
-  - **Email**: nodemailer v7.0.11
+  - **Email**: Shared utils mail service (nodemailer)
   - **Geolocation**: geoip-lite v1.4.10, axios v1.13.2
   - **Development**: ESLint v9.39.1, Prettier v3.7.4
 
@@ -432,9 +432,9 @@ graph TD
 
     D --> J[Mongoose]
 
-    F --> K[utils/auth]
-    F --> L[utils/passwordUtils]
-    F --> M[utils/mail]
+    F --> K[@longrunner/shared-auth/auth]
+    F --> L[@longrunner/shared-auth/passwordUtils]
+    F --> M[@longrunner/shared-utils/mail]
     F --> N[utils/contentFilter]
     F --> O[utils/ipLookup]
 
@@ -450,15 +450,15 @@ graph TD
 #### app.js imports (app.js:44-65):
 
 - **Controllers**: `controllers/users.js`, `controllers/reviews.js`, `controllers/blogsIM.js`, `controllers/admin.js`, `controllers/policy.js`
-- **Middleware**: `utils/middleware.js`, `utils/rateLimiter.js`, `utils/ipMiddleware.js`, `utils/auth.js`, `utils/tracker.js`, `utils/blockedIPMiddleware.js`
+- **Middleware**: `utils/middleware.js`, `@longrunner/shared-utils/rateLimiter.js`, `utils/ipMiddleware.js`, `@longrunner/shared-auth/auth.js`, `utils/tracker.js`, `utils/blockedIPMiddleware.js`
 - **Models**: `models/user.js`, `models/blockedIP.js` (direct imports)
 - **Dependencies**: All controllers indirectly import their respective models and utilities
 
 #### Controller imports (pattern across all controllers):
 
 - **Models**: All controllers import their respective Mongoose models
-- **Utilities**: `utils/catchAsync.js` for async error handling
-- **Services**: `utils/mail.js` for email notifications, `utils/passwordUtils.js` for auth operations
+- **Utilities**: `@longrunner/shared-utils/catchAsync.js` for async error handling
+- **Services**: `@longrunner/shared-utils/mail.js` for email notifications, `@longrunner/shared-auth/passwordUtils.js` for auth operations
 - **Security**: `utils/contentFilter.js` for spam detection (reviews controller)
 - **Geolocation**: `utils/ipLookup.js` for IP tracking (reviews controller)
 - **IP Management**: `utils/blockedIPMiddleware.js` for IP blocking (admin, reviews controllers)
@@ -466,16 +466,16 @@ graph TD
 #### Controller imports:
 
 - All controllers import their respective models
-- `utils/catchAsync.js` for error handling
-- `utils/mail.js` for notifications
-- `utils/passwordUtils.js` for auth
+- `@longrunner/shared-utils/catchAsync.js` for error handling
+- `@longrunner/shared-utils/mail.js` for notifications
+- `@longrunner/shared-auth/passwordUtils.js` for auth
 - `utils/contentFilter.js` for spam detection
 - `utils/ipLookup.js` for geolocation (reviews controller)
 - `utils/blockedIPMiddleware.js` for IP management (admin, reviews controllers)
 
 #### Model imports:
 
-- `utils/passwordUtils.js` (user model)
+- `@longrunner/shared-auth/passwordUtils.js` (user model)
 - `mongoose` (all models)
 
 #### Utils imports:
@@ -502,10 +502,10 @@ graph TD
 1. **Input** → Registration form data
 2. **Validation** → Joi schema validation (`middleware.js:validateRegister`)
 3. **Processing** → `users.js:registerPost`
-4. **Password Hashing** → `passwordUtils.js:hashPassword`
+4. **Password Hashing** → `@longrunner/shared-auth/passwordUtils.js:hashPassword`
 5. **Database** → User model creation (`models/user.js`)
-6. **Session** → Login user (`auth.js:loginUser`)
-7. **Notification** → Email sent (`mail.js`)
+6. **Session** → Login user (`@longrunner/shared-auth/auth.js:loginUser`)
+7. **Notification** → Email sent (`@longrunner/shared-utils/mail.js`)
 8. **Response** → Redirect to blog with success message
 
 ### Blog Post Creation Flow:
@@ -518,7 +518,7 @@ graph TD
 
 ### Review Creation Flow (reviews.js:create):
 
-1. **Rate Limiting** → `rateLimiter.js:reviewLimiter` (3 reviews per 15 minutes, user-based for logged-in users)
+1. **Rate Limiting** → `@longrunner/shared-utils/rateLimiter.js:reviewLimiter` (3 reviews per 15 minutes, user-based for logged-in users)
 2. **Input Validation** → `middleware.js:validateReview` with Joi schema and HTML sanitization
 3. **Blog Lookup** → Find parent BlogIM post by ID
 4. **Content Filtering** → `contentFilter.js:validateReview` with advanced spam detection
@@ -534,11 +534,11 @@ graph TD
 ### Authentication Flow:
 
 1. **Input** → Login credentials
-2. **Rate Limiting** → `rateLimiter.js:authLimiter`
+2. **Rate Limiting** → `@longrunner/shared-utils/rateLimiter.js:authLimiter`
 3. **Validation** → Joi schema validation
-4. **Authentication** → `auth.js:authenticateUser`
+4. **Authentication** → `@longrunner/shared-auth/auth.js:authenticateUser`
 5. **Password Verification** → `models/user.js:authenticate`
-6. **Session** → `auth.js:loginUser`
+6. **Session** → `@longrunner/shared-auth/auth.js:loginUser`
 7. **Response** → Redirect to intended page
 
 ## 6. Key Interactions
@@ -547,7 +547,7 @@ graph TD
 
 #### 1. User Authentication System:
 
-- `app.js:240-252` → `utils/auth.js:authenticateUser` → `models/user.js:authenticate`
+- `app.js:240-252` → `@longrunner/shared-auth/auth.js:authenticateUser` → `models/user.js:authenticate`
 - **Critical Path**: Login request → Authentication → Session creation
 
 #### 2. Content Moderation System:
@@ -562,7 +562,7 @@ graph TD
 
 #### 4. Password Reset System:
 
-- `controllers/users.js:forgotPost` → `utils/passwordUtils.js:generateResetToken` → `models/user.js`
+- `controllers/users.js:forgotPost` → `@longrunner/shared-auth/passwordUtils.js:generateResetToken` → `models/user.js`
 - **Critical Path**: Reset request → Token generation → Email sending
 
 #### 5. Security Middleware Chain:
@@ -665,9 +665,9 @@ graph TD
 ### Configuration Points:
 
 - **Environment Variables**: `.env` file for database, email, and security settings
-- **Rate Limiting**: `utils/rateLimiter.js` for adjusting limits
+- **Rate Limiting**: `@longrunner/shared-utils/rateLimiter.js` for adjusting limits
 - **Content Filtering**: `utils/contentFilter.js` for spam detection rules
-- **Email Configuration**: `utils/mail.js` for SMTP settings
+- **Email Configuration**: `@longrunner/shared-utils/mail.js` for SMTP settings
 - **IP Blocking**: `utils/blockedIPMiddleware.js` for cache TTL (5 minutes)
 - **Analytics**: `utils/tracker.js` for visitor tracking configuration
 - **Geolocation**: `utils/ipLookup.js` for fallback service configuration

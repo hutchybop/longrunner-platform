@@ -1,5 +1,5 @@
 import { createAuthMiddleware } from "@longrunner/shared-middleware";
-import catchAsync from "./catchAsync.js";
+import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import {
   tandcSchema,
   loginSchema,

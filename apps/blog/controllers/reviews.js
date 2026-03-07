@@ -1,6 +1,6 @@
 import Review from "../models/review.js";
 import BlogIM from "../models/blogIM.js";
-import mail from "../utils/mail.js";
+import mail from "@longrunner/shared-utils/mail.js";
 import ContentFilter from "../utils/contentFilter.js";
 
 export const create = async (req, res) => {
