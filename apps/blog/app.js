@@ -28,7 +28,11 @@ import {
   passwordResetLimiter,
   formSubmissionLimiter,
 } from "@longrunner/shared-utils/rateLimiter.js";
-import { createMongoDbUrl, createSessionConfig } from "@longrunner/shared-config";
+import {
+  createMongoDbUrl,
+  createSessionConfig,
+  createHelmetConfig,
+} from "@longrunner/shared-config";
 import { authenticateUser, loginUser } from "@longrunner/shared-auth/auth.js";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
@@ -92,99 +96,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const scriptSrcUrls = [
-  "https://stackpath.bootstrapcdn.com/",
-  "https://cdnjs.cloudflare.com/",
-  "https://cdn.jsdelivr.net/",
-  "https://code.jquery.com/",
-  "https://www.google.com/recaptcha/api.js",
-  "https://www.gstatic.com/recaptcha/releases/",
-  "https://use.fontawesome.com/",
-];
-const styleSrcUrls = [
-  "https://kit-free.fontawesome.com/",
-  "https://stackpath.bootstrapcdn.com/",
-  "https://fonts.googleapis.com/",
-  "https://use.fontawesome.com/",
-  "https://cdn.jsdelivr.net/",
-  "https://cdnjs.cloudflare.com/",
-  "https://fonts.gstatic.com",
-  "https://www.gstatic.com/recaptcha/releases/",
-];
-const imgSrcUrls = [
-  "https://www.gstatic.com/recaptcha/",
-  "https://www.google.com/recaptcha/",
-];
-const connectSrcUrls = [
-  "https://www.google.com/",
-  "https://www.gstatic.com/recaptcha/",
-];
-const fontSrcUrls = [
-  "https://cdnjs.cloudflare.com/",
-  "https://fonts.gstatic.com",
-  "https://fonts.googleapis.com/",
-  "https://use.fontawesome.com/",
-];
-const frameSrcUrls = ["https://www.google.com", "https://www.recaptcha.net"];
-
-function configureHelmet() {
-  if (process.env.NODE_ENV === "production") {
-    app.use(
-      helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            connectSrc: ["'self'", ...connectSrcUrls],
-            scriptSrc: ["'self'", "'unsafe-inline'", ...scriptSrcUrls],
-            styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
-            workerSrc: ["'self'", "blob:"],
-            objectSrc: ["'none'"],
-            imgSrc: ["'self'", "blob:", "data:", ...imgSrcUrls],
-            fontSrc: ["'self'", ...fontSrcUrls],
-            frameSrc: ["'self'", ...frameSrcUrls],
-            upgradeInsecureRequests: null,
-            scriptSrcAttr: ["'self'", "'unsafe-inline'"],
-          },
-        },
-        crossOriginOpenerPolicy: { policy: "same-origin" },
-        originAgentCluster: true,
-      }),
-    );
-  } else {
-    app.use(
-      helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'", "*"],
-            connectSrc: ["'self'", "*", ...connectSrcUrls],
-            scriptSrc: [
-              "'self'",
-              "'unsafe-inline'",
-              "'unsafe-eval'",
-              "*",
-              ...scriptSrcUrls,
-            ],
-            styleSrc: ["'self'", "'unsafe-inline'", "*", ...styleSrcUrls],
-            workerSrc: ["'self'", "blob:"],
-            objectSrc: ["'self'", "*"],
-            imgSrc: ["'self'", "blob:", "data:", "*", ...imgSrcUrls],
-            fontSrc: ["'self'", "*", ...fontSrcUrls],
-            frameSrc: ["'self'", "*", ...frameSrcUrls],
-            upgradeInsecureRequests: null,
-            scriptSrcAttr: ["'self'", "'unsafe-inline'", "*"],
-          },
-        },
-        crossOriginOpenerPolicy: { policy: "unsafe-none" },
-        originAgentCluster: false,
-        referrerPolicy: { policy: "no-referrer-when-downgrade" },
-        frameguard: false,
-        hsts: false,
-        noSniff: false,
-      }),
-    );
-  }
-}
-configureHelmet();
+app.use(helmet(createHelmetConfig()));
 
 const sessionConfig = createSessionConfig({
   name: "blog_longrunner",
