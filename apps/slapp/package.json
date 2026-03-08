@@ -17,6 +17,7 @@
     "@longrunner/shared-middleware": "workspace:*",
     "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",
+    "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
     "async": "^3.2.6",
     "axios": "^1.13.6",

@@ -5,6 +5,7 @@
     "packages/*",
     "apps/blog",
     "apps/slapp",
-    "apps/landing"
+    "apps/landing",
+    "apps/quiz"
   ]
 }

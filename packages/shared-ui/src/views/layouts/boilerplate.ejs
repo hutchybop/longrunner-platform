@@ -1,32 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <% 
+      const meta = typeof defaults !== 'undefined' && defaults ? defaults : {};
+      const metaTitle = meta.metaTitle || 'longrunner';
+      const metaDescription = meta.metaDescription || 'webapp';
+      const metaKeywords = meta.metaKeywords || 'longrunner';
+      const metaAuthor = meta.metaAuthor || 'Chris Hutchinson';
+    %>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Shopping List App. - Weekly shopping list creator" />
-    <meta property="og:description" content="Create meals, add ingredients and recipes, choose weekly a weekly meal plan and create your shopping list." />
+    <meta property="og:title" content="<%= metaTitle %>" />
+    <meta property="og:description" content="<%= metaDescription %>" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="Shopping List App. - Weekly shopping list creator" />
-    <meta property="twitter:description" content="Create meals, add ingredients and recipes, choose weekly a weekly meal plan and create your shopping list." />
-
+    <meta property="twitter:title" content="<%= metaTitle %>" />
+    <meta property="twitter:description" content="<%= metaDescription %>" />
+    
     <meta
       name="title"
-      content="Shopping List App. - Weekly shopping list creator"
+      content="<%= metaTitle %>"
     />
     <meta
       name="description"
-      content="Create meals, add ingredients and recipes, choose weekly a weekly meal plan and create your shopping list."
+      content="<%= metaDescription %>"
     />
     <meta
       name="keywords"
-      content="shooping, shopping list, meals, receipes, ingredients, food, groceries, grocery list, grocery"
+      content="<%= metaKeywords %>"
     />
-    <meta name="author" content="Chris Hutchinson" />
+    <meta name="author" content="<%= metaAuthor %>" />
     <meta name="robots" content="index, follow" />
     <title><%= title %></title>
 
@@ -92,16 +100,26 @@
 
   <body class="d-flex flex-column vh-100">
 
-    <%- include('../partials/navbar')%>
+    <%
+      const uiIncludes = typeof includes !== "undefined" && includes ? includes : {};
+    %>
 
-    <%- include('../partials/cookieAlert')%>
+    <% if (uiIncludes.navbar) { %>
+      <%- include(uiIncludes.navbar) %>
+    <% } %>
+
+    <%- include("../partials/cookieAlert") %>
 
     <main class="container mt-3" id="page_padding">
-      <%- include('../partials/flash') %> 
+      <%- include("../partials/flash") %>
       <%- body %>
     </main>
 
-    <!-- BootStrap scripts -->
+    <% if (uiIncludes.footer) { %>
+      <%- include(uiIncludes.footer) %>
+    <% } %>
+
+    <!-- Bootstrap scripts -->
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -112,8 +130,8 @@
     <% if (typeof js_page !== 'undefined') { %>
       <script type="text/javascript" src="/javascripts/<%= js_page %>.js"></script>
     <% } %>
-    <script type="text/javascript" src="/javascripts/boilerplate.js"></script>
-    <script type="text/javascript" src="/javascripts/validateForms.js"></script>
+    <script type="text/javascript" src="/javascripts/shared-ui/javascripts/boilerplate.js"></script>
+    <script type="text/javascript" src="/javascripts/shared-ui/javascripts/validateForms.js"></script>
 
   </body>
 </html>

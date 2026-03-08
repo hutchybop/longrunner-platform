@@ -27,6 +27,10 @@ const sharedPolicyRoot = path.resolve(
   path.dirname(require.resolve("@longrunner/shared-policy")),
   "..",
 );
+const sharedUiRoot = path.resolve(
+  path.dirname(require.resolve("@longrunner/shared-ui")),
+  "..",
+);
 
 const { RecaptchaV2: Recaptcha } = await import("express-recaptcha");
 const recaptcha = new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
@@ -75,6 +79,7 @@ import {
   isAuthorIngredient,
   isAuthorShoppingList,
 } from "./utils/middleware.js";
+import { boilerplateHelper } from "./utils/boilerplateHelper.js";
 
 const app = express();
 app.locals.User = User;
@@ -104,6 +109,7 @@ app.set("views", [
   path.join(__dirname, "views"),
   path.join(sharedAuthRoot, "src", "views"),
   path.join(sharedPolicyRoot, "src", "views"),
+  path.join(sharedUiRoot, "src", "views"),
 ]);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -124,6 +130,10 @@ app.use(
 app.use(
   "/javascripts/shared-policy",
   express.static(path.join(sharedPolicyRoot, "public")),
+);
+app.use(
+  "/javascripts/shared-ui",
+  express.static(path.join(sharedUiRoot, "public")),
 );
 
 app.use((req, res, next) => {
@@ -148,6 +158,7 @@ app.use(back());
 app.use(populateUser);
 app.use(compression());
 app.use(generalLimiter);
+app.use(boilerplateHelper());
 
 app.use(async (req, res, next) => {
   res.locals.currentUser = req.user;

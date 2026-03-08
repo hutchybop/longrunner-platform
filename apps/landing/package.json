@@ -9,6 +9,7 @@
     "@longrunner/shared-middleware": "workspace:*",
     "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",
+    "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
     "compression": "^1.8.1",
     "dotenv": "^17.3.1",

@@ -18,6 +18,7 @@
     "@longrunner/shared-middleware": "workspace:*",
     "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",
+    "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
     "axios": "^1.13.6",
     "compression": "^1.8.1",

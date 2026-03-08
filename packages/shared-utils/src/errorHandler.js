@@ -17,6 +17,6 @@ export const errorHandler = (err, req, res, next) => {
   res.status(statusCode).render("policy/error", {
     err,
     title: "Error - Something Went Wrong",
-    css_page: "error",
+    css_page: "shared-policy/error",
   });
 };

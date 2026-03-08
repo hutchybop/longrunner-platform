@@ -19,6 +19,10 @@ const sharedPolicyRoot = path.resolve(
   path.dirname(require.resolve("@longrunner/shared-policy")),
   "..",
 );
+const sharedUiRoot = path.resolve(
+  path.dirname(require.resolve("@longrunner/shared-ui")),
+  "..",
+);
 
 const { RecaptchaV2: Recaptcha } = await import("express-recaptcha");
 const recaptcha = new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
@@ -35,6 +39,7 @@ import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
 import * as longrunner from "./controllers/longrunner.js";
 import { validateTandC } from "./utils/middleware.js";
+import { boilerplateHelper } from "./utils/boilerplateHelper.js";
 
 const app = express();
 
@@ -53,6 +58,7 @@ app.set("view engine", "ejs");
 app.set("views", [
   path.join(__dirname, "views"),
   path.join(sharedPolicyRoot, "src", "views"),
+  path.join(sharedUiRoot, "src", "views"),
 ]);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -64,6 +70,10 @@ app.use(
 app.use(
   "/javascripts/shared-policy",
   express.static(path.join(sharedPolicyRoot, "public")),
+);
+app.use(
+  "/javascripts/shared-ui",
+  express.static(path.join(sharedUiRoot, "public")),
 );
 
 app.use(helmet(createHelmetConfig()));
@@ -86,6 +96,7 @@ app.use(back());
 
 app.use(compression());
 app.use(generalLimiter);
+app.use(boilerplateHelper());
 
 app.get("/policy/cookie-policy", policy.cookiePolicy);
 app.get("/policy/tandc", recaptcha.middleware.render, policy.tandc);
