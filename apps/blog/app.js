@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+// External Imports
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,6 +16,7 @@ import helmet from "helmet";
 import compression from "compression";
 import favicon from "serve-favicon";
 
+// Setting up shared assets
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
@@ -32,11 +34,13 @@ const sharedUiRoot = path.resolve(
   "..",
 );
 
+// Required for recaptcha
 const { RecaptchaV2: Recaptcha } = await import("express-recaptcha");
 const recaptcha = new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
   callback: "cb",
 });
 
+// Local imports
 import {
   generalLimiter,
   authLimiter,
@@ -74,40 +78,48 @@ import {
 } from "./utils/middleware.js";
 import { boilerplateHelper } from "./utils/boilerplateHelper.js";
 
+// Setting up the app
 const app = express();
 app.locals.User = User;
 
+// If in production, tells express about nginx proxy
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
+// Setting Mongodb Atlas
 const dbName = "blog";
 const dbUrl = createMongoDbUrl({ dbName });
 mongoose.connect(dbUrl);
 
+// Error Handling for the db connection
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
   console.log("Database connected");
 });
 
+// Serve favicon from public/favicon directory
 app.use(favicon(path.join(__dirname, "public", "favicon", "favicon.ico")));
+// Handle favicon requests explicitly
 app.use("/favicon.ico", (req, res) => {
-  res.sendStatus(204);
+  res.sendStatus(204); // No Content
 });
 
-app.engine("ejs", ejsMate);
-app.set("view engine", "ejs");
+// Setting up the app
+app.engine("ejs", ejsMate); // Tells express to use ejsmate for rendering .ejs html files
+app.set("view engine", "ejs"); // Sets ejs as the default engine
 app.set("views", [
   path.join(__dirname, "views"),
   path.join(sharedAuthRoot, "src", "views"),
   path.join(sharedPolicyRoot, "src", "views"),
   path.join(sharedUiRoot, "src", "views"),
-]);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(methodOverride("_method"));
-app.use(express.static(path.join(__dirname, "/public")));
+]); // Forces express to look at views directory for .ejs files
+app.use(express.json()); // Middleware to parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Makes req.body available
+app.use(methodOverride("_method")); // Allows us to add HTTP verbs other than post
+app.use(express.static(path.join(__dirname, "/public"))); // Serves static files (css, js, images) from public directory
+// Setting shared static assets
 app.use(
   "/stylesheets/shared-auth",
   express.static(path.join(sharedAuthRoot, "public")),
@@ -129,6 +141,7 @@ app.use(
   express.static(path.join(sharedUiRoot, "public")),
 );
 
+// Helps to stop mongo injection by not allowing certain characters in the query string
 app.use((req, res, next) => {
   if (req.body)
     req.body = mongoSanitize.sanitize(req.body, { replaceWith: "_" });
@@ -137,27 +150,33 @@ app.use((req, res, next) => {
   next();
 });
 
+// Setting up helmet to allow certain scripts/stylesheets
 app.use(helmet(createHelmetConfig()));
 
+// Setting up session
 const sessionConfig = createSessionConfig({
-  name: "blog_longrunner",
+  name: "blog_longrunner", // Name for the session cookie
   mongoUrl: dbUrl,
   MongoStore,
 });
 app.use(session(sessionConfig));
 
-app.use(flash());
-app.use(back());
-app.use(populateUser);
-app.use(compression());
-app.use(generalLimiter);
-app.use(boilerplateHelper());
+// Required after session setup.
+app.use(flash()); // Custom flash messages
+app.use(back()); // Allows back-to-last-page links
+app.use(populateUser); // Custom authentication middleware to populate user from session
+app.use(compression()); // Compression to make website run quicker
+app.use(generalLimiter); // Apply general rate limiting to all requests
+app.use(boilerplateHelper()); // Helper for app specific meta-data and navbar/footer
 
+// Middleware to set local variables and handle user session data
 app.use(async (req, res, next) => {
   res.locals.currentUser = req.user;
   next();
 });
 
+////////////////////////////// Shared Routes //////////////////////////////
+// Policy routes
 app.get("/policy/cookie-policy", policy.cookiePolicy);
 app.get("/policy/tandc", recaptcha.middleware.render, policy.tandc);
 app.post(
@@ -168,6 +187,7 @@ app.post(
   policy.tandcPost,
 );
 
+// Auth routes
 app.get("/auth/register", users.register);
 app.post(
   "/auth/register",
@@ -209,6 +229,8 @@ app.post(
 app.get("/auth/deletepre", isLoggedIn, users.deletePre);
 app.delete("/auth/delete", isLoggedIn, validateDelete, users.deleteUser);
 
+////////////////////////////// App Specific Routes //////////////////////////////
+// Admin routes
 app.get("/admin", isLoggedIn, isAdmin, catchAsync(admin.dashboard));
 app.get(
   "/admin/flagged-reviews",
@@ -251,6 +273,7 @@ app.delete(
   catchAsync(admin.deletePost),
 );
 
+// Review routes
 app.post(
   "/blogim/:id/reviews",
   formSubmissionLimiter,
@@ -265,17 +288,23 @@ app.delete(
 );
 app.get("/blogim/:id/reviews", reviews.reviewLogin);
 
+// BlogIM routes (public only)
 app.get("/", catchAsync(blogsIM.index));
 app.get("/blogim/:id", catchAsync(blogsIM.show));
 
+////////////////////////////// Shared Util Routes //////////////////////////////
+// Site-Map route
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));
 });
 
+// Unknown (404) webpage error
 app.use(policy.notFound);
 
+// Error Handler
 app.use(errorHandler);
 
+// Start server on port using HTTP
 const port = 3004;
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port} on all interfaces`);
