@@ -27,7 +27,7 @@
       content="shooping, shopping list, meals, receipes, ingredients, food, groceries, grocery list, grocery"
     />
     <meta name="author" content="Chris Hutchinson" />
-    <meta name="robots" content="index, follow, all" />
+    <meta name="robots" content="index, follow" />
     <title><%= title %></title>
 
     <!-- Favicon -->
@@ -94,19 +94,7 @@
 
     <%- include('../partials/navbar')%>
 
-    <!-- Cookie Alert -->
-    <div class="container mt-3">
-      <div class="row">
-        <div class="col">
-          <div id="cookieAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
-            This site uses essential cookies for functionality. By continuing to use our site, you agree to their use. 
-            <br>
-            <a href="/policy/cookie-policy">Cookie Policy</a>
-            <button id="cookieAlertBtn" type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-          </div>
-        </div>
-      </div>
-    </div>
+    <%- include('../partials/cookieAlert')%>
 
     <main class="container mt-3" id="page_padding">
       <%- include('../partials/flash') %> 

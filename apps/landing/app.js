@@ -25,32 +25,6 @@ const recaptcha = new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
   callback: "cb",
 });
 
-// const { RecaptchaV2: Recaptcha } = await import("express-recaptcha");
-// const hasRecaptchaKeys =
-//   Boolean(process.env.SITEKEY) && Boolean(process.env.SECRETKEY);
-// const recaptcha = hasRecaptchaKeys
-//   ? new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
-//       callback: "cb",
-//     })
-//   : {
-//       middleware: {
-//         render: (req, res, next) => {
-//           res.recaptcha = "";
-//           next();
-//         },
-//         verify: (req, res, next) => {
-//           req.recaptcha = { error: null };
-//           next();
-//         },
-//       },
-//     };
-
-// if (!hasRecaptchaKeys) {
-//   console.warn(
-//     "SITEKEY/SECRETKEY not set; running /policy/tandc without reCAPTCHA verification.",
-//   );
-// }
-
 import {
   generalLimiter,
   formSubmissionLimiter,
