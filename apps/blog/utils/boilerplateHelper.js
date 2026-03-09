@@ -1,3 +1,20 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const appBoilerplateJsPath = path.join(
+  __dirname,
+  "..",
+  "public",
+  "javascripts",
+  "boilerplate.js",
+);
+const boilerplateScript = fs.existsSync(appBoilerplateJsPath)
+  ? "/javascripts/boilerplate.js"
+  : "/javascripts/shared-ui/javascripts/boilerplate.js";
+
 export const boilerplateHelper = () => (req, res, next) => {
   const defaultMeta = {
     metaTitle: "MY IRONMAN BLOG - From start to finish, follow my journey.",
@@ -10,6 +27,7 @@ export const boilerplateHelper = () => (req, res, next) => {
   const defaultIncludes = {
     navbar: "partials/navbar",
     footer: "partials/footer",
+    boilerplateScript,
   };
   const originalRender = res.render.bind(res);
   res.render = (view, data = {}, cb) => {

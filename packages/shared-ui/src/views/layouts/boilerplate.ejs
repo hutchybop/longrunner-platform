@@ -102,6 +102,9 @@
 
     <%
       const uiIncludes = typeof includes !== "undefined" && includes ? includes : {};
+      const boilerplateScript =
+        uiIncludes.boilerplateScript ||
+        "/javascripts/shared-ui/javascripts/boilerplate.js";
     %>
 
     <% if (uiIncludes.navbar) { %>
@@ -109,6 +112,10 @@
     <% } %>
 
     <%- include("../partials/cookieAlert") %>
+
+    <% if (uiIncludes.misc) { %>
+      <%- include(uiIncludes.misc) %>
+    <% } %>
 
     <main class="container mt-3" id="page_padding">
       <%- include("../partials/flash") %>
@@ -130,7 +137,7 @@
     <% if (typeof js_page !== 'undefined') { %>
       <script type="text/javascript" src="/javascripts/<%= js_page %>.js"></script>
     <% } %>
-    <script type="text/javascript" src="/javascripts/shared-ui/javascripts/boilerplate.js"></script>
+    <script type="text/javascript" src="<%= boilerplateScript %>"></script>
     <script type="text/javascript" src="/javascripts/shared-ui/javascripts/validateForms.js"></script>
 
   </body>

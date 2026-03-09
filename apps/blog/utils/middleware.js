@@ -1,19 +1,30 @@
-import { createAuthMiddleware } from "@longrunner/shared-middleware";
 import {
-  tandcSchema,
+  createPolicyMiddleware,
+  createAuthMiddleware,
+} from "@longrunner/shared-middleware";
+import {
+  createPolicySchemas,
+  createAuthSchemas,
+} from "@longrunner/shared-schemas";
+import { reviewSchema } from "../models/schemas.js";
+import Review from "../models/review.js";
+
+const { tandcSchema } = createPolicySchemas();
+const {
   loginSchema,
   registerSchema,
   forgotSchema,
   resetSchema,
   detailsSchema,
   deleteSchema,
-  reviewSchema,
-} from "@longrunner/shared-schemas";
-import Review from "../models/review.js";
+} = createAuthSchemas();
+
+const policyMiddleware = createPolicyMiddleware({
+  schemas: { tandcSchema },
+});
 
 const authMiddleware = createAuthMiddleware({
   schemas: {
-    tandcSchema,
     loginSchema,
     registerSchema,
     forgotSchema,
@@ -23,8 +34,8 @@ const authMiddleware = createAuthMiddleware({
   },
 });
 
+export const { validateTandC } = policyMiddleware;
 export const {
-  validateTandC,
   validateLogin,
   validateRegister,
   validateForgot,

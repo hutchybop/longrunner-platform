@@ -1,46 +1,28 @@
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 
-export function createMiddleware(config = {}) {
-  const { schemas = {}, routePaths = {} } = config;
-
-  const {
-    tandcSchema,
-    loginSchema,
-    registerSchema,
-    forgotSchema,
-    resetSchema,
-    detailsSchema,
-    deleteSchema
-  } = schemas;
-
-  const {
-    tandc = "/policy/tandc",
-    login = "/auth/login",
-    register = "/auth/register",
-    forgot = "/auth/forgot",
-    reset = (req) => `/auth/reset/${req.params.token}`,
-    details = "/auth/details",
-    deletePath = "/auth/details",
-  } = routePaths;
-
-  const JoiFlashError = (error, req, res, next, url) => {
-    if (error) {
-      const msg = error.details.map((el) => el.message).join(",");
-      if (process.env.NODE_ENV !== "production") {
-        req.flash("error", `${msg}`);
-      } else if (msg.includes("must not include HTML!")) {
-        req.flash("error", "No HTML allowed, this includes, &, <, > ...");
-      } else {
-        req.flash(
-          "error",
-          "There has been a validation error, please try again.",
-        );
-      }
-      return res.redirect(`${url}`);
+const JoiFlashError = (error, req, res, next, url) => {
+  if (error) {
+    const msg = error.details.map((el) => el.message).join(",");
+    if (process.env.NODE_ENV !== "production") {
+      req.flash("error", `${msg}`);
+    } else if (msg.includes("must not include HTML!")) {
+      req.flash("error", "No HTML allowed, this includes, &, <, > ...");
     } else {
-      return next();
+      req.flash(
+        "error",
+        "There has been a validation error, please try again.",
+      );
     }
-  };
+    return res.redirect(`${url}`);
+  } else {
+    return next();
+  }
+};
+
+export function createPolicyMiddleware(config = {}) {
+  const { schemas = {}, routePaths = {} } = config;
+  const { tandcSchema } = schemas;
+  const { tandc = "/policy/tandc" } = routePaths;
 
   const middleware = {};
 
@@ -50,6 +32,32 @@ export function createMiddleware(config = {}) {
       JoiFlashError(error, req, res, next, tandc);
     });
   }
+
+  return middleware;
+}
+
+export function createAuthMiddleware(config = {}) {
+  const { schemas = {}, routePaths = {} } = config;
+
+  const {
+    loginSchema,
+    registerSchema,
+    forgotSchema,
+    resetSchema,
+    detailsSchema,
+    deleteSchema,
+  } = schemas;
+
+  const {
+    login = "/auth/login",
+    register = "/auth/register",
+    forgot = "/auth/forgot",
+    reset = (req) => `/auth/reset/${req.params.token}`,
+    details = "/auth/details",
+    deletePath = "/auth/details",
+  } = routePaths;
+
+  const middleware = {};
 
   if (loginSchema) {
     middleware.validateLogin = (req, res, next) => {
@@ -132,6 +140,7 @@ export function createMiddleware(config = {}) {
   return middleware;
 }
 
-export const createAuthMiddleware = createMiddleware;
-
-export default createMiddleware;
+export default {
+  createPolicyMiddleware,
+  createAuthMiddleware,
+};

@@ -1,7 +1,9 @@
-import { createAuthMiddleware } from "@longrunner/shared-middleware";
-import { tandcSchema } from "@longrunner/shared-schemas";
+import { createPolicyMiddleware } from "@longrunner/shared-middleware";
+import { createPolicySchemas } from "@longrunner/shared-schemas";
 
-const middleware = createAuthMiddleware({
+const { tandcSchema } = createPolicySchemas();
+
+const middleware = createPolicyMiddleware({
   schemas: {
     tandcSchema,
   },

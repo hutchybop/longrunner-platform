@@ -1,27 +1,40 @@
-import { createAuthMiddleware } from "@longrunner/shared-middleware";
+import {
+  createPolicyMiddleware,
+  createAuthMiddleware,
+} from "@longrunner/shared-middleware";
+import {
+  createPolicySchemas,
+  createAuthSchemas,
+} from "@longrunner/shared-schemas";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import {
-  tandcSchema,
-  loginSchema,
-  registerSchema,
-  forgotSchema,
-  resetSchema,
-  detailsSchema,
-  deleteSchema,
   mealSchema,
   ingredientSchema,
   defaultSchema,
   shoppingListMealsSchema,
   categorySchema,
   shoppingListIngredientsSchema,
-} from "@longrunner/shared-schemas";
+} from "../models/schemas.js";
 import { Meal } from "../models/meal.js";
 import { Ingredient } from "../models/ingredient.js";
 import { ShoppingList } from "../models/shoppingList.js";
 
+const { tandcSchema } = createPolicySchemas();
+const {
+  loginSchema,
+  registerSchema,
+  forgotSchema,
+  resetSchema,
+  detailsSchema,
+  deleteSchema,
+} = createAuthSchemas();
+
+const policyMiddleware = createPolicyMiddleware({
+  schemas: { tandcSchema },
+});
+
 const authMiddleware = createAuthMiddleware({
   schemas: {
-    tandcSchema,
     loginSchema,
     registerSchema,
     forgotSchema,
@@ -34,8 +47,8 @@ const authMiddleware = createAuthMiddleware({
   },
 });
 
+export const { validateTandC } = policyMiddleware;
 export const {
-  validateTandC,
   validateLogin,
   validateRegister,
   validateForgot,
