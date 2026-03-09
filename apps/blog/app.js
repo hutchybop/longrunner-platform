@@ -76,7 +76,7 @@ import {
   isReviewAuthor,
   isAdmin,
 } from "./utils/middleware.js";
-import { boilerplateHelper } from "./utils/boilerplateHelper.js";
+import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
 
 // Setting up the app
 const app = express();
@@ -137,8 +137,12 @@ app.use(
   express.static(path.join(sharedPolicyRoot, "public")),
 );
 app.use(
-  "/javascripts/shared-ui",
-  express.static(path.join(sharedUiRoot, "public")),
+  "/javascripts/shared-ui/javascripts",
+  express.static(path.join(sharedUiRoot, "public", "javascripts")),
+);
+app.use(
+  "/stylesheets/shared-ui/stylesheets",
+  express.static(path.join(sharedUiRoot, "public", "stylesheets")),
 );
 
 // Helps to stop mongo injection by not allowing certain characters in the query string
@@ -167,7 +171,19 @@ app.use(back()); // Allows back-to-last-page links
 app.use(populateUser); // Custom authentication middleware to populate user from session
 app.use(compression()); // Compression to make website run quicker
 app.use(generalLimiter); // Apply general rate limiting to all requests
-app.use(boilerplateHelper()); // Helper for app specific meta-data and navbar/footer
+app.use(
+  boilerplateHelper({
+    appRoot: __dirname,
+    meta: {
+      metaTitle: "MY IRONMAN BLOG - From start to finish, follow my journey.",
+      metaDescription:
+        "A blog about my Ironman triathlon journey. Follow me from my first day of training to the big day. I discuss nutrition, training plans, triathlon kit and ups and downs.",
+      metaKeywords:
+        "Ironman, Ironman Blog, training plan, triathlon, journey, nutrition, cycling, swim, run, shopping list",
+      metaAuthor: "Chris Hutchinson",
+    },
+  }),
+); // Helper for app specific meta-data and navbar/footer
 
 // Middleware to set local variables and handle user session data
 app.use(async (req, res, next) => {

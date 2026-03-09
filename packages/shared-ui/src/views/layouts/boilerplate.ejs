@@ -75,6 +75,16 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
     />
 
+    <%
+      const uiIncludes = typeof includes !== "undefined" && includes ? includes : {};
+      const boilerplateScript =
+        uiIncludes.boilerplateScript ||
+        "/javascripts/shared-ui/javascripts/boilerplate.js";
+      const boilerplateCss =
+        uiIncludes.boilerplateCss ||
+        "/stylesheets/shared-ui/stylesheets/boilerplate.css";
+    %>
+
     <!-- Personal CSS -->
     <% if (typeof css_page !== 'undefined') { %>
       <link
@@ -87,7 +97,7 @@
     <link
       rel="stylesheet"
       type="text/css"
-      href="/stylesheets/boilerplate.css"
+      href="<%= boilerplateCss %>"
     />
 
     <!-- Google Fonts -->
@@ -99,13 +109,6 @@
   </head>
 
   <body class="d-flex flex-column vh-100">
-
-    <%
-      const uiIncludes = typeof includes !== "undefined" && includes ? includes : {};
-      const boilerplateScript =
-        uiIncludes.boilerplateScript ||
-        "/javascripts/shared-ui/javascripts/boilerplate.js";
-    %>
 
     <% if (uiIncludes.navbar) { %>
       <%- include(uiIncludes.navbar) %>

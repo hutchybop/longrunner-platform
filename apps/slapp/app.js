@@ -79,7 +79,7 @@ import {
   isAuthorIngredient,
   isAuthorShoppingList,
 } from "./utils/middleware.js";
-import { boilerplateHelper } from "./utils/boilerplateHelper.js";
+import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
 
 const app = express();
 app.locals.User = User;
@@ -132,8 +132,12 @@ app.use(
   express.static(path.join(sharedPolicyRoot, "public")),
 );
 app.use(
-  "/javascripts/shared-ui",
-  express.static(path.join(sharedUiRoot, "public")),
+  "/javascripts/shared-ui/javascripts",
+  express.static(path.join(sharedUiRoot, "public", "javascripts")),
+);
+app.use(
+  "/stylesheets/shared-ui/stylesheets",
+  express.static(path.join(sharedUiRoot, "public", "stylesheets")),
 );
 
 app.use((req, res, next) => {
@@ -158,7 +162,19 @@ app.use(back());
 app.use(populateUser);
 app.use(compression());
 app.use(generalLimiter);
-app.use(boilerplateHelper());
+app.use(
+  boilerplateHelper({
+    appRoot: __dirname,
+    meta: {
+      metaTitle: "Shopping List App. - Weekly shopping list creator",
+      metaDescription:
+        "Create meals, add ingredients and recipes, choose weekly a weekly meal plan and create your shopping list.",
+      metaKeywords:
+        "shooping, shopping list, meals, receipes, ingredients, food, groceries, grocery list, grocery",
+      metaAuthor: "Chris Hutchinson",
+    },
+  }),
+);
 
 app.use(async (req, res, next) => {
   res.locals.currentUser = req.user;

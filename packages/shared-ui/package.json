@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "type": "module",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./boilerplateHelper": "./src/boilerplateHelper.js",
+    "./boilerplateHelper.js": "./src/boilerplateHelper.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

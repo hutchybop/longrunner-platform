@@ -39,7 +39,7 @@ import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
 import * as longrunner from "./controllers/longrunner.js";
 import { validateTandC } from "./utils/middleware.js";
-import { boilerplateHelper } from "./utils/boilerplateHelper.js";
+import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
 
 const app = express();
 
@@ -72,8 +72,12 @@ app.use(
   express.static(path.join(sharedPolicyRoot, "public")),
 );
 app.use(
-  "/javascripts/shared-ui",
-  express.static(path.join(sharedUiRoot, "public")),
+  "/javascripts/shared-ui/javascripts",
+  express.static(path.join(sharedUiRoot, "public", "javascripts")),
+);
+app.use(
+  "/stylesheets/shared-ui/stylesheets",
+  express.static(path.join(sharedUiRoot, "public", "stylesheets")),
 );
 
 app.use(helmet(createHelmetConfig()));
@@ -96,7 +100,18 @@ app.use(back());
 
 app.use(compression());
 app.use(generalLimiter);
-app.use(boilerplateHelper());
+app.use(
+  boilerplateHelper({
+    appRoot: __dirname,
+    meta: {
+      metaTitle: "longrunner.co.uk landing page",
+      metaDescription:
+        "longrunner.co.uk is a landing page that links to the longrunner app ecosystem, including the shopping list app, quiz app, and blog app",
+      metaKeywords: "Landing, Navigation, slapp, quiz, blog",
+      metaAuthor: "Chris Hutchinson",
+    },
+  }),
+);
 
 app.get("/policy/cookie-policy", policy.cookiePolicy);
 app.get("/policy/tandc", recaptcha.middleware.render, policy.tandc);
