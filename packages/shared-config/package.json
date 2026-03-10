@@ -6,6 +6,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.js",
-    "./index.js": "./src/index.js"
+    "./index.js": "./src/index.js",
+    "./eslint": "./src/eslint.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1"
   }
 }

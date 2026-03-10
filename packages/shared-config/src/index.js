@@ -1,3 +1,43 @@
+import fs from "node:fs";
+import path from "node:path";
+import dotenv from "dotenv";
+import { createAppEslintConfig } from "./eslint.js";
+
+export function loadAppEnv(config = {}) {
+  const {
+    appRoot,
+    sharedEnvFile = ".env.shared",
+    appEnvFile = ".env",
+  } = config;
+
+  if (!appRoot) {
+    throw new Error("loadAppEnv requires appRoot");
+  }
+
+  const repoRoot = path.resolve(appRoot, "../..");
+  const sharedPath = path.join(repoRoot, sharedEnvFile);
+  const appPath = path.join(appRoot, appEnvFile);
+
+  const readEnv = (filePath) => {
+    if (!fs.existsSync(filePath)) {
+      return {};
+    }
+
+    return dotenv.parse(fs.readFileSync(filePath));
+  };
+
+  const merged = {
+    ...readEnv(sharedPath),
+    ...readEnv(appPath),
+  };
+
+  for (const [key, value] of Object.entries(merged)) {
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
 export function createMongoDbUrl(config = {}) {
   const {
     username = "hutch",
@@ -40,7 +80,9 @@ export function createSessionConfig(config = {}) {
   }
 
   if (!MongoStore || typeof MongoStore.create !== "function") {
-    throw new Error("createSessionConfig requires MongoStore with create() method");
+    throw new Error(
+      "createSessionConfig requires MongoStore with create() method",
+    );
   }
 
   return {
@@ -140,7 +182,13 @@ export function createHelmetConfig(config = {}) {
       directives: {
         defaultSrc: ["'self'", "*"],
         connectSrc: ["'self'", "*", ...connectSrcUrls],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*", ...scriptSrcUrls],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          "*",
+          ...scriptSrcUrls,
+        ],
         styleSrc: ["'self'", "'unsafe-inline'", "*", ...styleSrcUrls],
         workerSrc: ["'self'", "blob:"],
         objectSrc: ["'self'", "*"],
@@ -161,8 +209,12 @@ export function createHelmetConfig(config = {}) {
 }
 
 export default {
+  loadAppEnv,
   createMongoDbUrl,
   createSessionConfig,
   createCspSources,
   createHelmetConfig,
+  createAppEslintConfig,
 };
+
+export { createAppEslintConfig };

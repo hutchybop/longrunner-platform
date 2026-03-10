@@ -50,4 +50,9 @@ const formSubmissionLimiter = createLimiter({
     req.user ? `user_${req.user._id}` : ipKeyGenerator(req),
 });
 
-export { generalLimiter, authLimiter, passwordResetLimiter, formSubmissionLimiter };
+export {
+  generalLimiter,
+  authLimiter,
+  passwordResetLimiter,
+  formSubmissionLimiter,
+};

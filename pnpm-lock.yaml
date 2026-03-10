@@ -6,13 +6,30 @@ settings:
 
 importers:
 
-  .: {}
-
-  apps/blog:
+  .:
     dependencies:
+      '@longrunner/shared-config':
+        specifier: workspace:*
+        version: link:packages/shared-config
+    devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.0.3)
+      eslint:
+        specifier: ^10.0.2
+        version: 10.0.3
+      eslint-config-prettier:
+        specifier: ^10.1.8
+        version: 10.1.8(eslint@10.0.3)
+      eslint-plugin-prettier:
+        specifier: ^5.5.5
+        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.3))(eslint@10.0.3)(prettier@3.8.1)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
+
+  apps/blog:
+    dependencies:
       '@longrunner/shared-auth':
         specifier: workspace:*
         version: link:../../packages/shared-auth
@@ -43,9 +60,6 @@ importers:
       connect-mongo:
         specifier: ^6.0.0
         version: 6.0.0(express-session@1.19.0)(mongodb@7.1.0)
-      dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
       ejs:
         specifier: ^4.0.1
         version: 4.0.1
@@ -82,19 +96,6 @@ importers:
       serve-favicon:
         specifier: ^2.5.1
         version: 2.5.1
-    devDependencies:
-      eslint:
-        specifier: ^10.0.2
-        version: 10.0.3
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@10.0.3)
-      eslint-plugin-prettier:
-        specifier: ^5.5.5
-        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.3))(eslint@10.0.3)(prettier@3.8.1)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
 
   apps/landing:
     dependencies:
@@ -119,9 +120,6 @@ importers:
       compression:
         specifier: ^1.8.1
         version: 1.8.1
-      dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
       ejs:
         specifier: ^4.0.1
         version: 4.0.1
@@ -146,31 +144,12 @@ importers:
       serve-favicon:
         specifier: ^2.5.1
         version: 2.5.1
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.0.0
-        version: 9.39.4
-      eslint:
-        specifier: ^10.0.2
-        version: 10.0.3
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@10.0.3)
-      eslint-plugin-prettier:
-        specifier: ^5.5.5
-        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.3))(eslint@10.0.3)(prettier@3.8.1)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
 
   apps/quiz:
     dependencies:
       '@codecorn/connect-flash-new':
         specifier: ^1.0.4
         version: 1.0.4
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@10.0.3)
       '@longrunner/shared-auth':
         specifier: workspace:*
         version: link:../../packages/shared-auth
@@ -204,9 +183,6 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3
-      dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
       ejs-mate:
         specifier: ^4.0.0
         version: 4.0.0
@@ -261,19 +237,6 @@ importers:
       socket.io:
         specifier: ^4.8.3
         version: 4.8.3
-    devDependencies:
-      eslint:
-        specifier: ^10.0.2
-        version: 10.0.3
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@10.0.3)
-      eslint-plugin-prettier:
-        specifier: ^5.5.5
-        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.3))(eslint@10.0.3)(prettier@3.8.1)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
 
   apps/slapp:
     dependencies:
@@ -310,9 +273,6 @@ importers:
       connect-mongo:
         specifier: ^6.0.0
         version: 6.0.0(express-session@1.19.0)(mongodb@7.1.0)
-      dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
       ejs:
         specifier: ^4.0.1
         version: 4.0.1
@@ -349,22 +309,6 @@ importers:
       serve-favicon:
         specifier: ^2.5.1
         version: 2.5.1
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.39.3
-        version: 9.39.4
-      eslint:
-        specifier: ^10.0.2
-        version: 10.0.3
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@10.0.3)
-      eslint-plugin-prettier:
-        specifier: ^5.5.5
-        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.3))(eslint@10.0.3)(prettier@3.8.1)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
 
   packages/shared-auth:
     dependencies:
@@ -381,7 +325,11 @@ importers:
         specifier: ^9.2.3
         version: 9.2.4
 
-  packages/shared-config: {}
+  packages/shared-config:
+    dependencies:
+      dotenv:
+        specifier: ^17.3.1
+        version: 17.3.1
 
   packages/shared-middleware:
     dependencies:
@@ -426,6 +374,9 @@ importers:
       nodemailer:
         specifier: ^8.0.1
         version: 8.0.1
+      sanitize-html:
+        specifier: ^2.17.0
+        version: 2.17.1
 
 packages:
 
@@ -462,10 +413,6 @@ packages:
     peerDependenciesMeta:
       eslint:
         optional: true
-
-  '@eslint/js@9.39.4':
-    resolution: {integrity: sha512-nE7DEIchvtiFTwBw4Lfbu59PG+kCofhjsKaCWzxTpt4lfRjRMqG6uMBzKXuEcyXhOHoUp9riAm7/aWYGhXZ9cw==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/object-schema@3.0.3':
     resolution: {integrity: sha512-iM869Pugn9Nsxbh/YHRqYiqd23AmIbxJOcpUMOuWCVNdoQJ5ZtwL6h3t0bcZzJUlC3Dq9jCFCESBZnX0GTv7iQ==}
@@ -1575,8 +1522,6 @@ snapshots:
   '@eslint/js@10.0.1(eslint@10.0.3)':
     optionalDependencies:
       eslint: 10.0.3
-
-  '@eslint/js@9.39.4': {}
 
   '@eslint/object-schema@3.0.3': {}
 

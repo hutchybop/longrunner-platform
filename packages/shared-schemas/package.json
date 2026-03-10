@@ -8,6 +8,10 @@
     ".": "./src/index.js",
     "./index.js": "./src/index.js"
   },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
   "dependencies": {
     "joi": "^18.0.2",
     "sanitize-html": "^2.17.1"

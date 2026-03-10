@@ -26,7 +26,9 @@ export function createPolicyController(config = {}) {
     const isLoggedIn = Boolean(req.user);
     return {
       backHref: isLoggedIn ? resolvedBackLinks.user : resolvedBackLinks.guest,
-      backLabel: isLoggedIn ? resolvedBackLabels.user : resolvedBackLabels.guest,
+      backLabel: isLoggedIn
+        ? resolvedBackLabels.user
+        : resolvedBackLabels.guest,
     };
   };
 
@@ -40,10 +42,8 @@ export function createPolicyController(config = {}) {
       "Content is provided for informational purposes only. We make no warranties or representations regarding accuracy, completeness, or suitability.",
     contentDisclaimerSecondary:
       "You are responsible for how you use information and features provided on this website.",
-    intellectualProperty:
-      `The content, design, and code of ${domain} are owned by the website creator. You may not reproduce, distribute, or use any part of the website or its content without prior written consent.`,
-    limitationOfLiability:
-      `${domain} is provided on an "as is" basis. We make no warranties or representations, express or implied, regarding the website's availability, functionality, or accuracy of content. We are not liable for any direct, indirect, incidental, or consequential damages arising from your use of the website. Additionally, the website may be taken down or modified at any time without prior notice, and you should not rely on its continued availability.`,
+    intellectualProperty: `The content, design, and code of ${domain} are owned by the website creator. You may not reproduce, distribute, or use any part of the website or its content without prior written consent.`,
+    limitationOfLiability: `${domain} is provided on an "as is" basis. We make no warranties or representations, express or implied, regarding the website's availability, functionality, or accuracy of content. We are not liable for any direct, indirect, incidental, or consequential damages arising from your use of the website. Additionally, the website may be taken down or modified at any time without prior notice, and you should not rely on its continued availability.`,
     cookieName: "session",
     cookiePurpose:
       "This cookie keeps the user logged in and maintains their session across different pages.",

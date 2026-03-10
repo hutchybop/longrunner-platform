@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -17,6 +15,7 @@ import favicon from "serve-favicon";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+loadAppEnv({ appRoot: __dirname });
 const require = createRequire(import.meta.url);
 const sharedAuthRoot = path.resolve(
   path.dirname(require.resolve("@longrunner/shared-auth/user.js")),
@@ -47,6 +46,7 @@ import {
   createMongoDbUrl,
   createSessionConfig,
   createHelmetConfig,
+  loadAppEnv,
 } from "@longrunner/shared-config";
 import { authenticateUser, loginUser } from "@longrunner/shared-auth/auth.js";
 import flash from "@longrunner/shared-utils/flash.js";

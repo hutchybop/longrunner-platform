@@ -7,8 +7,8 @@ export function createUsersController(config = {}) {
     domain = "longrunner.co.uk",
     assetsPrefix = "shared-auth",
     onRegister = async () => {},
-    onDelete = async (userId) => {},
-    protectedUsername = null
+    onDelete = async () => {},
+    protectedUsername = null,
   } = config;
 
   return {
@@ -94,7 +94,8 @@ export function createUsersController(config = {}) {
 
       if (foundUser) {
         foundUser.resetPasswordToken = token;
-        foundUser.resetPasswordExpires = PasswordUtils.generateResetTokenExpiry();
+        foundUser.resetPasswordExpires =
+          PasswordUtils.generateResetTokenExpiry();
         if (foundUser.resetPasswordUsed !== undefined) {
           foundUser.resetPasswordUsed = false;
         }
@@ -125,13 +126,13 @@ export function createUsersController(config = {}) {
         resetPasswordToken: req.params.token,
         resetPasswordExpires: { $gt: new Date() },
       };
-      
+
       if (User.schema.paths.resetPasswordUsed) {
         query.resetPasswordUsed = { $ne: true };
       }
 
       const foundUser = await User.findOne(query);
-      
+
       if (!foundUser) {
         req.flash(
           "error",
@@ -153,7 +154,7 @@ export function createUsersController(config = {}) {
           resetPasswordToken: req.params.token,
           resetPasswordExpires: { $gt: new Date() },
         };
-        
+
         if (User.schema.paths.resetPasswordUsed) {
           query.resetPasswordUsed = { $ne: true };
         }
@@ -173,7 +174,9 @@ export function createUsersController(config = {}) {
           return res.redirect("back");
         }
 
-        foundUser.password = await PasswordUtils.hashPassword(req.body.password);
+        foundUser.password = await PasswordUtils.hashPassword(
+          req.body.password,
+        );
         foundUser.resetPasswordToken = undefined;
         foundUser.resetPasswordExpires = undefined;
         if (foundUser.resetPasswordUsed !== undefined) {
@@ -220,7 +223,9 @@ export function createUsersController(config = {}) {
         const User = req.app.locals.User;
 
         const foundEmail = await User.findOne({ email: req.body.email });
-        const foundUsername = await User.findOne({ username: req.body.username });
+        const foundUsername = await User.findOne({
+          username: req.body.username,
+        });
 
         if (foundEmail != null) {
           if (foundEmail.id != id) {
@@ -341,7 +346,7 @@ export function createUsersController(config = {}) {
         req.flash("error", "Incorrect password, please try again");
         res.redirect("/auth/deletepre");
       }
-    }
+    },
   };
 }
 

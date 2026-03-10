@@ -1,0 +1,105 @@
+import js from "@eslint/js";
+import prettier from "eslint-config-prettier";
+import pluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import { createAppEslintConfig } from "@longrunner/shared-config";
+
+export default [
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "apps/landing",
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "apps/slapp",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "apps/blog",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "apps/quiz",
+    includeSharedBase: false,
+    browserGlobals: {
+      fetch: "readonly",
+      alert: "readonly",
+      setInterval: "readonly",
+      clearInterval: "readonly",
+      io: "readonly",
+      socket: "writable",
+      userData: "writable",
+      quizCode: "writable",
+      questions: "writable",
+      users: "writable",
+      usersSubmitted: "writable",
+      isQuizCode: "writable",
+      joinFunc: "writable",
+      isDupe: "writable",
+      isJoin: "writable",
+      a: "writable",
+    },
+    nodeGlobals: {
+      require: "readonly",
+      module: "readonly",
+    },
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-auth",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-config",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-middleware",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-policy",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-schemas",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-ui",
+    includeSharedBase: false,
+  }),
+  ...createAppEslintConfig({
+    js,
+    prettier,
+    pluginPrettierRecommended,
+    appRoot: "packages/shared-utils",
+    includeSharedBase: false,
+  }),
+];

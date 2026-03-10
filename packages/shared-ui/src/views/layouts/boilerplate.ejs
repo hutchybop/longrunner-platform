@@ -116,11 +116,11 @@
 
     <%- include("../partials/cookieAlert") %>
 
-    <% if (uiIncludes.misc) { %>
-      <%- include(uiIncludes.misc) %>
-    <% } %>
-
     <main class="container mt-3" id="page_padding">
+      <% if (uiIncludes.misc) { %>
+        <%- include(uiIncludes.misc) %>
+      <% } %>
+
       <%- include("../partials/flash") %>
       <%- body %>
     </main>

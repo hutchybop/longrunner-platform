@@ -4,6 +4,8 @@ node_modules/
 
 # environment variables
 .env*
+!.env.example
+!.env.shared.example
 
 # logs
 output*.txt

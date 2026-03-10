@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,6 +12,7 @@ import favicon from "serve-favicon";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+loadAppEnv({ appRoot: __dirname });
 const require = createRequire(import.meta.url);
 const sharedPolicyRoot = path.resolve(
   path.dirname(require.resolve("@longrunner/shared-policy")),
@@ -33,7 +32,7 @@ import {
   generalLimiter,
   formSubmissionLimiter,
 } from "@longrunner/shared-utils/rateLimiter.js";
-import { createHelmetConfig } from "@longrunner/shared-config";
+import { createHelmetConfig, loadAppEnv } from "@longrunner/shared-config";
 import flash from "@longrunner/shared-utils/flash.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";

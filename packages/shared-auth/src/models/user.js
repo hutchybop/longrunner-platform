@@ -11,7 +11,7 @@ export function createUserSchema(config = {}) {
     hasRole = false,
     hasResetPasswordUsed = false,
     roleEnum = ["user"],
-    roleDefault = "user"
+    roleDefault = "user",
   } = config;
 
   const schemaDefinition = {

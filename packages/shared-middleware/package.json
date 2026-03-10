@@ -8,6 +8,10 @@
     ".": "./src/index.js",
     "./index.js": "./src/index.js"
   },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
   "dependencies": {
     "@longrunner/shared-utils": "workspace:*"
   },

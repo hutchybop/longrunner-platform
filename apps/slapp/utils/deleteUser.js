@@ -1,14 +1,18 @@
 import readline from "readline";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import User from "../models/user.js";
 import { Meal } from "../models/meal.js";
 import { Ingredient } from "../models/ingredient.js";
 import { ShoppingList } from "../models/shoppingList.js";
 import { Category } from "../models/category.js";
+import { loadAppEnv } from "@longrunner/shared-config";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+loadAppEnv({ appRoot: path.resolve(__dirname, "..") });
 
 const dbName = "slapp";
 const dbUrl =
