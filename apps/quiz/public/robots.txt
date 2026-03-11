@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://quiz.longrunner.co.uk/sitemap.xml
+
+# Disallow non-indexable app flows
+Disallow: /api/
+Disallow: /lobby
+Disallow: /quiz
+Disallow: /finish
+Disallow: /quiz-kick-user
+Disallow: /reset-user
+Disallow: /reset-quiz
+
+# Disallow temporary test routes
+Disallow: /test-error

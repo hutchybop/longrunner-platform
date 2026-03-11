@@ -1,0 +1,99 @@
+<% layout('layouts/boilerplate')%>
+<div class="container mt-3 ms-2 mb-3">
+    <div class="row">
+        <div class="col-lg-6 mb-2">
+            <h1>The longrunner Quiz</h1>
+            <h2>Quiz Code: <strong><%= userData.quizCode %></strong></h2>
+            <div class="mt-3">
+                <p id="catDiff">Category: <span id="cat" class="addBold"> <%= questions[userData.questionNumber - 1].category %></span></p>
+                <p>Difficulty: <span id="diff" class="addBold"><%= questions[userData.questionNumber - 1].difficulty %></span></p>
+            </div>
+            <h4>Question <span><%= userData.questionNumber %></span>: <span id='questNum' class="addBold"><%= questions[userData.questionNumber - 1].question %></span></h4>
+            <h3 id="question" class="addBold"></h3>
+            <h3>Answers:</h3>
+
+            <div class="form-check ps-5">
+                <div class="mb-3">
+                    <input class="form-check-input checkboxes" type="checkbox" name="answer" id="ansOne">
+                    <label class="form-check-label strikethrough ps-2" for="one" id="labelOne">
+                        <h4>A: <span id="multiOne" class="addBold"></span></h4>
+                    </label>
+                </div>
+                <div class="mb-3">
+                    <input class="form-check-input checkboxes" type="checkbox" name="answer" id="ansTwo">
+                    <label class="form-check-label strikethrough ps-2" for="two" id="labelTwo">
+                        <h4>B: <span id="multiTwo" class="addBold"></span></h4>
+                    </label>
+                </div>
+                <div class="mb-3">
+                    <input class="form-check-input checkboxes" type="checkbox" name="answer" id="ansThree">
+                    <label class="form-check-label strikethrough ps-2" for="three" id="labelThree">
+                        <h4>C: <span id="multiThree" class="addBold"></span></h4>
+                    </label>
+                </div>
+                <div class="mb-3">
+                    <input class="form-check-input checkboxes" type="checkbox" name="answer" id="ansFour">
+                    <label class="form-check-label strikethrough ps-2" for="four" id="labelFour">
+                        <h4>D: <span id="multiFour" class="addBold"></span></h4>
+                    </label>
+                </div>
+            </div>
+
+            <div id="correctAnsDiv">
+                <h4>Correct Answer: <span id="correctAns"></span></h4>
+            </div>
+            
+
+
+            <div class="d-flex">
+                <div class="me-auto">
+                    <button id="submitBtn" class="btn btn-success">Submit Answer</button>
+                </div>
+                <div>
+                    <button id="showBtn" class="btn btn-info">Show Answer</button>
+                </div>
+                <div>
+                    <button id="nextBtn" class="btn btn-primary">Next Question</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mt-3 mb-3" id="submittedDiv">
+            <div  class="card" style="width: 18rem;">
+                <div class="card-header">
+                    <h3>Users Submitted...</h3>
+                </div>
+                <ul id="submittedUl" class="list-group list-group-flush"></ul>
+                <% for(const u of usersSubmitted) { %>
+                    <li class="list-group-item"><%= u %></li>
+                <% } %>
+            </div>
+
+            <% if(userData.quizMaster == true && users.length > 1){ %>
+            <div  class="card mt-4" style="width: 18rem;">
+                <form id='kickUser' action="/quiz-kick-user?_method=PATCH" method='Post' class='content p-2'>
+                    <label class="mb-2 quest" for="diffSelection">Kick a User</label>
+                    <select class="form-select mb-2" id="usersToKick" name="kickUser">
+                        <% for(const u of users) { %>
+                            <% if(u.userName !== userData.userName) { %>
+                            <option value=<%= u.userName %>><%= u.userName %></option>
+                            <% } %>
+                        <% } %>
+                    </select> 
+                    <button type="submit" class="btn btn-danger mt-1">Kick</button> 
+                </form>    
+            </div>
+            <% } %>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = <%- JSON.stringify(questions) %>;
+    const userData = <%- JSON.stringify(userData) %>;
+    const users = <%- JSON.stringify(users) %>;
+    const usersSubmitted = <%- JSON.stringify(usersSubmitted) %>;
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/javascripts/socket.js"></script>

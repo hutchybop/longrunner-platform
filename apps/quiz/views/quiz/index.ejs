@@ -1,0 +1,120 @@
+<% layout('layouts/boilerplate')%>
+
+<!-- Policy buttons -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <a id="cookiePolicyBtn" class="btn btn-info btn-sm" href="/policy/cookie-policy#cookieTop">Cookie Policy</a>
+            <a id="tandcBtn" class="btn btn-info btn-sm" href="/policy/tandc">T&Cs</a>
+            <a id="contact" class="btn btn-info btn-sm" href="/policy/tandc#contactForm">Contact</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main container -->
+<section class="d-flex align-items-center justify-content-center min-vh-100">
+    <div class="d-flex flex-column">
+        <h1 class="content align-self-center text-center p-2">
+            Welcome to the longrunner Quiz!
+        </h1>
+        <!-- User choice buttons -->
+        <div class="d-flex justify-content-evenly">
+            <div>
+                <button id="newBtn" class="btn btn-success btn-lg">Start a New Quiz</button>
+            </div>
+            <div>
+                <button id="joinBtn" class="btn btn-primary btn-lg">Join a Quiz</button>
+            </div>
+        </div>
+
+
+        <!-- New quiz options -->
+        <div id="showNewQuiz">
+            <form id='lobbyNew' action="/lobby-new" method='post' class='content validated-form p-2' novalidate>
+
+                <div class='mb-3'>
+                    <label for="userNameNewInput" class="form-label text-center">Enter Your Username</label>
+                    <input type="text" id="userNameNewInput" name="userNameNew" class="form-control" required>
+                    <div class="invalid-feedback">
+                        Please provide a username.
+                    </div>
+                </div>
+
+                <div class="row">
+
+                    <div class="col">
+                        <label class="mb-2 quest text-nowrap" for="amountSelection">No. of Questions:</label>
+                        <select class="form-select mb-2" id="amountSelection" name="amount">
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                            <option value="40">40</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+
+                    <div class="col">
+                        <label class="mb-2 quest" for="diffSelection">Difficulty:</label>
+                        <select class="form-select mb-2" id="diffSelection" name="diff">
+                            <option value="easy" selected>Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="easy,medium">Easy & Medium</option>
+                            <option value="easy,medium,hard">Easy, Medium & Hard</option>
+                            <option value="medium,hard">Medium & Hard</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="form-check mt-3 d-inline-flex align-items-center gap-2 text-start">
+                    <input class="form-check-input checkboxes m-0" type="checkbox" name="auto" id="autoCheckBox" checked>
+                    <label class="form-check-label m-0" for="autoCheckBox">
+                        AutoMode
+                    </label>
+                </div>
+
+                <div class="mt-3">
+                    <button id="lobbyBtnNew" type="submit" class="btn btn-success me-1">Start</button>
+                    <button id="cancelBtnNew" class="btn btn-danger ms-1">Cancel</button>
+                </div>
+
+            </form>
+        </div>
+            
+        <!-- Join quiz options -->
+        <div id="showJoinQuiz">
+            <form id='lobbyJoin' action="/lobby-join" method='post' class='content validated-form p-2' novalidate>
+                <div class='mb-3'>
+                    <label for="quizCodeInput" class="form-label text-center">Enter the quiz code</label>
+                    <input type="text" id="quizCodeInput" name="quizCode" class="form-control" required>
+                    <div class="invalid-feedback">
+                        Please provide a quizCode.
+                    </div>
+                </div>
+                <div class='mb-3'>
+                    <label for="userNameJoinInput" class="form-label text-center">Enter Your Username</label>
+                    <input type="text" id="userNameJoinInput" name="userNameJoin" class="form-control" required>
+                    <div class="invalid-feedback">
+                        Please provide a username.
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button id="lobbyBtnJoin" type="submit" class="btn btn-success me-1">Start</button>
+                    <button id="cancelBtnJoin" class="btn btn-danger ms-1">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+
+<script>
+
+    // Variable sent from index controller. Need to be defined here as won't work in .js file
+    const isQuizCode = '<%- isQuizCode %>'
+    const isDupe = '<%- isDupe %>'
+    const quizCode = '<%- quizCode %>'
+    const isJoin = '<%- isJoin %>'
+
+</script>

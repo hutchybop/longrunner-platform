@@ -1,0 +1,11 @@
+  <% if(userData && userData.quizMaster == true){ %>
+    <!-- Lets the QuizMaster reset the Quiz -->
+    <form id='resetQuiz' action="/reset-quiz?_method=DELETE" method='post'>
+      <button id="resetQuizBtn" class="btn btn-danger mb-3 mt-4 ms-3">Reset Quiz</button>
+    </form>
+  <% }else if(userData && userData.quizMaster != true) { %>
+    <!-- Lets all other users leave the Quiz -->
+    <form id='resetUser' action="/reset-user?_method=PATCH" method='post'>
+      <button id="resetUserBtn" class="btn btn-danger mb-3 mt-4 ms-3">Leave Quiz</button>
+    </form>
+  <% } %>

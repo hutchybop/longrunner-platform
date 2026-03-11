@@ -1,0 +1,27 @@
+body {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+      url("/images/finish.jpg");
+    background-size: cover;
+    background-position: center;
+    color: rgba(0, 0, 0);
+}
+
+.card {
+    opacity: 0.5;
+}
+
+#title {
+  color: #ffffff;
+}
+
+.highlight {
+  color: rgb(27, 88, 53);
+  font-weight: bold;
+  font-size: xx-large;
+}
+
+.highlightPer {
+  color: rgb(27, 88, 53);
+  font-weight: bold;
+  font-size: x-large;
+}

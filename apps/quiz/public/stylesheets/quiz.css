@@ -1,0 +1,41 @@
+body {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+      url("/images/quiz.jpg");
+    background-size: cover;
+    background-position: center;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+input[type="checkbox"]:checked + label.strikethrough {
+    text-decoration: underline;
+    color: rgba(0, 255, 0, 0.9);
+}
+
+
+input.form-check-input {
+    width: 20px;
+    height: 25px;
+}
+
+#catDiff {
+    margin: 0em;
+}
+
+.addBold {
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.card {
+    opacity: 0.7;
+    color: rgba(0, 0, 0, 0.9);
+}
+
+#showBtn, #nextBtn, #correctAnsDiv {
+    display: none;
+}
+
+#correctAns {
+    font-size: 1.5em;
+    color: rgba(0, 255, 0, 0.9);
+}

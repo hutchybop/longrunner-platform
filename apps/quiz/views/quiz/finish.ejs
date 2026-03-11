@@ -1,0 +1,30 @@
+<% layout('layouts/boilerplate')%>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 id="title">The Results are in, how did you do..?</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <% for (const u of userScores) { %>
+            <div class="col-lg-4">
+                <div class="card mt-3 mb-3" style="width: 18rem;">
+                    <div class="card-header">
+                        <h2><%= u.userName %></h2>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Score: <span class="highlight"><%= u.userScore %>%</span></li>
+                        <li class="list-group-item"><span ><%= u.userComment %></span></li>
+                    </ul>
+                </div>
+            </div>
+        <% } %>
+    </div>
+    
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/javascripts/socket.js"></script>
+
