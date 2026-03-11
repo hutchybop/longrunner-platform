@@ -2,10 +2,9 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: http://slapp.longrunner.co.uk/sitemap.xml
+Sitemap: https://slapp.longrunner.co.uk/sitemap.xml
 
-# Disallow admin areas
-Disallow: /admin/
+# Disallow account and app-private routes
 Disallow: /auth/
 Disallow: /meals/
 Disallow: /shoppinglist/

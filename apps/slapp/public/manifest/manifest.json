@@ -1,8 +1,8 @@
 {
-    "name": "Hb Shopping List",
-    "short_name": "Shopping List App",
-    "description": "Create, meals, add ingredients, then create weekly shopping Lists",
-    "start_url": "/shoppinglist",
+    "name": "Shopping List App - Weekly shopping list creator",
+    "short_name": "SLApp",
+    "description": "Create meals, add ingredients and recipes, choose a weekly meal plan, and create your shopping list.",
+    "start_url": "/",
     "background_color": "#000000",
     "theme_color": "#FF6F91",
     "display":"standalone",

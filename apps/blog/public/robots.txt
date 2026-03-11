@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: http://blog.longrunner.co.uk/sitemap.xml
+Sitemap: https://blog.longrunner.co.uk/sitemap.xml
 
 # Disallow admin areas
 Disallow: /admin/

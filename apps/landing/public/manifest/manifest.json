@@ -1,7 +1,7 @@
 {
-    "name": "MY IRONMAN BLOG - From start to finish, follow my journey.",
-    "short_name": "Ironman Blog",
-    "description": "A blog about my Ironman triathlon journey. Follow me from my first day of training to the big day. I discuss nutrition, training plans, triathlon kit and ups and downs.",
+    "name": "longrunner.co.uk landing page",
+    "short_name": "longrunner",
+    "description": "longrunner.co.uk is a landing page that links to the longrunner app ecosystem, including the shopping list app, quiz app, and blog app",
     "start_url": "/",
     "background_color": "#000000",
     "theme_color": "#FF6F91",

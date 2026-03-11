@@ -7,7 +7,7 @@
 
 <!-- Main page -->
 <url>
-  <loc>https://slapp.longrunner.co.uk/</loc>
+  <loc>https://longrunner.co.uk/</loc>
   <lastmod>2026-03-11T00:00:00+00:00</lastmod>
   <changefreq>weekly</changefreq>
   <priority>1.00</priority>
@@ -15,13 +15,13 @@
 
 <!-- Policy pages -->
 <url>
-  <loc>https://slapp.longrunner.co.uk/policy/cookie-policy</loc>
+  <loc>https://longrunner.co.uk/policy/cookie-policy</loc>
   <lastmod>2026-03-11T00:00:00+00:00</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.50</priority>
 </url>
 <url>
-  <loc>https://slapp.longrunner.co.uk/policy/tandc</loc>
+  <loc>https://longrunner.co.uk/policy/tandc</loc>
   <lastmod>2026-03-11T00:00:00+00:00</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.50</priority>

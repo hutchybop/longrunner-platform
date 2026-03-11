@@ -2,11 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: http://longrunner.co.uk/sitemap.xml
-
-# Disallow admin areas
-Disallow: /admin/
-Disallow: /auth/
-
-# Disallow temporary test routes
-Disallow: /test-error
+Sitemap: https://longrunner.co.uk/sitemap.xml

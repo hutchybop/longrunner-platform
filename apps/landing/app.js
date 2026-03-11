@@ -124,6 +124,9 @@ app.post(
 
 // longrunner routes
 app.get("/", longrunner.landing);
+app.get("/sitemap.xml", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));
+});
 
 app.use(policy.notFound);
 
