@@ -12,7 +12,7 @@
     "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
     "compression": "^1.8.1",
-    "ejs": "^4.0.1",
+    "ejs": "^5.0.1",
     "ejs-mate": "^4.0.0",
     "express": "^5.2.1",
     "express-back": "0.0.2",
