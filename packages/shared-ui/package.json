@@ -15,5 +15,8 @@
     "lint:fix": "eslint . --fix"
   },
   "author": "hutchyBop",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "mongoose": "^9.3.0"
+  }
 }

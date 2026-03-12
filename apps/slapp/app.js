@@ -90,8 +90,6 @@ if (process.env.NODE_ENV === "production") {
 
 const dbName = "slapp";
 const dbUrl = createMongoDbUrl({ dbName });
-mongoose.connect(dbUrl);
-
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
