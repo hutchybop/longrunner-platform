@@ -1,40 +1,37 @@
-# 🛒 Shopping List App
+# Shopping List App
 
-Express app for meal planning and shopping list generation at `slapp.longrunner.co.uk`, now running in the Longrunner pnpm monorepo with ES modules and shared workspace packages.
+Express app for meal planning and shopping list generation at `slapp.longrunner.co.uk`, running in the Longrunner pnpm monorepo with ES modules and shared workspace packages.
 
-🔗 Live at: [https://slapp.longrunner.co.uk](https://slapp.longrunner.co.uk)
+## Live
 
----
+🔗 [https://slapp.longrunner.co.uk](https://slapp.longrunner.co.uk)
 
-## ✨ Features
+## Features
 
-- ✅ User auth flow: register, login, logout, forgot/reset password, account delete
-- 🍽️ Meal creation and recipe/ingredient management
-- 📅 Weekly planning and shopping list generation
-- 🗂️ Category-based shopping list organization
-- 🔒 Shared security and validation stack across apps
+- User auth: register, login, logout, forgot/reset password, account delete
+- Meal creation and recipe/ingredient management
+- Weekly planning and shopping list generation
+- Category-based shopping list organization
+- Shared security and validation stack across apps
 
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Runtime:** Node.js (ES modules)
 - **Framework:** Express + EJS (`ejs-mate` layouts)
 - **Database:** MongoDB + Mongoose
 - **Monorepo:** pnpm workspaces
-- **Shared Workspace Packages:**
-  - `@longrunner/shared-auth`
-  - `@longrunner/shared-utils`
-  - `@longrunner/shared-middleware`
-  - `@longrunner/shared-schemas`
-  - `@longrunner/shared-config`
-  - `@longrunner/shared-policy`
 
----
+## Shared Packages
 
-## 🚀 Development
+- `@longrunner/shared-auth`
+- `@longrunner/shared-utils`
+- `@longrunner/shared-middleware`
+- `@longrunner/shared-schemas`
+- `@longrunner/shared-config`
+- `@longrunner/shared-policy`
+- `@longrunner/shared-ui`
 
-From repo root:
+## Development
 
 ```bash
 pnpm install
@@ -42,9 +39,9 @@ pnpm --filter shoppinglist lint
 pnpm --filter shoppinglist exec node app.js
 ```
 
-App runs on port `3001` by default.
+Runs on port `3001`.
 
-### Required Environment Variables
+### Environment Variables
 
 - `MONGODB`
 - `SESSION_KEY`
@@ -54,11 +51,9 @@ App runs on port `3001` by default.
 - `ALIAS_EMAIL`
 - `ZOHOPW`
 
----
+## Structure
 
-## 📁 App Structure
-
-```text
+```
 apps/slapp/
 ├── app.js
 ├── controllers/
@@ -69,11 +64,4 @@ apps/slapp/
 └── docs/
 ```
 
-Note: auth and policy templates/assets are now consumed from shared packages at runtime.
-
----
-
-## 📄 Notes
-
-- This app is part of the Longrunner monorepo migration from duplicated app logic to shared packages.
-- Keep app-specific domain logic (meals/shopping/categories) here; keep reusable cross-app logic in `packages/*`.
+Auth and policy templates/assets are consumed from shared packages at runtime.

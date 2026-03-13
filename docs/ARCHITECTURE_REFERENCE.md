@@ -1,8 +1,9 @@
 # Architecture Reference - Longrunner Platform
 
-This document keeps a birds-eye view of the `longrunner-platform` pnpm workspace that now hosts the `ironman-blog` and `shoppinglist` apps plus shared workspaces under `packages/@longrunner`. Everything runs as ES modules, reuses shared controllers, middleware, schemas, and serves the shared auth/policy views from the shared packages so that the apps remain focused on their domain logic.
+This document provides a birds-eye view of the `longrunner-platform` pnpm workspace, which hosts four Express applications and shared workspace packages. All code runs as ES modules with shared authentication, middleware, schemas, and UI components.
 
 ## Table of Contents
+
 1. [System Overview](#system-overview)
 2. [Architecture Flow](#architecture-flow)
 3. [File/Module Inventory](#filemodule-inventory)
@@ -15,30 +16,38 @@ This document keeps a birds-eye view of the `longrunner-platform` pnpm workspace
 
 ## System Overview
 
-| App | Directory | Port | Focus |
-|-----|-----------|------|-------|
-| `ironman-blog` | `apps/blog` | 3004 | Ironman training blog, reviews, admin moderation, IP tracking. |
-| `shoppinglist` | `apps/slapp` | 3001 | Meal planner, ingredient catalog, weekly shopping list generator. |
+| App               | Directory      | Port | Focus                                                               |
+| ----------------- | -------------- | ---- | ------------------------------------------------------------------- |
+| `landing`         | `apps/landing` | 3000 | Landing page linking to other apps, policy pages. No auth/database. |
+| `shoppinglist`    | `apps/slapp`   | 3001 | Meal planner, ingredient catalog, weekly shopping list generator.   |
+| `longrunner-quiz` | `apps/quiz`    | 3002 | General knowledge quiz with real-time multiplayer via Socket.io.    |
+| `ironman-blog`    | `apps/blog`    | 3004 | Ironman training blog, reviews, admin moderation, IP tracking.      |
 
 ### Shared Workspace Packages
-- `@longrunner/shared-auth` – user schema factory, bcrypt password helpers, and reusable auth controllers that plug into each app's `User` model and session system.
-- `@longrunner/shared-policy` – policy/cookie controllers, shared policy views, and static assets mounted under `/stylesheets/shared-policy` and `/javascripts/shared-policy`.
-- `@longrunner/shared-middleware` – validation middleware generators plus `isLoggedIn` / `populateUser` helpers powered by shared Joi schemas.
-- `@longrunner/shared-schemas` – Joi schema collection (auth, reviews, meals, ingredients, shopping lists), includes a custom `escapeHTML` string extension.
-- `@longrunner/shared-config` – helpers for building MongoDB URLs, session configs, and Helmet CSP settings.
-- `@longrunner/shared-utils` – rate limiters, flash middleware, ExpressError, centralized error handler, mailer, and `catchAsync`.
+
+| Package                         | Purpose                                                                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `@longrunner/shared-auth`       | User schema factory, bcrypt password helpers, reusable auth controllers (register/login/forgot/reset).                      |
+| `@longrunner/shared-policy`     | Policy/cookie controllers, shared policy views, static assets (`/stylesheets/shared-policy`, `/javascripts/shared-policy`). |
+| `@longrunner/shared-middleware` | Validation middleware generators, `isLoggedIn` / `populateUser` helpers powered by shared Joi schemas.                      |
+| `@longrunner/shared-schemas`    | Joi schema collection (auth, reviews, meals, ingredients, quiz), includes custom `escapeHTML` string extension.             |
+| `@longrunner/shared-config`     | Helpers for building MongoDB URLs, session configs, and Helmet CSP settings.                                                |
+| `@longrunner/shared-utils`      | Rate limiters, flash middleware, ExpressError, centralized error handler, mailer, and `catchAsync`.                         |
+| `@longrunner/shared-ui`         | Boilerplate helper for meta tags, navbar/footer auto-inclusion, shared EJS partials.                                        |
 
 ### Core Technologies
-- `express@5.x` running as the web framework with middleware chains in each `app.js`.
-- `mongoose` ODM talking to per-app MongoDB databases (`blog`, `slapp`).
-- `pnpm` workspaces with `type": "module"` packages.
-- `EJS` templating (with `ejs-mate`) and shared EJS partials/views from `shared-auth` and `shared-policy`.
-- Authentication via session cookies (MongoStore) + bcrypt/hash migration.
+
+- `express@5.x` as the web framework with middleware chains in each `app.js`.
+- `mongoose` ODM talking to per-app MongoDB databases (`landing` has no DB, `slapp`, `quiz`, `blog` each have their own).
+- `socket.io` for real-time quiz multiplayer (quiz app only).
+- `pnpm` workspaces with `"type": "module"` packages.
+- `EJS` templating (with `ejs-mate`) and shared EJS partials/views from `shared-auth`, `shared-policy`, and `shared-ui`.
+- Authentication via session cookies (MongoStore for persistent sessions) + bcrypt/hash migration.
 - Security stack: `helmet` (with CSP from `shared-config`), `express-mongo-sanitize`, `compression`, `express-rate-limit`, `express-recaptcha`, `sanitize-html`.
 - Mail delivery via Zoho SMTP configured in `@longrunner/shared-utils/mail.js`.
-- Environment variables: `MONGODB`, `SESSION_KEY`, `SITEKEY`, `SECRETKEY`, `EMAIL_USER`, `ALIAS_EMAIL`, `ZOHOPW`, plus `DEFAULT_USER_ID` for seeding on registration.
+- Environment variables: `MONGODB`, `SESSION_KEY`, `SITEKEY`, `SECRETKEY`, `EMAIL_USER`, `ALIAS_EMAIL`, `ZOHOPW`.
 
-Verification: prefer `pnpm --filter ironman-blog lint` or `pnpm --filter shoppinglist lint` after edits and start apps with `pnpm --filter <app> exec node app.js`.
+**Verification:** Run `pnpm --filter <app> lint` after edits. Start apps with `pnpm --filter <app> exec node app.js`.
 
 ---
 
@@ -49,32 +58,51 @@ Verification: prefer `pnpm --filter ironman-blog lint` or `pnpm --filter shoppin
 ```mermaid
 flowchart LR
     Client[Browser / API client]
-    BlogApp[apps/blog/app.js]
+    LandingApp[apps/landing/app.js]
     SlappApp[apps/slapp/app.js]
-    SharedMiddleware[/utils + shared packages/]
-    SharedAuth[@longrunner/shared-auth]
-    SharedPolicy[@longrunner/shared-policy]
-    SharedConfig[@longrunner/shared-config]
-    SharedUtils[@longrunner/shared-utils]
+    QuizApp[apps/quiz/app.js]
+    BlogApp[apps/blog/app.js]
+    SharedMiddleware["/utils + shared packages/"]
+    SharedAuth["shared-auth"]
+    SharedPolicy["shared-policy"]
+    SharedConfig["shared-config"]
+    SharedUtils["shared-utils"]
+    SharedUi["shared-ui"]
     SharedMiddleware --> SharedConfig
     SubControllers[controllers/ + models/]
     Database[(MongoDB)]
     Views[EJS views + shared partials]
 
-    Client -->|HTTP / forms / AJAX| BlogApp
+    Client -->|HTTP / forms / AJAX| LandingApp
     Client -->|HTTP / forms / AJAX| SlappApp
+    Client -->|HTTP / WebSocket| QuizApp
+    Client -->|HTTP / forms / AJAX| BlogApp
+
+    LandingApp --> SharedConfig
+    LandingApp --> SharedUtils
+    LandingApp --> SharedPolicy
+    LandingApp --> SharedUi
+
+    SlappApp --> SharedConfig
+    SlappApp --> SharedUtils
+    SlappApp --> SharedAuth
+    SlappApp --> SharedPolicy
+    SlappApp --> SharedUi
+
+    QuizApp --> SharedConfig
+    QuizApp --> SharedUtils
+    QuizApp --> SharedPolicy
+    QuizApp --> SharedUi
 
     BlogApp --> SharedConfig
-    SlappApp --> SharedConfig
     BlogApp --> SharedUtils
-    SlappApp --> SharedUtils
     BlogApp --> SharedAuth
-    SlappApp --> SharedAuth
     BlogApp --> SharedPolicy
-    SlappApp --> SharedPolicy
+    BlogApp --> SharedUi
 
-    BlogApp --> SubControllers
     SlappApp --> SubControllers
+    QuizApp --> SubControllers
+    BlogApp --> SubControllers
     SubControllers --> Database
     SubControllers --> SharedUtils
     SubControllers --> Views
@@ -82,127 +110,211 @@ flowchart LR
     Database --> SharedUtils
 ```
 
-Each `app.js` boots `express`, resolves shared view roots, serves static assets from both local `public/` and `shared-*` packages, sanitizes inputs, mounts session/cookie helpers, registers Recaptcha for `/policy/tandc`, wires rate limiters, and then wires routes for shared auth plus app-specific controllers.
+Each `app.js` boots `express`, resolves shared view roots, serves static assets from both local `public/` and shared packages, sanitizes inputs, mounts session/cookie helpers, registers Recaptcha for `/policy/tandc`, wires rate limiters, and then wires routes.
 
-Shared assets are served with explicit prefixes (`/stylesheets/shared-auth`, `/javascripts/shared-auth`, `/stylesheets/shared-policy`, `/javascripts/shared-policy`), so the apps can render the shared templates without copying them.
+Shared assets are served with explicit prefixes:
+
+- `/stylesheets/shared-policy`, `/javascripts/shared-policy`
+- `/stylesheets/shared-auth`, `/javascripts/shared-auth`
+- `/javascripts/shared-ui/javascripts`, `/stylesheets/shared-ui/stylesheets`
 
 ---
 
 ## File/Module Inventory
 
-### `apps/blog`
-- `app.js` – entry point (port 3004). Imports shared config/middleware/auth/policy, configures MongoStore sessions, helmet CSP, compression, Recaptcha, general/auth/forgot rate limiters, and wires the blog routes. Sets multi-root views array to include shared auth/policy templates.
-- `controllers/`
-  - `users.js` – wraps `@longrunner/shared-auth/controllers` for blog-specific `onDelete` cleanup (removes `Review` docs) and exposes the standard register/login/forgot/reset/details/delete handlers.
-  - `blogsIM.js` – renders blog home and detail pages, populates reviews via `BlogIM.find().populate('reviews.author')`.
-  - `reviews.js` – review CRUD, spam detection (`ContentFilter`), `mail` notifications for flagged deletions, routes `/blogim/:id/reviews` and deletion paths.
-  - `admin.js` – admin dashboards and moderation logic, handles flagged review approvals/deletions, post CRUD, and email notifications via `@longrunner/shared-utils/mail.js`.
-- `models/`
-  - `BlogIM` – post metadata with `reviews` array.
-  - `Review` – body, author, spam score, IP metadata, flagging status.
-  - `User` – factory from `@longrunner/shared-auth` enabling role-aware and reset-password-used fields.
-- `utils/`
-  - `middleware.js` – wraps `@longrunner/shared-middleware` with Joi schemas, adds `validateReview`, `isAdmin`, `isReviewAuthor` guards, and standard flash messaging helpers.
-  - `contentFilter.js` – spam scoring rules, HTML sanitization, CSP/regex-based scoring used by `reviews.create`.
-  - `deleteUser.js` – CLI utility (references the slapp database) for interactive cleanup of users/meals/shopping lists.
-  - static assets under `public/` (CSS/JS/images) feeding the blog UI.
+### `apps/landing` (Port 3000)
 
-### `apps/slapp`
-- `app.js` – entry point (port 3001) with the same shared middleware wiring as the blog app, plus controllers for meals/ingredients/shopping lists/categories. Mounts Recaptcha-protected `/policy/tandc` and user auth routes from shared controllers.
+- `app.js` – Entry point. Lightweight app with no database. Imports shared policy, utils, and UI. Configures session (in-memory), helmet, compression, rate limiters. Sets multi-root views array for shared policy/UI templates.
 - `controllers/`
-  - `users.js` – wraps `@longrunner/shared-auth` while seeding setup data (`newUserSeed`) when a new user registers and cleaning domain models on delete.
-  - `meals.js` – CRUD over `Meal`, handles ingredient lookups, weekly/replace-on-use logic, renders `meals/new`, `meals/edit`, `meals/show`.
-  - `ingredients.js` – ingredient catalog maintenance plus cascade deletions from `Meal` documents.
-  - `shoppingLists.js` – landing page for visitors, list generation, editing, default meal assignments, and `copyListFunc` for clipboard-ready output.
-  - `categories.js` – lets users rename categories while synchronizing associated ingredients.
-- `models/`
-  - `User` – `createUserSchema({ hasResetPasswordUsed: true })` for password token tracking.
-  - `Meal` – complex schema with `weeklyItems`, `replaceOnUse`, `default` flags, meal types/enums, references to ingredients.
-  - `Ingredient` – name/category link to a user.
-  - `ShoppingList` – stores named lists, daily meal slots, `items`, `editVer`, and author references.
-  - `Category` – per-user categorical labels stored as an array.
-- `utils/`
-  - `middleware.js` – extends `@longrunner/shared-middleware` with Joi validators from `@longrunner/shared-schemas` for meals, ingredients, shopping lists, categories, plus ownership guards (`isAuthorMeal`, etc.).
-  - `copyToClip.js` – helper used by `shoppingLists.show` to format shopping list items per category.
-  - `toUpperCase.js` – normalizes meal/ingredient names.
-  - `newUserSeed.js` – seeds categories, ingredients, and meals from the default user when a new account is created.
-  - `copydb.js` – Mongo shell script to clone the source `shoppinglist` database into the active `slapp` database.
-  - `deleteUser.js` – CLI to remove a user and all related assets (mirrors the `onDelete` cleanup).
+  - `policy.js` – Cookie policy and T&C with Recaptcha.
+  - `longrunner.js` – Landing page render.
+- `utils/middleware.js` – `validateTandC` middleware.
+- `public/` – Static assets (CSS, JS, favicon, sitemap).
 
-### Shared packages
-- `packages/shared-auth`
-  - `createUserSchema()` – builds the shared `User` schema with optional role/`resetPasswordUsed` flags, includes old Passport hash migration that emails progress updates via `@longrunner/shared-utils/mail`.
-  - `createUsersController()` – renders shared auth views, handles registration/login/logout/forgot/reset/details/delete flows, flashes, and ensures the protected user (`defaultMeals`) cannot be deleted.
-  - `./auth.js`, `./passwordUtils.js`, `./user.js`, `./controllers.js` – aliased exports for the apps.
-- `packages/shared-policy`
-  - `createPolicyController()` – renders cookie policy and T&C, wires Recaptcha for `/policy/tandc`, and sends copy of contact submission emails through `@longrunner/shared-utils/mail.js`.
-  - Includes shared policy views (`src/views/policy/*`) and CSS/JS assets under `public/`.
-- `packages/shared-middleware`
-  - `createAuthMiddleware()` – builds Joi-based validators plus `isLoggedIn`/`populateUser`; used by both apps to ensure consistent flash messaging on validation errors.
-- `packages/shared-schemas`
-  - `Joi` extension with `escapeHTML`, plus exported schema bundles (`createAuthSchemas`, `createBlogSchemas`, `createSlappSchemas`) consumed by controllers and middleware.
-- `packages/shared-config`
-  - `createMongoDbUrl()` – centralizes MongoDB login strings (app-specific DB names passed from `app.js`).
-  - `createSessionConfig()` – builds session cookies (cookie name, secret, MongoStore) and enforces secure/same-site settings.
-  - `createHelmetConfig()` – CSP builder for production/development along with helper `createCspSources()`.
-- `packages/shared-utils`
-  - `catchAsync` – wraps async handlers.
-  - `mail` – Nodemailer mailer using Zoho SMTP and environment vars.
-  - `ExpressError`, `errorHandler` – standard error class/middleware.
-  - `flash` – session-based flash helper.
-  - Rate limiters (`generalLimiter`, `authLimiter`, `passwordResetLimiter`, `formSubmissionLimiter`) used in both apps.
+### `apps/slapp` (Port 3001)
+
+- `app.js` – Entry point. Wires shared auth, policy, config, middleware. Connects to `slapp` MongoDB database. Mounts Recaptcha-protected routes and auth controllers.
+- `controllers/`
+  - `users.js` – Wraps `@longrunner/shared-auth`, seeds setup data (`newUserSeed`) on registration, cleans domain models on delete.
+  - `meals.js` – CRUD over `Meal`, handles ingredient lookups, weekly/replace-on-use logic.
+  - `ingredients.js` – Ingredient catalog maintenance, cascade deletions from `Meal` docs.
+  - `shoppingLists.js` – List generation, editing, default meal assignments, clipboard output.
+  - `categories.js` – Category rename with synchronization to ingredients.
+- `models/`
+  - `User` – Extended from `@longrunner/shared-auth` with `hasResetPasswordUsed`.
+  - `Meal` – Complex schema with `weeklyItems`, `replaceOnUse`, `default` flags, meal types.
+  - `Ingredient` – Name/category reference to user.
+  - `ShoppingList` – Named lists, daily meal slots, `items`, `editVer`.
+  - `Category` – Per-user categorical labels.
+- `utils/`
+  - `middleware.js` – Extends `@longrunner/shared-middleware` with Joi validators for meals, ingredients, shopping lists, categories. Ownership guards (`isAuthorMeal`, etc.).
+  - `copyToClip.js` – Formats shopping list items per category.
+  - `toUpperCase.js` – Normalizes meal/ingredient names.
+  - `newUserSeed.js` – Seeds categories, ingredients, meals for new accounts.
+  - `deleteUser.js` – CLI utility for user cleanup.
+
+### `apps/quiz` (Port 3002)
+
+- `app.js` – Entry point. Wires shared config, policy, utils, UI. Connects to `quiz` MongoDB database. **Key difference:** Uses `socket.io` for real-time multiplayer quiz functionality.
+- `controllers/`
+  - `quiz.js` – Lobby creation/joining, quiz gameplay, user management.
+  - `api.js` – AJAX endpoints for quiz state, question fetching, scoring.
+  - `policy.js` – Cookie policy and T&C.
+- `models/`
+  - `quiz.js` – Quiz session state, players, current question index, answers.
+  - `question.js` – Question bank with difficulty levels.
+  - `schemas.js` – Mongoose schema definitions.
+  - `user-session-template.js` – Player data structure.
+- `utils/`
+  - `middleware.js` – Validators for lobby creation/joining, user data, T&C.
+  - `quizChecks.js` – Middleware to validate quiz state.
+  - `comments.js` – Utility for comment generation (if used).
+- `public/javascripts/` – Client-side Socket.io and quiz logic.
+
+### `apps/blog` (Port 3004)
+
+- `app.js` – Entry point. Wires shared auth, policy, config, middleware. Connects to `blog` MongoDB database.
+- `controllers/`
+  - `users.js` – Wraps `@longrunner/shared-auth`, handles blog-specific cleanup (removes `Review` docs).
+  - `blogsIM.js` – Blog home and detail pages, review population.
+  - `reviews.js` – Review CRUD, spam detection (`ContentFilter`), mail notifications for flagged deletions.
+  - `admin.js` – Admin dashboards, moderation, flagged review handling, post CRUD.
+- `models/`
+  - `BlogIM` – Post metadata with `reviews` array.
+  - `Review` – Body, author, spam score, IP metadata, flagging status.
+  - `User` – Extended from `@longrunner/shared-auth` with role support.
+- `utils/`
+  - `middleware.js` – Wraps `@longrunner/shared-middleware` with `validateReview`, `isAdmin`, `isReviewAuthor`.
+  - `contentFilter.js` – Spam scoring, HTML sanitization, regex-based scoring.
+  - `deleteUser.js` – CLI utility for user cleanup.
+- `public/` – Static assets.
+
+### Shared Packages
+
+#### `@longrunner/shared-auth`
+
+- `createUserSchema()` – Builds shared `User` schema with optional role/resetPasswordUsed flags, includes Passport hash migration.
+- `createUsersController()` – Handles registration/login/logout/forgot/reset/details/delete, flashes, protects default users.
+- `./auth.js`, `./passwordUtils.js`, `./user.js`, `./controllers.js` – Aliased exports.
+
+#### `@longrunner/shared-policy`
+
+- `createPolicyController()` – Renders cookie policy and T&C, wires Recaptcha for `/policy/tandc`, sends contact submission emails.
+- `src/views/policy/*` – Shared policy EJS templates.
+- `public/` – Shared policy CSS/JS assets.
+
+#### `@longrunner/shared-middleware`
+
+- `createAuthMiddleware()` – Builds Joi-based validators plus `isLoggedIn`/`populateUser`.
+
+#### `@longrunner/shared-schemas`
+
+- `Joi` extension with `escapeHTML`.
+- Exported schema bundles: `createAuthSchemas`, `createBlogSchemas`, `createSlappSchemas`, `createQuizSchemas`.
+
+#### `@longrunner/shared-config`
+
+- `createMongoDbUrl({ dbName })` – Centralizes MongoDB connection strings.
+- `createSessionConfig({ name, mongoUrl, MongoStore })` – Session cookies with MongoStore.
+- `createHelmetConfig()` – CSP builder for production/development.
+- `createCspSources()` – CSP helper.
+- `loadAppEnv({ appRoot })` – Loads environment variables from app's `.env`.
+
+#### `@longrunner/shared-utils`
+
+- `catchAsync` – Wraps async handlers.
+- `mail` – Nodemailer mailer using Zoho SMTP.
+- `ExpressError`, `errorHandler` – Standard error class and middleware.
+- `flash` – Session-based flash helper.
+- Rate limiters: `generalLimiter`, `authLimiter`, `passwordResetLimiter`, `formSubmissionLimiter`.
+
+#### `@longrunner/shared-ui`
+
+- `boilerplateHelper({ appRoot, meta, misc })` – Middleware that auto-includes navbar/footer, sets meta tags, injects CSS/JS paths.
 
 ---
 
 ## Dependency Map
 
 ### Core dependencies (workspace-wide)
-- `express`, `mongoose`, `express-session`, `connect-mongo`, `express-mongo-sanitize`, `helmet`, `compression`, `method-override`, `express-back`, `ejs-mate`, `express-rate-limit`, `express-recaptcha`, `cors` (if used transitively).
-- `dotenv/config` (ESM import) for environment variables, `sanitize-html` for shared schema validation and `ContentFilter`, `nodemailer` for mail.
+
+- `express`, `mongoose`, `express-session`, `connect-mongo`, `express-mongo-sanitize`, `helmet`, `compression`, `method-override`, `express-back`, `ejs-mate`, `express-rate-limit`, `express-recaptcha`, `socket.io`.
+- `dotenv/config` for environment variables, `sanitize-html`, `nodemailer`.
 
 ### Graph view (entry points and imports)
 
 ```mermaid
 graph TD
-    BlogApp[apps/blog/app.js] --> SharedConfig[@longrunner/shared-config]
-    BlogApp --> SharedAuth[@longrunner/shared-auth]
-    BlogApp --> SharedPolicy[@longrunner/shared-policy]
-    BlogApp --> SharedUtils[@longrunner/shared-utils]
-    SlappApp[apps/slapp/app.js] --> SharedConfig
-    SlappApp --> SharedAuth
+    LandingApp["apps/landing/app.js"] --> SharedConfig["shared-config"]
+    LandingApp --> SharedPolicy["shared-policy"]
+    LandingApp --> SharedUtils["shared-utils"]
+    LandingApp --> SharedUi["shared-ui"]
+
+    SlappApp["apps/slapp/app.js"] --> SharedConfig
+    SlappApp --> SharedAuth["shared-auth"]
     SlappApp --> SharedPolicy
     SlappApp --> SharedUtils
-    BlogApp --> BlogControllers[controllers/*.js]
-    SlappApp --> SlappControllers
-    BlogControllers --> BlogModels[models/*.js]
-    SlappControllers --> SlappModels
-    BlogControllers --> SharedUtils
+    SlappApp --> SharedMiddleware["shared-middleware"]
+    SlappApp --> SharedUi
+
+    QuizApp["apps/quiz/app.js"] --> SharedConfig
+    QuizApp --> SharedPolicy
+    QuizApp --> SharedUtils
+    QuizApp --> SharedUi
+    QuizApp --> SharedMiddleware
+
+    BlogApp["apps/blog/app.js"] --> SharedConfig
+    BlogApp --> SharedAuth
+    BlogApp --> SharedPolicy
+    BlogApp --> SharedUtils
+    BlogApp --> SharedMiddleware
+    BlogApp --> SharedUi
+
+    SlappApp --> SlappControllers[controllers/*.js]
+    QuizApp --> QuizControllers
+    BlogApp --> BlogControllers
+
+    SlappControllers --> SlappModels[models/*.js]
+    QuizControllers --> QuizModels
+    BlogControllers --> BlogModels
+
     SlappControllers --> SharedUtils
-    SharedMiddleware[@longrunner/shared-middleware] --> SharedSchemas
+    QuizControllers --> SharedUtils
+    BlogControllers --> SharedUtils
+
+    SharedMiddleware --> SharedSchemas["shared-schemas"]
     SharedAuth --> SharedUtils
     SharedPolicy --> SharedUtils
-
-    BlogApp --> SharedMiddleware
-    SlappApp --> SharedMiddleware
-
-    SharedMiddleware --> SharedSchemas
 ```
 
-Core entry points: `apps/blog/app.js` and `apps/slapp/app.js` boot the server, wire middleware, and mount routes. `packages/*` are utility entry points (e.g., `@longrunner/shared-auth/controllers.js`, `@longrunner/shared-utils/rateLimiter.js`).
+### Entry Points
+
+| App       | Entry Point                       |
+| --------- | --------------------------------- |
+| `landing` | `apps/landing/app.js` (port 3000) |
+| `slapp`   | `apps/slapp/app.js` (port 3001)   |
+| `quiz`    | `apps/quiz/app.js` (port 3002)    |
+| `blog`    | `apps/blog/app.js` (port 3004)    |
 
 ### Circular dependencies
-None detected in the current file graph. Shared packages are unidirectional utilities that apps consume, and controllers only import their models and shared utilities (no mutual imports).
+
+None detected. Shared packages are unidirectional utilities consumed by apps. Controllers import models and shared utilities without mutual dependencies.
 
 ---
 
 ## Data Flow
 
 ### General request-response loop
-1. Browser or API client issues GET/POST to `/auth/*`, `/policy/*`, `/meals`, `/shoppinglist`, or `/blogim`.
-2. `app.js` sanitizes `req.body`/`req.params`, trusts proxy in production, attaches flash/session middleware from `@longrunner/shared-utils`, sets `res.locals.currentUser`, and enforces rate limits.
-3. Request enters route-specific validator (`@longrunner/shared-middleware`) and, if valid, hits the appropriate controller.
-4. Controller reads/writes Mongoose models, possibly populates references, uses shared mailer/rate limiters, and either renders an EJS view (with shared policy/auth partials) or redirects.
-5. MongoDB responds via Mongoose; results get formatted for the client and sent back with `res.render` or JSON.
+
+1. Browser issues GET/POST to any app's route (`/auth/*`, `/policy/*`, `/meals`, `/quiz`, `/blogim`, etc.).
+2. `app.js` sanitizes `req.body`/`req.params`, sets trust proxy in production, attaches flash/session middleware, sets `res.locals.currentUser`, enforces rate limits.
+3. Request enters route-specific validator (from `@longrunner/shared-middleware` or app's `utils/middleware.js`).
+4. If valid, controller executes business logic:
+   - Reads/writes Mongoose models
+   - Possibly populates references
+   - Uses shared mailer/rate limiters
+   - Renders EJS view (with shared policy/auth/UI partials) or redirects.
+5. MongoDB responds via Mongoose; results get formatted and sent back.
 
 ```mermaid
 sequenceDiagram
@@ -223,63 +335,113 @@ sequenceDiagram
     A-->>B: 302 to /
 ```
 
-### Blog review creation flow
+### Quiz real-time flow (Socket.io)
 
 ```mermaid
 flowchart LR
-    Client -->|POST /blogim/:id/reviews| Express
-    Express --> validateReview
-    Express --> ContentFilter
-    ContentFilter --> ReviewModel
-    ReviewModel --> BlogIMModel
-    BlogIMModel --> MongoDB
-    ReviewModel --> MongoDB
-    MongoDB --> mail[@longrunner/shared-utils/mail]
-    MongoDB --> Express
-    Express -->|render| Client
+    Client -->|WebSocket Connect| QuizApp
+    QuizApp -->|Join/Create Lobby| QuizApp
+    QuizApp -->|Emit Question| Client
+    Client -->|Submit Answer| QuizApp
+    QuizApp -->|Score Update| Client
+    QuizApp -->|Leaderboard| Client
 ```
 
-### Shopping list generation flow
-1. User selects meals (protected by `isLoggedIn` and `validateshoppingListMeals`).
-2. `shoppingLists.createMeals` loads `Meal` docs (including weekly/replace-on-use populations), aggregates ingredient quantities by category, merges constant/non-food meals, and saves a `ShoppingList` document with `editVer` metadata.
-3. Response redirects to `/shoppinglist/edit/:id`, where the list is reformatted via `copyListFunc` and categories from the `Category` model.
+### Shopping list creation flow
+
+1. Authenticated user posts `/shoppinglist` with meal IDs; `validateshoppingListMeals` confirms payload.
+2. Controller `shoppingLists.createMeals` loads `Meal` docs (including weekly/replace-on-use), aggregates ingredient quantities by category, merges constant/non-food meals, saves `ShoppingList` with `editVer`.
+3. Redirects to `/shoppinglist/edit/:id` where `copyListFunc` formats for clipboard/print.
+
+### Blog review creation flow
+
+1. Visitor posts to `/blogim/:id/reviews`.
+2. `validateReview` and `ContentFilter` check for spam.
+3. Review saved with metadata (IP, spam score).
+4. If flagged, admin notified via mailer.
+5. Review ID pushed to `BlogIM.reviews` array.
 
 ---
 
 ## Key Interactions
 
-### 1. User registration (both apps)
-1. `GET /auth/register` renders the shared form (`@longrunner/shared-auth` views).
-2. `POST /auth/register` runs `validateRegister`, `authLimiter`, then `users.registerPost` from `@longrunner/shared-auth/controllers`.
-3. Handler hashes the password (`PasswordUtils`), saves the user, seeds domain data (`newUserSeed` for `/apps/slapp`), logs the user in (`loginUser`), and flashes success.
+### 1. User registration (slapp, blog)
 
-### 2. Password reset
-1. `POST /auth/forgot` validates email, generates a token (`PasswordUtils.generateResetToken()`), sets expires fields on the `User` model, and mails the reset link via `@longrunner/shared-utils/mail`.
-2. `GET /auth/reset/:token` ensures the token is still valid and renders the reset view.
-3. `POST /auth/reset/:token` hashes the new password, marks `resetPasswordUsed`, clears legacy hash fields, logs the user in, and emails confirmation.
+1. `GET /auth/register` renders shared form (`@longrunner/shared-auth`).
+2. `POST /auth/register` runs `validateRegister`, `authLimiter`, then `users.registerPost`.
+3. Handler hashes password (`PasswordUtils`), saves user, seeds domain data (`newUserSeed` for slapp), logs user in, flashes success.
 
-### 3. Blog review moderation
-1. Visitor hits `/blogim/:id` → `blogsIM.show` loads the post with populated reviews.
-2. `POST /blogim/:id/reviews` runs `validateReview`, uses `ContentFilter` to decide if the review is spam or flagged, stores metadata on the `Review` model, and optionally pushes the review ID into the `BlogIM` document.
-3. Spam/flagged reviews notify admins via shared mailer; admins operate through `admin.flaggedReviews` and `/admin/all-reviews` to approve/delete from `admin.js`.
+### 2. Password reset (slapp, blog)
 
-### 4. Shopping list creation
-1. Authenticated user posts `/shoppinglist` with meal IDs; `validateshoppingListMeals` confirms payload.
-2. Controller `shoppingLists.createMeals` aggregates quantities, saves `ShoppingList`, limits saved lists to ten per user, and redirects to edit.
-3. Editors update via `/shoppinglist/:id` with `validateshoppingListIngredients`; `copyListFunc` formats the final list for clipboard or print.
+1. `POST /auth/forgot` validates email, generates token, sets expires fields, mails reset link.
+2. `GET /auth/reset/:token` validates token, renders reset view.
+3. `POST /auth/reset/:token` hashes new password, marks `resetPasswordUsed`, clears legacy hashes, logs user in, emails confirmation.
 
-### 5. Policy/contact form
-1. `/policy/tandc` renders a Recaptcha-protected form from `@longrunner/shared-policy`.
-2. Submissions go through rate limiting, `validateTandC`, and `shared-policy.tandcPost`, which uses `@longrunner/shared-utils/mail` to notify both submitter and owner.
+### 3. Quiz multiplayer session
+
+1. User creates lobby (`POST /lobby-new`) or joins (`POST /lobby-join`).
+2. Socket.io room created/joined with quiz code.
+3. Host starts quiz (`/api/start-quiz`), questions delivered via WebSocket.
+4. Players submit answers, scores updated in real-time.
+5. Quiz ends (`/api/finished-quiz`), leaderboard displayed.
+
+### 4. Blog review moderation
+
+1. Visitor posts review at `/blogim/:id/reviews`.
+2. `ContentFilter` scores for spam, stores metadata.
+3. Flagged reviews notify admins via shared mailer.
+4. Admins approve/delete via `admin.flaggedReviews`.
+
+### 5. Shopping list generation
+
+1. Authenticated user posts `/shoppinglist` with meal IDs.
+2. Controller aggregates quantities, saves `ShoppingList`, limits to ten per user.
+3. Redirects to edit view with `copyListFunc` formatting.
+
+### 6. Policy/contact form (all apps)
+
+1. `/policy/tandc` renders Recaptcha-protected form.
+2. Submissions go through rate limiting, validation, and `shared-policy.tandcPost`.
+3. Notifies both submitter and owner via shared mailer.
 
 ---
 
 ## Extension Points
 
-1. **New domain feature** – Add `models/<feature>.js`, export Mongoose schema, and wire to the existing controller structure.
+1. **New domain feature** – Add `models/<feature>.js`, export Mongoose schema, wire to new or existing controller.
+2. **New app** – Create under `apps/<name>/`, copy existing `app.js` structure, add to workspace in `package.json`.
+3. **New shared utility** – Add to appropriate `@longrunner/shared-*` package, export, import in apps.
+4. **New quiz question category** – Add to `apps/quiz/models/question.js` schema, update difficulty enums.
+5. **New validation schema** – Add to `@longrunner/shared-schemas`, consume in app middleware.
 
-Before pushing changes, run the relevant `pnpm --filter <app> lint` command, and verify the app boots with `pnpm --filter <app> exec node app.js`.
+### Files typically modified for new features
+
+| Feature Type       | Files to Modify                                                            |
+| ------------------ | -------------------------------------------------------------------------- |
+| New route          | `app.js` (mount), `controllers/*.js`, `models/*.js`, `utils/middleware.js` |
+| New shared utility | New file in `packages/shared-*/src/`, export from package index            |
+| New validation     | `packages/shared-schemas/src/*.js`, `apps/*/utils/middleware.js`           |
+| New quiz type      | `apps/quiz/models/question.js`, `apps/quiz/controllers/api.js`             |
+| Admin feature      | `apps/blog/controllers/admin.js`, relevant model                           |
 
 ---
 
-*Last Updated: 2026-03-07*
+## Verification Commands
+
+```bash
+# Lint a single workspace
+pnpm --filter landing lint
+pnpm --filter shoppinglist lint
+pnpm --filter longrunner-quiz lint
+pnpm --filter ironman-blog lint
+
+# Boot an app
+pnpm --filter landing exec node app.js
+pnpm --filter shoppinglist exec node app.js
+pnpm --filter longrunner-quiz exec node app.js
+pnpm --filter ironman-blog exec node app.js
+```
+
+---
+
+_Last Updated: 2026-03-13_

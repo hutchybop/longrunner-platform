@@ -4,8 +4,12 @@ pnpm workspace monorepo for Longrunner applications, migrated to ES modules with
 
 ## Apps
 
-- `apps/blog` - Ironman training blog (`blog.longrunner.co.uk`)
-- `apps/slapp` - Shopping list app (`slapp.longrunner.co.uk`)
+| App               | Directory      | Port | Description                                                      |
+| ----------------- | -------------- | ---- | ---------------------------------------------------------------- |
+| `landing`         | `apps/landing` | 3000 | Landing page linking to other apps, policy pages                 |
+| `shoppinglist`    | `apps/slapp`   | 3001 | Meal planner, ingredient catalog, weekly shopping list generator |
+| `longrunner-quiz` | `apps/quiz`    | 3002 | General knowledge quiz with real-time multiplayer via Socket.io  |
+| `ironman-blog`    | `apps/blog`    | 3004 | Ironman training blog with reviews and admin moderation          |
 
 ## Packages
 
@@ -15,21 +19,29 @@ pnpm workspace monorepo for Longrunner applications, migrated to ES modules with
 - `@longrunner/shared-schemas` - shared Joi schemas
 - `@longrunner/shared-config` - shared db/session/helmet config helpers
 - `@longrunner/shared-utils` - shared mail, flash, async wrapper, errors, rate limiters
+- `@longrunner/shared-ui` - boilerplate helper for meta tags, navbar/footer, shared EJS partials
 
 ## Workspace Layout
 
-```text
+```
 longrunner-platform/
 ├── apps/
-│   ├── blog/
-│   └── slapp/
+│   ├── blog/         (port 3004)
+│   ├── landing/      (port 3000)
+│   ├── quiz/        (port 3002)
+│   └── slapp/       (port 3001)
 ├── packages/
 │   ├── shared-auth/
 │   ├── shared-config/
 │   ├── shared-middleware/
 │   ├── shared-policy/
 │   ├── shared-schemas/
+│   ├── shared-ui/
 │   └── shared-utils/
+├── docs/
+│   ├── AGENTS.md
+│   ├── ARCHITECTURE_REFERENCE.md
+│   └── DEVELOPMENT_LOG.md
 ├── package.json
 └── pnpm-workspace.yaml
 ```
@@ -37,20 +49,25 @@ longrunner-platform/
 ## Development
 
 ```bash
+# Install dependencies
 pnpm install
 
-# lint each app
-pnpm --filter ironman-blog lint
+# Lint apps
+pnpm --filter landing lint
 pnpm --filter shoppinglist lint
+pnpm --filter longrunner-quiz lint
+pnpm --filter ironman-blog lint
 
-# run apps
-pnpm --filter ironman-blog exec node app.js
+# Run apps
+pnpm --filter landing exec node app.js
 pnpm --filter shoppinglist exec node app.js
+pnpm --filter longrunner-quiz exec node app.js
+pnpm --filter ironman-blog exec node app.js
 ```
 
 ## Environment
 
-Both apps expect environment variables such as:
+All apps expect environment variables such as:
 
 - `MONGODB`
 - `SESSION_KEY`
@@ -60,8 +77,11 @@ Both apps expect environment variables such as:
 - `ALIAS_EMAIL`
 - `ZOHOPW`
 
-## Migration Notes
+## Core Technologies
 
-- Phase 1-4 migration is complete in code structure.
-- Auth and policy templates/assets are now shared and mounted at runtime from workspace packages.
-- App folders now primarily hold app-specific domain logic; reusable logic lives in `packages/*`.
+- Express 5.x with ES modules
+- MongoDB/Mongoose ODM (per-app databases)
+- Socket.io for real-time quiz multiplayer
+- EJS templating with ejs-mate
+- Session auth with MongoStore
+- Security: helmet, express-mongo-sanitize, express-rate-limit, recaptcha

@@ -1,40 +1,37 @@
-# 🏃‍♂️ Ironman Training Blog
+# Ironman Training Blog
 
-Express app for long-form Ironman training content at `blog.longrunner.co.uk`, now running inside the Longrunner pnpm monorepo with ES modules and shared workspace packages.
+Express app for long-form Ironman training content at `blog.longrunner.co.uk`, running in the Longrunner pnpm monorepo with ES modules and shared workspace packages.
 
-🔗 Live at: [https://blog.longrunner.co.uk](https://blog.longrunner.co.uk)
+## Live
 
----
+🔗 [https://blog.longrunner.co.uk](https://blog.longrunner.co.uk)
 
-## ✨ Features
+## Features
 
-- ✅ User auth flow: register, login, logout, forgot/reset password, account delete
-- 📝 Blog post and review system with moderation and admin workflows
-- 👥 Role-aware behavior (`user`/`admin`) via shared auth model factory config
-- 🛡️ Security stack: helmet, sanitization, rate limiting, secure sessions
-- 📈 Tracking and moderation helpers for suspicious review activity
+- User auth: register, login, logout, forgot/reset password, account delete
+- Blog post and review system with moderation and admin workflows
+- Role-aware behavior (`user`/`admin`) via shared auth model factory config
+- Security stack: helmet, sanitization, rate limiting, secure sessions
+- Tracking and moderation helpers for suspicious review activity
 
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Runtime:** Node.js (ES modules)
 - **Framework:** Express + EJS (`ejs-mate` layouts)
 - **Database:** MongoDB + Mongoose
 - **Monorepo:** pnpm workspaces
-- **Shared Workspace Packages:**
-  - `@longrunner/shared-auth`
-  - `@longrunner/shared-utils`
-  - `@longrunner/shared-middleware`
-  - `@longrunner/shared-schemas`
-  - `@longrunner/shared-config`
-  - `@longrunner/shared-policy`
 
----
+## Shared Packages
 
-## 🚀 Development
+- `@longrunner/shared-auth`
+- `@longrunner/shared-utils`
+- `@longrunner/shared-middleware`
+- `@longrunner/shared-schemas`
+- `@longrunner/shared-config`
+- `@longrunner/shared-policy`
+- `@longrunner/shared-ui`
 
-From repo root:
+## Development
 
 ```bash
 pnpm install
@@ -42,9 +39,9 @@ pnpm --filter ironman-blog lint
 pnpm --filter ironman-blog exec node app.js
 ```
 
-App runs on port `3004` by default.
+Runs on port `3004`.
 
-### Required Environment Variables
+### Environment Variables
 
 - `MONGODB`
 - `SESSION_KEY`
@@ -54,11 +51,9 @@ App runs on port `3004` by default.
 - `ALIAS_EMAIL`
 - `ZOHOPW`
 
----
+## Structure
 
-## 📁 App Structure
-
-```text
+```
 apps/blog/
 ├── app.js
 ├── controllers/
@@ -69,11 +64,4 @@ apps/blog/
 └── docs/
 ```
 
-Note: auth and policy templates/assets are now consumed from shared packages at runtime.
-
----
-
-## 📄 Notes
-
-- This app is part of the Longrunner monorepo migration from duplicated app logic to shared packages.
-- Keep app-specific code in this app; put reusable auth/policy/config/middleware logic in `packages/*`.
+Auth and policy templates/assets are consumed from shared packages at runtime.

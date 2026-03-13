@@ -1,40 +1,71 @@
-# ❓ Quiz Web App
+# Quiz Web App
 
-A work-in-progress quiz application built with **Node.js**, **Express**, **EJS**, **MongoDB**, and **Socket.IO**.
+Quiz application built with **Node.js**, **Express**, **EJS**, **MongoDB**, and **Socket.IO** for real-time multiplayer. Now running in the Longrunner pnpm monorepo with ES modules.
 
-Test your knowledge solo or challenge a friend in real-time multiplayer mode!
+## Live
 
-🔗 Try it out live: [https://quiz.longrunner.co.uk](https://quiz.longrunner.co.uk)
+🔗 [https://quiz.longrunner.co.uk](https://quiz.longrunner.co.uk)
+
 Note: If the website is down, I'm probably testing or updating it.
 
----
+## Features
 
-## ✨ Features
+- Take quizzes with varying difficulties and question counts
+- "Auto" mode automatically advances to the next question
+- Multiplayer quiz mode using a shared room code (via Socket.IO)
+- Real-time answer tracking and scoring (multiplayer mode may be buggy)
 
-- 🎯 Take quizzes with varying difficulties and question counts
-- ⚡ "Auto" mode automatically advances to the next question
-- 👥 Multiplayer quiz mode using a shared room code (via Socket.IO)
-- 📊 Real-time answer tracking and scoring (multiplayer mode may be buggy)
+## Tech Stack
 
----
+- **Runtime:** Node.js (ES modules)
+- **Framework:** Express + EJS
+- **Database:** MongoDB + Mongoose
+- **Realtime:** Socket.IO for multiplayer
+- **Monorepo:** pnpm workspaces
 
-## 🛠️ Tech Stack
+## Shared Packages
 
-- **Backend:** Node.js, Express.js, MongoDB (Mongoose).
-- **Frontend:** EJS, HTML, CSS.
-- **Realtime:** Socket.IO for multiplayer functionality.
-- **Other Tools:** dotenv, express-session, etc.
+- `@longrunner/shared-auth`
+- `@longrunner/shared-utils`
+- `@longrunner/shared-middleware`
+- `@longrunner/shared-schemas`
+- `@longrunner/shared-config`
+- `@longrunner/shared-policy`
+- `@longrunner/shared-ui`
 
----
+## Development
+
+```bash
+pnpm install
+pnpm --filter longrunner-quiz lint
+pnpm --filter longrunner-quiz exec node app.js
+```
+
+Runs on port `3002`.
+
+### Environment Variables
+
+- `MONGODB`
+- `SESSION_KEY`
+- `SITEKEY`
+- `SECRETKEY`
+- `EMAIL_USER`
+- `ALIAS_EMAIL`
+- `ZOHOPW`
+
+## Structure
+
+```
+apps/quiz/
+├── app.js
+├── controllers/
+├── models/
+├── public/
+├── utils/
+├── views/
+└── docs/
+```
 
 ## Contributing
 
 This project is still a work in progress. Feedback, feature requests, and contributions are welcome!
-
-Feel free to open issues or submit pull requests with:
-
-- Suggestions for UI/UX improvements.
-- New feature ideas.
-- Bug reports.
-
----
