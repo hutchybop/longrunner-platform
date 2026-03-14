@@ -10,6 +10,8 @@ import methodOverride from "method-override";
 import back from "express-back";
 import compression from "compression";
 import favicon from "serve-favicon";
+import session from "express-session";
+import { MongoStore } from "connect-mongo";
 
 // Setting up shared assets
 const __filename = fileURLToPath(import.meta.url);
@@ -26,14 +28,17 @@ const sharedPolicyRoot = path.resolve(
 );
 
 // Local imports
-import { createMongoDbUrl, loadAppEnv } from "@longrunner/shared-config";
+import {
+  createMongoDbUrl,
+  createSessionConfig,
+  loadAppEnv,
+} from "@longrunner/shared-config";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
 import * as admin from "./controllers/admin.js";
 import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
-import checkBlockedIP from "./utils/blockedIPMiddleware.js";
 
 // Setting up the app
 const app = express();
@@ -100,13 +105,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Required after session setup.
-app.use(flash()); // Custom flash messages
+// Setting up session
+const sessionConfig = createSessionConfig({
+  name: "tracker_longrunner",
+  mongoUrl: dbUrl,
+  MongoStore,
+});
+app.use(session(sessionConfig));
+
+// App middleware
+app.use(flash());
 app.use(back()); // Allows back-to-last-page links
 app.use(compression()); // Compression to make website run quicker
 app.use(
   boilerplateHelper({
     appRoot: __dirname,
+    showCookieAlert: false,
     meta: {
       metaTitle: "longrunner Tracker",
       metaDescription: "longrunner Tracker",
@@ -115,15 +129,6 @@ app.use(
     },
   }),
 ); // Helper for app specific meta-data and navbar/footer
-
-// Exportable middleware for other apps - MUST be before routes
-import getIpInfoMiddleware from "./utils/tracker.js";
-import { trackRequest as trackRequestDb } from "./controllers/admin.js";
-
-app.get("/tracker/track/:appName", getIpInfoMiddleware, trackRequestDb);
-
-// Global IP blocking middleware - affects all apps
-app.use(checkBlockedIP);
 
 ////////////////////////////// App Specific Routes //////////////////////////////
 // Admin routes
@@ -135,13 +140,6 @@ app.get("/admin/tracker", catchAsync(admin.tracker));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
 app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));
-
-// API route for tracking (called by other apps)
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-app.get("/api/blocked-ips", catchAsync(admin.getBlockedIPsApi));
-app.post("/api/track", express.json(), catchAsync(admin.trackApi));
 
 // Unknown (404) webpage error
 app.use(policy.notFound);

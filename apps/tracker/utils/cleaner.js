@@ -1,5 +1,11 @@
+// Standalone util to clean tracker db records
+// Not used anywhere else
+// run with: node apps/tracker/utils/cleaner.js
+
 import mongoose from "mongoose";
+import { pathToFileURL } from "url";
 import { createMongoDbUrl } from "@longrunner/shared-config";
+import "../models/tracker.js";
 
 const cleanupOldRecords = async () => {
   try {
@@ -27,7 +33,10 @@ const cleanupOldRecords = async () => {
   }
 };
 
-if (require.main === module) {
+const isDirectRun =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
   cleanupOldRecords()
     .then(() => {
       console.log("Cleanup complete");

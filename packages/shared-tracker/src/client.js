@@ -1,5 +1,5 @@
-import axios from "axios";
 import geoip from "geoip-lite";
+import { getBlockedIps, recordRequest } from "./store.js";
 
 export const DEFAULT_SKIP_PATHS = [
   "/favicon.ico",
@@ -59,13 +59,7 @@ export function createIpContextMiddleware() {
 }
 
 export function createTrackRequestMiddleware(config = {}) {
-  const {
-    appName,
-    trackerUrl = process.env.TRACKER_URL || "http://localhost:3004",
-    apiPath = "/api/track",
-    skipPaths = DEFAULT_SKIP_PATHS,
-    timeoutMs = 1000,
-  } = config;
+  const { appName, skipPaths = DEFAULT_SKIP_PATHS } = config;
 
   if (!appName) {
     throw new Error("createTrackRequestMiddleware requires appName");
@@ -100,9 +94,7 @@ export function createTrackRequestMiddleware(config = {}) {
           }),
         };
 
-        await axios.post(`${trackerUrl}${apiPath}`, trackerData, {
-          timeout: timeoutMs,
-        });
+        await recordRequest(trackerData);
       } catch (error) {
         console.error("Failed to track request:", error.message);
       }
@@ -113,12 +105,7 @@ export function createTrackRequestMiddleware(config = {}) {
 }
 
 export function createBlockedIpMiddleware(config = {}) {
-  const {
-    trackerUrl = process.env.TRACKER_URL || "http://localhost:3004",
-    blockedIpsPath = "/api/blocked-ips",
-    cacheTtlMs = 5 * 60 * 1000,
-    timeoutMs = 1000,
-  } = config;
+  const { cacheTtlMs = 5 * 60 * 1000 } = config;
 
   let blockedIpCache = new Set();
   let lastCacheUpdate = 0;
@@ -130,13 +117,7 @@ export function createBlockedIpMiddleware(config = {}) {
     }
 
     refreshPromise = (async () => {
-      const response = await axios.get(`${trackerUrl}${blockedIpsPath}`, {
-        timeout: timeoutMs,
-      });
-
-      const blockedIps = Array.isArray(response.data?.blockedIps)
-        ? response.data.blockedIps
-        : [];
+      const blockedIps = await getBlockedIps();
 
       blockedIpCache = new Set(
         blockedIps
@@ -177,20 +158,15 @@ export function createBlockedIpMiddleware(config = {}) {
 }
 
 export function createTrackingMiddlewareStack(config = {}) {
-  const {
-    appName,
-    trackerUrl = process.env.TRACKER_URL || "http://localhost:3004",
-    skipPaths = DEFAULT_SKIP_PATHS,
-  } = config;
+  const { appName, skipPaths = DEFAULT_SKIP_PATHS } = config;
 
   return [
     createIpContextMiddleware(),
     createBlockedIpMiddleware({
-      trackerUrl,
+      cacheTtlMs: config.cacheTtlMs,
     }),
     createTrackRequestMiddleware({
       appName,
-      trackerUrl,
       skipPaths,
     }),
   ];

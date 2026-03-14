@@ -16,7 +16,5 @@
   },
   "author": "hutchyBop",
   "license": "MIT",
-  "dependencies": {
-    "mongoose": "^9.3.0"
-  }
+  "dependencies": {}
 }

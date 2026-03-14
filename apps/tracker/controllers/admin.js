@@ -1,10 +1,9 @@
 import Tracker from "../models/tracker.js";
-import TrackerEvent from "../models/trackerEvent.js";
 import {
-  blockIP as blockIpAddress,
-  unblockIP as unblockIpAddress,
-  getBlockedIPs,
-} from "../utils/blockedIPMiddleware.js";
+  blockIpAddress,
+  unblockIpAddress,
+  getBlockedIps,
+} from "@longrunner/shared-tracker";
 
 const validApps = ["blog", "slapp", "quiz", "landing"];
 
@@ -242,141 +241,11 @@ export const tracker = async (req, res) => {
 };
 
 export const blockedIPs = async (req, res) => {
-  const blockedIPs = await getBlockedIPs();
+  const blockedIPs = await getBlockedIps();
   res.render("admin/blockedIPs", {
     title: "Blocked IPs",
     blockedIPs,
   });
-};
-
-const ingestTrackData = async (input = {}) => {
-  const {
-    appName,
-    ip,
-    country,
-    city,
-    userAgent,
-    route,
-    method,
-    statusCode,
-    isGoodRoute,
-  } = input;
-
-  if (!validApps.includes(appName)) {
-    return { ok: false, status: 400, error: "Invalid app name" };
-  }
-
-  const safeIp = ip || "UNKNOWN";
-  const safeCountry = country || "UNKNOWN";
-  const safeCity = city || "UNKNOWN";
-  const safeUserAgent = userAgent || "UNKNOWN";
-  const safeRoute = route || "UNKNOWN";
-  const safeMethod = method || "UNKNOWN";
-  const safeStatusCode = Number.isInteger(statusCode) ? statusCode : 0;
-  const calculatedGoodRoute =
-    typeof isGoodRoute === "boolean"
-      ? isGoodRoute
-      : (safeMethod === "GET" && safeStatusCode < 400) || safeRoute === "/";
-
-  await TrackerEvent.create({
-    ip: safeIp,
-    appName,
-    country: safeCountry,
-    city: safeCity,
-    userAgent: safeUserAgent,
-    route: safeRoute,
-    method: safeMethod,
-    statusCode: safeStatusCode,
-    isGoodRoute: calculatedGoodRoute,
-  });
-
-  let tracker = await Tracker.findOne({ ip: safeIp, appName });
-
-  if (!tracker) {
-    tracker = new Tracker({
-      ip: safeIp,
-      appName,
-      country: safeCountry,
-      city: safeCity,
-      userAgent: safeUserAgent,
-      timesVisited: 1,
-      isFirstVisit: true,
-    });
-  } else {
-    tracker.timesVisited++;
-    tracker.lastVisitDate = new Date().toLocaleDateString("en-GB");
-    tracker.lastVisitTime = new Date().toLocaleTimeString("en-GB", {
-      hour12: false,
-    });
-    tracker.isFirstVisit = false;
-    tracker.userAgent = safeUserAgent || tracker.userAgent;
-
-    if (tracker.ip === "UNKNOWN" && safeIp !== "UNKNOWN") tracker.ip = safeIp;
-    if (tracker.country === "UNKNOWN" && safeCountry !== "UNKNOWN")
-      tracker.country = safeCountry;
-    if (tracker.city === "UNKNOWN" && safeCity !== "UNKNOWN")
-      tracker.city = safeCity;
-  }
-
-  const routeMap = calculatedGoodRoute ? tracker.goodRoutes : tracker.badRoutes;
-  const current = routeMap.get(safeRoute) || 0;
-  routeMap.set(safeRoute, current + 1);
-
-  await tracker.save();
-
-  return { ok: true };
-};
-
-export const trackApi = async (req, res) => {
-  try {
-    const result = await ingestTrackData(req.body || {});
-
-    if (!result.ok) {
-      return res.status(result.status).json({ error: result.error });
-    }
-
-    return res.json({ success: true });
-  } catch (error) {
-    console.error("Track API error:", error);
-    return res.status(500).json({ error: "Failed to track request" });
-  }
-};
-
-export const getBlockedIPsApi = async (req, res) => {
-  const blockedIps = await getBlockedIPs();
-  res.json({ blockedIps });
-};
-
-export const trackRequest = async (req, res, next) => {
-  try {
-    const { appName } = req.params;
-    const ip = req.ipInfo?.ip || req.ip || "UNKNOWN";
-    const country = req.ipInfo?.country || "UNKNOWN";
-    const city = req.ipInfo?.city || "UNKNOWN";
-    const userAgent = req.get("User-Agent") || "UNKNOWN";
-    const route = req.route?.path || req.originalUrl;
-    const method = req.method;
-    const statusCode = res.statusCode;
-
-    if (!validApps.includes(appName)) {
-      return next();
-    }
-
-    await ingestTrackData({
-      appName,
-      ip,
-      country,
-      city,
-      userAgent,
-      route,
-      method,
-      statusCode,
-    });
-  } catch (error) {
-    console.error("Track request error:", error);
-  }
-
-  next();
 };
 
 export const blockIP = async (req, res) => {

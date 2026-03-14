@@ -53,6 +53,8 @@ export const boilerplateHelper =
       includes.misc = options.misc;
     }
 
+    includes.showCookieAlert = options.showCookieAlert !== false;
+
     const meta = { ...defaultMeta, ...options.meta };
 
     const originalRender = res.render.bind(res);

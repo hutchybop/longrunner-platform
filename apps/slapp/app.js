@@ -92,7 +92,6 @@ if (process.env.NODE_ENV === "production") {
 app.use(
   ...createTrackingMiddlewareStack({
     appName: "slapp",
-    trackerUrl: process.env.TRACKER_URL,
   }),
 );
 

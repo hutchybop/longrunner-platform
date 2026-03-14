@@ -7,3 +7,10 @@ export {
   createBlockedIpMiddleware,
   createTrackingMiddlewareStack,
 } from "./client.js";
+
+export {
+  getBlockedIps,
+  recordRequest,
+  blockIpAddress,
+  unblockIpAddress,
+} from "./store.js";

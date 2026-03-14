@@ -13,8 +13,7 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@longrunner/shared-utils": "workspace:*",
-    "mongoose": "^9.3.0"
+    "@longrunner/shared-utils": "workspace:*"
   },
   "peerDependencies": {
     "express": "^5.2.1"

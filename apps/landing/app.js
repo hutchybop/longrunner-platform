@@ -50,7 +50,6 @@ if (process.env.NODE_ENV === "production") {
 app.use(
   ...createTrackingMiddlewareStack({
     appName: "landing",
-    trackerUrl: process.env.TRACKER_URL,
   }),
 );
 
