@@ -123,6 +123,9 @@ importers:
       compression:
         specifier: ^1.8.1
         version: 1.8.1
+      connect-mongo:
+        specifier: ^6.0.0
+        version: 6.0.0(express-session@1.19.0)(mongodb@7.1.0)
       ejs:
         specifier: ^5.0.1
         version: 5.0.1

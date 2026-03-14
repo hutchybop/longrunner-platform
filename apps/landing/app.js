@@ -5,6 +5,8 @@ import { createRequire } from "module";
 
 import ejsMate from "ejs-mate";
 import session from "express-session";
+import { mongoose } from "mongoose";
+import { MongoStore } from "connect-mongo";
 import back from "express-back";
 import helmet from "helmet";
 import compression from "compression";
@@ -32,7 +34,12 @@ import {
   generalLimiter,
   formSubmissionLimiter,
 } from "@longrunner/shared-utils/rateLimiter.js";
-import { createHelmetConfig, loadAppEnv } from "@longrunner/shared-config";
+import {
+  createHelmetConfig,
+  createMongoDbUrl,
+  createSessionConfig,
+  loadAppEnv,
+} from "@longrunner/shared-config";
 import flash from "@longrunner/shared-utils/flash.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
@@ -88,22 +95,28 @@ app.use(
 
 app.use(helmet(createHelmetConfig()));
 
-const sessionConfig = {
+// Setting Mongodb Atlas
+const dbName = "blog";
+const dbUrl = createMongoDbUrl({ dbName });
+mongoose.connect(dbUrl);
+
+// Error Handling for the db connection
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "connection error:"));
+db.once("open", () => {
+  console.log("Database connected");
+});
+
+// Setting up the session
+const sessionConfig = createSessionConfig({
   name: "landing_longrunner",
-  secret: process.env.SESSION_KEY || "please-change-session-secret",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 7 * 2,
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-  },
-};
+  mongoUrl: dbUrl,
+  MongoStore,
+});
 app.use(session(sessionConfig));
+
 app.use(flash());
 app.use(back());
-
 app.use(compression());
 app.use(generalLimiter);
 app.use(

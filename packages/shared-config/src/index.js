@@ -51,6 +51,12 @@ export function createMongoDbUrl(config = {}) {
     throw new Error("createMongoDbUrl requires dbName");
   }
 
+  if (!password) {
+    throw new Error(
+      "createMongoDbUrl requires password (set MONGODB or pass password in config)",
+    );
+  }
+
   return [
     `mongodb+srv://${username}:`,
     password,

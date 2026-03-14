@@ -5,8 +5,13 @@ let trackerConnection = null;
 let trackerConnectionPromise = null;
 
 const TRACKER_DB_NAME = "longrunnerTracker";
+let trackerDbConfigError = null;
 
 export async function getTrackerConnection() {
+  if (trackerDbConfigError) {
+    throw trackerDbConfigError;
+  }
+
   if (trackerConnection?.readyState === 1) {
     return trackerConnection;
   }
@@ -15,10 +20,17 @@ export async function getTrackerConnection() {
     return trackerConnectionPromise;
   }
 
-  const dbUrl = createMongoDbUrl({
-    dbName: TRACKER_DB_NAME,
-    appName: TRACKER_DB_NAME,
-  });
+  let dbUrl;
+  try {
+    dbUrl = createMongoDbUrl({
+      dbName: TRACKER_DB_NAME,
+      appName: TRACKER_DB_NAME,
+      password: process.env.MONGODB,
+    });
+  } catch (error) {
+    trackerDbConfigError = error;
+    throw error;
+  }
 
   trackerConnection = mongoose.createConnection(dbUrl, {
     serverSelectionTimeoutMS: 5000,
