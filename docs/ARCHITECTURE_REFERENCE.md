@@ -1,6 +1,6 @@
 # Architecture Reference - Longrunner Platform
 
-This document provides a birds-eye view of the `longrunner-platform` pnpm workspace, which hosts four Express applications and shared workspace packages. All code runs as ES modules with shared authentication, middleware, schemas, and UI components.
+This document provides a birds-eye view of the `longrunner-platform` pnpm workspace, which hosts five Express applications and shared workspace packages. All code runs as ES modules with shared authentication, middleware, schemas, and UI components.
 
 ## Table of Contents
 
@@ -21,7 +21,8 @@ This document provides a birds-eye view of the `longrunner-platform` pnpm worksp
 | `landing`         | `apps/landing` | 3000 | Landing page linking to other apps, policy pages. No auth/database. |
 | `shoppinglist`    | `apps/slapp`   | 3001 | Meal planner, ingredient catalog, weekly shopping list generator.   |
 | `longrunner-quiz` | `apps/quiz`    | 3002 | General knowledge quiz with real-time multiplayer via Socket.io.    |
-| `ironman-blog`    | `apps/blog`    | 3004 | Ironman training blog, reviews, admin moderation, IP tracking.      |
+| `ironman-blog`    | `apps/blog`    | 3003 | Ironman training blog, reviews, admin moderation, IP tracking.      |
+| `tracker`         | `apps/tracker` | 3004 | Global IP tracking and analytics for longrunner apps.               |
 
 ### Shared Workspace Packages
 
@@ -34,12 +35,14 @@ This document provides a birds-eye view of the `longrunner-platform` pnpm worksp
 | `@longrunner/shared-config`     | Helpers for building MongoDB URLs, session configs, and Helmet CSP settings.                                                |
 | `@longrunner/shared-utils`      | Rate limiters, flash middleware, ExpressError, centralized error handler, mailer, and `catchAsync`.                         |
 | `@longrunner/shared-ui`         | Boilerplate helper for meta tags, navbar/footer auto-inclusion, shared EJS partials.                                        |
+| `@longrunner/shared-tracker`    | IP tracking middleware with geoip-lite, request recording, IP blocking. Used by blog and quiz apps.                         |
 
 ### Core Technologies
 
 - `express@5.x` as the web framework with middleware chains in each `app.js`.
-- `mongoose` ODM talking to per-app MongoDB databases (`landing` has no DB, `slapp`, `quiz`, `blog` each have their own).
+- `mongoose` ODM talking to per-app MongoDB databases (`landing` has no DB, `slapp`, `quiz`, `blog`, `tracker` each have their own).
 - `socket.io` for real-time quiz multiplayer (quiz app only).
+- `geoip-lite` for IP geolocation in `@longrunner/shared-tracker`.
 - `pnpm` workspaces with `"type": "module"` packages.
 - `EJS` templating (with `ejs-mate`) and shared EJS partials/views from `shared-auth`, `shared-policy`, and `shared-ui`.
 - Authentication via session cookies (MongoStore for persistent sessions) + bcrypt/hash migration.
@@ -62,12 +65,14 @@ flowchart LR
     SlappApp[apps/slapp/app.js]
     QuizApp[apps/quiz/app.js]
     BlogApp[apps/blog/app.js]
+    TrackerApp[apps/tracker/app.js]
     SharedMiddleware["/utils + shared packages/"]
     SharedAuth["shared-auth"]
     SharedPolicy["shared-policy"]
     SharedConfig["shared-config"]
     SharedUtils["shared-utils"]
     SharedUi["shared-ui"]
+    SharedTracker["shared-tracker"]
     SharedMiddleware --> SharedConfig
     SubControllers[controllers/ + models/]
     Database[(MongoDB)]
@@ -77,6 +82,7 @@ flowchart LR
     Client -->|HTTP / forms / AJAX| SlappApp
     Client -->|HTTP / WebSocket| QuizApp
     Client -->|HTTP / forms / AJAX| BlogApp
+    Client -->|HTTP / AJAX| TrackerApp
 
     LandingApp --> SharedConfig
     LandingApp --> SharedUtils
@@ -93,16 +99,25 @@ flowchart LR
     QuizApp --> SharedUtils
     QuizApp --> SharedPolicy
     QuizApp --> SharedUi
+    QuizApp --> SharedTracker
 
     BlogApp --> SharedConfig
     BlogApp --> SharedUtils
     BlogApp --> SharedAuth
     BlogApp --> SharedPolicy
     BlogApp --> SharedUi
+    BlogApp --> SharedTracker
+
+    TrackerApp --> SharedConfig
+    TrackerApp --> SharedUtils
+    TrackerApp --> SharedPolicy
+    TrackerApp --> SharedUi
+    TrackerApp --> SharedTracker
 
     SlappApp --> SubControllers
     QuizApp --> SubControllers
     BlogApp --> SubControllers
+    TrackerApp --> SubControllers
     SubControllers --> Database
     SubControllers --> SharedUtils
     SubControllers --> Views
@@ -189,6 +204,19 @@ Shared assets are served with explicit prefixes:
   - `deleteUser.js` – CLI utility for user cleanup.
 - `public/` – Static assets.
 
+### `apps/tracker` (Port 3004)
+
+- `app.js` – Entry point. Global IP tracking dashboard for all longrunner apps. Connects to `longrunnerTracker` MongoDB database.
+- `controllers/`
+  - `admin.js` – Dashboard, tracker analytics, blocked IPs management.
+  - `policy.js` – 404 handler.
+- `models/`
+  - `tracker.js` – IP tracking schema with geo data, route tracking, user agent, TTL index (90 days).
+- `utils/`
+  - `cleaner.js` – Utility for cleaning up old tracking data.
+- `views/admin/` – Dashboard, tracker view, blocked IPs EJS templates.
+- `public/` – Static assets (favicon).
+
 ### Shared Packages
 
 #### `@longrunner/shared-auth`
@@ -232,6 +260,15 @@ Shared assets are served with explicit prefixes:
 
 - `boilerplateHelper({ appRoot, meta, misc })` – Middleware that auto-includes navbar/footer, sets meta tags, injects CSS/JS paths.
 
+#### `@longrunner/shared-tracker`
+
+- `normalizeIp(req)` – Extracts and normalizes IP from request headers (handles X-Forwarded-For, proxy IPs).
+- `createIpContextMiddleware()` – Attaches geoip-lite data to `req.ipInfo` (country, city, region, timezone).
+- `createTrackRequestMiddleware({ appName, skipPaths })` – Records requests to MongoDB with route, status, user agent.
+- `createBlockedIpMiddleware({ cacheTtlMs })` – Blocks IPs listed in tracker DB, with cached lookup.
+- `createTrackingMiddlewareStack({ appName })` – Combines all three middlewares into a stack.
+- `getBlockedIps()`, `recordRequest()`, `blockIpAddress()`, `unblockIpAddress()` – Database operations.
+
 ---
 
 ## Dependency Map
@@ -239,7 +276,7 @@ Shared assets are served with explicit prefixes:
 ### Core dependencies (workspace-wide)
 
 - `express`, `mongoose`, `express-session`, `connect-mongo`, `express-mongo-sanitize`, `helmet`, `compression`, `method-override`, `express-back`, `ejs-mate`, `express-rate-limit`, `express-recaptcha`, `socket.io`.
-- `dotenv/config` for environment variables, `sanitize-html`, `nodemailer`.
+- `dotenv/config` for environment variables, `sanitize-html`, `nodemailer`, `geoip-lite`.
 
 ### Graph view (entry points and imports)
 
@@ -269,14 +306,23 @@ graph TD
     BlogApp --> SharedUtils
     BlogApp --> SharedMiddleware
     BlogApp --> SharedUi
+    BlogApp --> SharedTracker["shared-tracker"]
+
+    TrackerApp["apps/tracker/app.js"] --> SharedConfig
+    TrackerApp --> SharedPolicy
+    TrackerApp --> SharedTracker
+    TrackerApp --> SharedUi
+    TrackerApp --> SharedUtils
 
     SlappApp --> SlappControllers[controllers/*.js]
     QuizApp --> QuizControllers
     BlogApp --> BlogControllers
+    TrackerApp --> TrackerControllers[controllers/*.js]
 
     SlappControllers --> SlappModels[models/*.js]
     QuizControllers --> QuizModels
     BlogControllers --> BlogModels
+    TrackerControllers --> TrackerModels[models/*.js"]
 
     SlappControllers --> SharedUtils
     QuizControllers --> SharedUtils
@@ -294,6 +340,8 @@ graph TD
 | `landing` | `apps/landing/app.js` (port 3000) |
 | `slapp`   | `apps/slapp/app.js` (port 3001)   |
 | `quiz`    | `apps/quiz/app.js` (port 3002)    |
+| `blog`    | `apps/blog/app.js` (port 3003)    |
+| `tracker` | `apps/tracker/app.js` (port 3004) |
 | `blog`    | `apps/blog/app.js` (port 3004)    |
 
 ### Circular dependencies
@@ -361,6 +409,14 @@ flowchart LR
 4. If flagged, admin notified via mailer.
 5. Review ID pushed to `BlogIM.reviews` array.
 
+### IP tracking flow
+
+1. Request hits any app with `@longrunner/shared-tracker` middleware enabled (blog, quiz).
+2. `createIpContextMiddleware` extracts IP from headers/proxy, uses `geoip-lite` to add geo data to `req.ipInfo`.
+3. `createBlockedIpMiddleware` checks cached blocklist; returns 403 if IP is blocked.
+4. `createTrackRequestMiddleware` records request on response `finish` event to `longrunnerTracker` database.
+5. Tracker app at `/admin/tracker` provides dashboard to view aggregated stats and manage blocked IPs.
+
 ---
 
 ## Key Interactions
@@ -404,6 +460,13 @@ flowchart LR
 2. Submissions go through rate limiting, validation, and `shared-policy.tandcPost`.
 3. Notifies both submitter and owner via shared mailer.
 
+### 7. IP tracking and blocking
+
+1. Blog and quiz apps use `@longrunner/shared-tracker` middleware to record requests.
+2. Tracker app (`/admin/tracker`) displays aggregated IP stats by app, country, route.
+3. Admin can block IPs at `/admin/blocked-ips`; blocked IPs get 403 on other apps.
+4. Tracking data auto-expires after 90 days via MongoDB TTL index.
+
 ---
 
 ## Extension Points
@@ -413,6 +476,7 @@ flowchart LR
 3. **New shared utility** – Add to appropriate `@longrunner/shared-*` package, export, import in apps.
 4. **New quiz question category** – Add to `apps/quiz/models/question.js` schema, update difficulty enums.
 5. **New validation schema** – Add to `@longrunner/shared-schemas`, consume in app middleware.
+6. **Enable IP tracking** – Add `@longrunner/shared-tracker` middleware to app's `app.js` and configure with app name.
 
 ### Files typically modified for new features
 
@@ -423,6 +487,7 @@ flowchart LR
 | New validation     | `packages/shared-schemas/src/*.js`, `apps/*/utils/middleware.js`           |
 | New quiz type      | `apps/quiz/models/question.js`, `apps/quiz/controllers/api.js`             |
 | Admin feature      | `apps/blog/controllers/admin.js`, relevant model                           |
+| IP tracking        | `app.js` (add middleware), `apps/tracker/views/admin/*.ejs` (if new views) |
 
 ---
 
@@ -434,14 +499,16 @@ pnpm --filter landing lint
 pnpm --filter shoppinglist lint
 pnpm --filter longrunner-quiz lint
 pnpm --filter ironman-blog lint
+pnpm --filter tracker lint
 
 # Boot an app
 pnpm --filter landing exec node app.js
 pnpm --filter shoppinglist exec node app.js
 pnpm --filter longrunner-quiz exec node app.js
 pnpm --filter ironman-blog exec node app.js
+pnpm --filter tracker exec node app.js
 ```
 
 ---
 
-_Last Updated: 2026-03-13_
+_Last Updated: 2026-03-14_

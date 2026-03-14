@@ -10,15 +10,15 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 - Module system: ES modules (`"type": "module"`) across apps/packages.
 - Main apps:
   - `apps/landing` (`name: landing`, port `3000`)
-  - `apps/slapp` (`name: shoppinglist`, port `3001`)
-  - `apps/quiz` (`name: longrunner-quiz`, port `3002`)
-  - `apps/blog` (`name: ironman-blog`, port `3004`)
-- Shared packages: `@longrunner/shared-auth`, `@longrunner/shared-config`, `@longrunner/shared-middleware`, `@longrunner/shared-policy`, `@longrunner/shared-schemas`, `@longrunner/shared-ui`, `@longrunner/shared-utils`.
+  - `apps/slapp` (`name: slapp`, port `3001`)
+  - `apps/quiz` (`name: quiz`, port `3002`)
+  - `apps/blog` (`name: blog`, port `3003`)
+  - `apps/tracker` (`name: tracker`, port `3004`)
+- Shared packages: `@longrunner/shared-auth`, `@longrunner/shared-config`, `@longrunner/shared-middleware`, `@longrunner/shared-policy`, `@longrunner/shared-schemas`, `@longrunner/shared-ui`, `@longrunner/shared-utils`, `@longrunner/shared-tracker`.
 
-## Install / Run / Lint / Test
+## Environment Setup
 
-### Install
-
+- This repo requires a `.env` file to run. Check existing examples or the app's documentation for required environment variables (database connection, session secrets, etc.).
 - Install all workspace dependencies:
   - `pnpm install`
 
@@ -26,9 +26,10 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 
 - Preferred (works for every app):
   - `pnpm --filter landing exec node app.js`
-  - `pnpm --filter shoppinglist exec node app.js`
-  - `pnpm --filter longrunner-quiz exec node app.js`
-  - `pnpm --filter ironman-blog exec node app.js`
+  - `pnpm --filter slapp exec node app.js`
+  - `pnpm --filter quiz exec node app.js`
+  - `pnpm --filter blog exec node app.js`
+  - `pnpm --filter tracker exec node app.js`
 - Optional (landing only has `start` script):
   - `pnpm --filter landing start`
 
@@ -36,55 +37,37 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 
 - Lint a single workspace:
   - `pnpm --filter landing lint`
-  - `pnpm --filter shoppinglist lint`
-  - `pnpm --filter longrunner-quiz lint`
-  - `pnpm --filter ironman-blog lint`
+  - `pnpm --filter slapp lint`
+  - `pnpm --filter quiz lint`
+  - `pnpm --filter blog lint`
+  - `pnpm --filter tracker lint`
   - `pnpm --filter @longrunner/shared-utils lint`
 - Lint + autofix a workspace:
   - `pnpm --filter <workspace-name> lint:fix`
 - Lint all workspaces with lint scripts:
   - `pnpm -r --if-present run lint`
 
-### Build
-
-- There is currently **no repo-wide build script** and no per-workspace build pipeline.
-- Treat lint + app boot checks as the primary verification path.
-
 ### Test
 
 - There is currently **no automated test framework configured** (no Jest/Vitest/Playwright/node:test suite in repo).
-- Some workspaces include a placeholder `test` script that exits with error.
+- Most workspaces include a placeholder `test` script that exits with error.
 - If you are asked to "run tests", do this instead:
   - Run lint on the changed workspace.
   - Boot the affected app and verify the edited flow manually.
-
-### Running a single test (important)
-
-- True single-test execution is not available yet because no test harness exists.
-- Closest equivalent for targeted verification is linting one file:
-  - `pnpm --filter <workspace-name> exec eslint path/to/file.js`
-- If a future PR introduces `node:test` files, use:
-  - `pnpm --filter <workspace-name> exec node --test path/to/file.test.js`
-  - Optional test name filter: `--test-name-pattern "name fragment"`
+- If a future PR introduces `node:test` files, run a single test with:
+  - `pnpm --filter <workspace> exec node --test path/to/file.test.js`
+  - With test name filter: `--test-name-pattern "name fragment"`
 
 ## Code Style Rules
 
-### Language and modules
+### Language, modules, and ESLint
 
 - Use modern JavaScript only; do not introduce TypeScript unless explicitly requested.
 - Use ES module syntax (`import` / `export`) everywhere.
-- Server files are linted as `sourceType: "module"`.
-- Browser files under `public/**/*.js` are linted as script-style globals.
-
-### Formatting
-
-- Formatting is enforced via ESLint + Prettier integration (`eslint-plugin-prettier/recommended`).
-- Follow existing repo formatting:
-  - 2-space indentation
-  - semicolons
-  - double quotes
-  - trailing commas where Prettier applies them
-- Do not hand-format against Prettier; run lint/fix when needed.
+- Server files are linted as ES modules (`sourceType: "module"`).
+- Browser files under `public/**/*.js` are linted as scripts with browser globals (`document`, `window`, `localStorage`).
+- Console logging is allowed (`no-console: off`) in both contexts.
+- ESLint config is defined in `@longrunner/shared-config/src/eslint.js` via `createAppEslintConfig()`.
 
 ### Imports
 
@@ -103,6 +86,13 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 - Enforce persistence contracts with Mongoose schemas/models.
 - Prefer explicit validation/sanitization over implicit assumptions.
 
+### Database and Mongoose patterns
+
+- Define Mongoose schemas in dedicated files under `models/` or `src/models/`.
+- Use the shared connection utility from `@longrunner/shared-config` for MongoDB connections.
+- Follow existing model patterns: schema definition → model export → index re-export.
+- Avoid hardcoding connection strings; use environment variables.
+
 ### Naming conventions
 
 - Variables/functions: `camelCase`.
@@ -118,6 +108,18 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 - Keep the centralized `errorHandler` middleware last in the middleware chain.
 - Do not swallow errors; propagate via `next(err)` or thrown errors in async handlers.
 - Preserve user-facing flash-message behavior on auth/form flows.
+
+### File and directory organization
+
+- Follow the existing structure in each app:
+  - `app.js` - main entry point
+  - `models/` - Mongoose schemas and models
+  - `controllers/` - route handlers
+  - `routes/` - Express router definitions
+  - `middleware/` - custom middleware
+  - `public/` - static assets (browser JS in `public/javascripts/`, CSS in `public/stylesheets/`)
+  - `views/` - EJS templates
+- Keep related logic co-located; avoid creating deep nesting.
 
 ### Security and auth conventions
 
@@ -139,15 +141,10 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 
 ## Cursor / Copilot Rules
 
-- No `.cursor/rules/` directory found.
-- No `.cursorrules` file found.
-- No `.github/copilot-instructions.md` file found.
-- Therefore, there are no additional Cursor/Copilot instruction files to merge.
+- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` files found.
 
 ## Practical Verification Checklist for Agents
 
-- Identify touched workspace(s).
-- Run `pnpm --filter <workspace> lint` for each touched workspace.
+- Identify touched workspace(s) → run `pnpm --filter <workspace> lint`.
 - If behavior changed, boot impacted app with `pnpm --filter <workspace> exec node app.js`.
 - Manually verify edited route/view/form/auth flow.
-- Report exactly what was verified and what remains unverified.

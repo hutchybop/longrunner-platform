@@ -1,5 +1,28 @@
 # DEVELOPMENT LOG
 
+## Session 3
+
+### Saturday March 14th
+
+<br>
+
+**Summary:** This session focused on adding a new tracker app for global IP tracking and analytics, refactoring the tracker functionality into a shared package, and updating project documentation across all apps.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+eb93ae0, 25c43f0, 69e3da1, a15cf18
+
+**Session git history:**
+
+- update tracker - _Updated tracker app with controller enhancements, navbar additions, and shared-tracker package improvements_
+- update tracker - _Refactored tracker to use shared-tracker package, removed local package dependencies from apps_
+- add tracker app - _Added new tracker app with models, controllers, views, and integrated shared-tracker package_
+- Update project docs and update readme.md files - _Updated AGENTS.md, ARCHITECTURE_REFERENCE.md, and app README files_
+
+---
+
+<br>
+
 ## Session 2
 
 ### Thursday March 12th
