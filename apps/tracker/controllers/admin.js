@@ -1,6 +1,7 @@
 import Tracker from "../models/tracker.js";
 import {
   blockIpAddress,
+  decodeRouteKey,
   unblockIpAddress,
   getBlockedIps,
 } from "@longrunner/shared-tracker";
@@ -98,6 +99,11 @@ export const dashboard = async (req, res) => {
     { $limit: 10 },
   ]);
 
+  const decodedRouteStats = routeStats.map((route) => ({
+    ...route,
+    _id: decodeRouteKey(route._id),
+  }));
+
   const appStats = await Tracker.aggregate([
     {
       $group: {
@@ -118,7 +124,7 @@ export const dashboard = async (req, res) => {
     title: "Tracker Dashboard",
     stats,
     countryStats,
-    routeStats,
+    routeStats: decodedRouteStats,
     appStats,
     selectedApp,
     validApps,
@@ -214,10 +220,33 @@ export const tracker = async (req, res) => {
     { $limit: 10 },
   ]);
 
+  const decodedRouteStats = routeStats.map((route) => ({
+    ...route,
+    _id: decodeRouteKey(route._id),
+  }));
+
   const trackerData = await Tracker.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
+
+  for (const visitor of trackerData) {
+    if (visitor.goodRoutes instanceof Map) {
+      const decodedGoodRoutes = new Map();
+      for (const [routeKey, count] of visitor.goodRoutes.entries()) {
+        decodedGoodRoutes.set(decodeRouteKey(routeKey), count);
+      }
+      visitor.goodRoutes = decodedGoodRoutes;
+    }
+
+    if (visitor.badRoutes instanceof Map) {
+      const decodedBadRoutes = new Map();
+      for (const [routeKey, count] of visitor.badRoutes.entries()) {
+        decodedBadRoutes.set(decodeRouteKey(routeKey), count);
+      }
+      visitor.badRoutes = decodedBadRoutes;
+    }
+  }
 
   const totalTrackerEntries = await Tracker.countDocuments(filter);
   const totalPages = Math.ceil(totalTrackerEntries / limit);
@@ -227,7 +256,7 @@ export const tracker = async (req, res) => {
     stats,
     countryStats,
     trackerData,
-    routeStats,
+    routeStats: decodedRouteStats,
     selectedApp,
     validApps,
     pagination: {
@@ -256,7 +285,8 @@ export const blockIP = async (req, res) => {
   } else {
     req.flash("error", `Failed to block IP ${ip}`);
   }
-  res.redirect("back");
+  const referer = req.get("referer") || req.get("referrer");
+  res.redirect(referer || "/admin/blocked-ips");
 };
 
 export const unblockIP = async (req, res) => {
@@ -267,5 +297,6 @@ export const unblockIP = async (req, res) => {
   } else {
     req.flash("error", `Failed to unblock IP ${ip}`);
   }
-  res.redirect("back");
+  const referer = req.get("referer") || req.get("referrer");
+  res.redirect(referer || "/admin/blocked-ips");
 };

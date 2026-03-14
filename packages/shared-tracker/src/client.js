@@ -3,6 +3,7 @@ import { getBlockedIps, recordRequest } from "./store.js";
 
 export const DEFAULT_SKIP_PATHS = [
   "/favicon.ico",
+  "/favicon/",
   "/stylesheets/",
   "/javascripts/",
   "/images/",
@@ -37,7 +38,9 @@ export function normalizeIp(req) {
 }
 
 export function classifyRoute({ method, statusCode, route }) {
-  return (method === "GET" && statusCode < 400) || route === "/";
+  const isSuccessfulGet =
+    method === "GET" && (statusCode < 300 || statusCode === 304);
+  return isSuccessfulGet || route === "/";
 }
 
 export function createIpContextMiddleware() {
@@ -60,6 +63,7 @@ export function createIpContextMiddleware() {
 
 export function createTrackRequestMiddleware(config = {}) {
   const { appName, skipPaths = DEFAULT_SKIP_PATHS } = config;
+  let lastTrackErrorLogAt = 0;
 
   if (!appName) {
     throw new Error("createTrackRequestMiddleware requires appName");
@@ -92,11 +96,22 @@ export function createTrackRequestMiddleware(config = {}) {
             statusCode: res.statusCode,
             route,
           }),
+          environment: process.env.NODE_ENV || "development",
+          host: req.get("Host") || "UNKNOWN",
+          isLocalDev:
+            process.env.NODE_ENV !== "production" ||
+            /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(
+              req.get("Host") || "",
+            ),
         };
 
         await recordRequest(trackerData);
       } catch (error) {
-        console.error("Failed to track request:", error.message);
+        const now = Date.now();
+        if (now - lastTrackErrorLogAt > 60 * 1000) {
+          console.error("Failed to track request:", error.message);
+          lastTrackErrorLogAt = now;
+        }
       }
     });
 
@@ -109,7 +124,9 @@ export function createBlockedIpMiddleware(config = {}) {
 
   let blockedIpCache = new Set();
   let lastCacheUpdate = 0;
+  let lastRefreshAttempt = 0;
   let refreshPromise = null;
+  let lastBlockedErrorLogAt = 0;
 
   const refreshBlockedIpCache = async () => {
     if (refreshPromise) {
@@ -117,6 +134,7 @@ export function createBlockedIpMiddleware(config = {}) {
     }
 
     refreshPromise = (async () => {
+      lastRefreshAttempt = Date.now();
       const blockedIps = await getBlockedIps();
 
       blockedIpCache = new Set(
@@ -137,7 +155,11 @@ export function createBlockedIpMiddleware(config = {}) {
 
   return async (req, res, next) => {
     try {
-      if (Date.now() - lastCacheUpdate > cacheTtlMs) {
+      const now = Date.now();
+      if (
+        now - lastCacheUpdate > cacheTtlMs &&
+        now - lastRefreshAttempt > cacheTtlMs
+      ) {
         await refreshBlockedIpCache();
       }
 
@@ -150,7 +172,11 @@ export function createBlockedIpMiddleware(config = {}) {
         });
       }
     } catch (error) {
-      console.error("Blocked IP middleware failed:", error.message);
+      const now = Date.now();
+      if (now - lastBlockedErrorLogAt > 60 * 1000) {
+        console.error("Blocked IP middleware failed:", error.message);
+        lastBlockedErrorLogAt = now;
+      }
     }
 
     next();

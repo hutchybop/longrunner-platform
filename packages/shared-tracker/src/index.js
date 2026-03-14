@@ -13,4 +13,5 @@ export {
   recordRequest,
   blockIpAddress,
   unblockIpAddress,
+  decodeRouteKey,
 } from "./store.js";

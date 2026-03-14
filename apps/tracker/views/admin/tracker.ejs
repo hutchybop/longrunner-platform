@@ -143,7 +143,12 @@
                         <% trackerData.forEach(function(visitor) { %>
                             <tr>
                                 <td><code><%= visitor.ip %></code></td>
-                                <td><span class="badge bg-secondary"><%= visitor.appName %></span></td>
+                                <td>
+                                    <span class="badge bg-secondary"><%= visitor.appName %></span>
+                                    <% if (visitor.lastIsLocalDev) { %>
+                                        <span class="badge bg-warning text-dark ms-1">DEV</span>
+                                    <% } %>
+                                </td>
                                 <td><%= visitor.country %></td>
                                 <td><%= visitor.city %></td>
                                 <td>

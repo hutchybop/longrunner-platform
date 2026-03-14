@@ -51,6 +51,18 @@ const trackerSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    lastEnvironment: {
+      type: String,
+      default: "development",
+    },
+    lastHost: {
+      type: String,
+      default: "UNKNOWN",
+    },
+    lastIsLocalDev: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -108,6 +120,18 @@ const trackerEventSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    environment: {
+      type: String,
+      default: "development",
+    },
+    host: {
+      type: String,
+      default: "UNKNOWN",
+    },
+    isLocalDev: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -124,6 +148,20 @@ trackerEventSchema.index({ ip: 1, appName: 1, createdAt: -1 });
 const blockedIpSchema = new mongoose.Schema({
   blockedIPArray: [{ type: String }],
 });
+
+function sanitizeRouteKey(route) {
+  return String(route)
+    .replaceAll("%", "%25")
+    .replaceAll(".", "%2E")
+    .replaceAll("$", "%24");
+}
+
+function decodeRouteKey(route) {
+  return String(route)
+    .replaceAll("%24", "$")
+    .replaceAll("%2E", ".")
+    .replaceAll("%25", "%");
+}
 
 function getModels(connection) {
   const Tracker =
@@ -155,6 +193,9 @@ export async function recordRequest(trackerData = {}) {
     method,
     statusCode,
     isGoodRoute,
+    environment,
+    host,
+    isLocalDev,
   } = trackerData;
 
   const safeIp = ip || "UNKNOWN";
@@ -166,6 +207,10 @@ export async function recordRequest(trackerData = {}) {
   const safeStatusCode = Number.isInteger(statusCode) ? statusCode : 0;
   const safeIsGoodRoute =
     typeof isGoodRoute === "boolean" ? isGoodRoute : false;
+  const safeEnvironment = environment || process.env.NODE_ENV || "development";
+  const safeHost = host || "UNKNOWN";
+  const safeIsLocalDev = Boolean(isLocalDev);
+  const safeRouteMapKey = sanitizeRouteKey(safeRoute);
 
   await TrackerEvent.create({
     ip: safeIp,
@@ -177,6 +222,9 @@ export async function recordRequest(trackerData = {}) {
     method: safeMethod,
     statusCode: safeStatusCode,
     isGoodRoute: safeIsGoodRoute,
+    environment: safeEnvironment,
+    host: safeHost,
+    isLocalDev: safeIsLocalDev,
   });
 
   let tracker = await Tracker.findOne({ ip: safeIp, appName });
@@ -190,6 +238,9 @@ export async function recordRequest(trackerData = {}) {
       userAgent: safeUserAgent,
       timesVisited: 1,
       isFirstVisit: true,
+      lastEnvironment: safeEnvironment,
+      lastHost: safeHost,
+      lastIsLocalDev: safeIsLocalDev,
     });
   } else {
     tracker.timesVisited += 1;
@@ -199,6 +250,9 @@ export async function recordRequest(trackerData = {}) {
     });
     tracker.isFirstVisit = false;
     tracker.userAgent = safeUserAgent || tracker.userAgent;
+    tracker.lastEnvironment = safeEnvironment;
+    tracker.lastHost = safeHost;
+    tracker.lastIsLocalDev = safeIsLocalDev;
 
     if (tracker.ip === "UNKNOWN" && safeIp !== "UNKNOWN") tracker.ip = safeIp;
     if (tracker.country === "UNKNOWN" && safeCountry !== "UNKNOWN") {
@@ -210,11 +264,13 @@ export async function recordRequest(trackerData = {}) {
   }
 
   const routeMap = safeIsGoodRoute ? tracker.goodRoutes : tracker.badRoutes;
-  const currentRouteCount = routeMap.get(safeRoute) || 0;
-  routeMap.set(safeRoute, currentRouteCount + 1);
+  const currentRouteCount = routeMap.get(safeRouteMapKey) || 0;
+  routeMap.set(safeRouteMapKey, currentRouteCount + 1);
 
   await tracker.save();
 }
+
+export { decodeRouteKey };
 
 export async function getBlockedIps() {
   const connection = await getTrackerConnection();

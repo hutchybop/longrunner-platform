@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-md sticky-top navbar-dark bg-dark">
+  <% const currentPathValue = typeof currentPath === "string" ? currentPath : ""; %>
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/admin">
+      <i class="fas fa-chart-line me-2"></i>Tracker
+    </a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#trackerNavbar"
+      aria-controls="trackerNavbar"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="trackerNavbar">
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link <%= currentPathValue === '/admin' ? 'active' : '' %>" href="/admin">
+          <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+        </a>
+        <a class="nav-link <%= currentPathValue === '/admin/tracker' ? 'active' : '' %>" href="/admin/tracker">
+          <i class="fas fa-database me-1"></i>Tracker Data
+        </a>
+        <a class="nav-link <%= currentPathValue === '/admin/blocked-ips' ? 'active' : '' %>" href="/admin/blocked-ips">
+          <i class="fas fa-ban me-1"></i>Blocked IPs
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>

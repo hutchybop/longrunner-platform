@@ -1,5 +1,7 @@
-<% if (flash.success && flash.success.length > 0) { %>
-  <% flash.success.forEach(msg => { %>
+<% const flashData = typeof flash !== "undefined" && flash ? flash : {}; %>
+
+<% if (flashData.success && flashData.success.length > 0) { %>
+  <% flashData.success.forEach(msg => { %>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       <%- msg %>
       <button type="button" class="btn-close fs-6" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -7,8 +9,8 @@
   <% }) %>
 <% } %>
 
-<% if (flash.error && flash.error.length > 0) { %>
-  <% flash.error.forEach(msg => { %>
+<% if (flashData.error && flashData.error.length > 0) { %>
+  <% flashData.error.forEach(msg => { %>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       <%- msg %>
       <button type="button" class="btn-close fs-6" data-bs-dismiss="alert" aria-label="Close"></button>

@@ -105,6 +105,11 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  res.locals.currentPath = req.path;
+  next();
+});
+
 // Setting up session
 const sessionConfig = createSessionConfig({
   name: "tracker_longrunner",

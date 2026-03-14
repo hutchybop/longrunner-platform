@@ -50,6 +50,18 @@ const trackerSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    lastEnvironment: {
+      type: String,
+      default: "development",
+    },
+    lastHost: {
+      type: String,
+      default: "UNKNOWN",
+    },
+    lastIsLocalDev: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
