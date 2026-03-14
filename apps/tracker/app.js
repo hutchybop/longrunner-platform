@@ -75,6 +75,7 @@ app.set("views", [
   path.join(sharedUiRoot, "src", "views"),
   path.join(sharedPolicyRoot, "src", "views"),
 ]); // Forces express to look at views directory for .ejs files
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Makes req.body available
 app.use(methodOverride("_method")); // Allows us to add HTTP verbs other than post
@@ -145,6 +146,12 @@ app.get("/admin/tracker", catchAsync(admin.tracker));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
 app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));
+
+////////////////////////////// Shared Util Routes //////////////////////////////
+// Site-Map route
+app.get("/sitemap.xml", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));
+});
 
 // Unknown (404) webpage error
 app.use(policy.notFound);
