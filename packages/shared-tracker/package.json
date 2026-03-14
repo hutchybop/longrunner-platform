@@ -1,0 +1,24 @@
+{
+  "name": "@longrunner/shared-tracker",
+  "version": "1.0.0",
+  "description": "Shared IP tracking middleware for longrunner apps",
+  "main": "src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js",
+    "./client": "./src/client.js",
+    "./client.js": "./src/client.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "geoip-lite": "^2.0.0"
+  },
+  "peerDependencies": {
+    "express": "^5.2.1"
+  }
+}

@@ -1,6 +1,7 @@
 packages:
-  - 'packages/*'
-  - 'apps/blog'
-  - 'apps/slapp'
-  - 'apps/landing'
-  - 'apps/quiz'
+  - "packages/*"
+  - "apps/tracker"
+  - "apps/blog"
+  - "apps/slapp"
+  - "apps/landing"
+  - "apps/quiz"

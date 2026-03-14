@@ -80,6 +80,7 @@ import {
   isAuthorShoppingList,
 } from "./utils/middleware.js";
 import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
+import { createTrackingMiddlewareStack } from "@longrunner/shared-tracker";
 
 const app = express();
 app.locals.User = User;
@@ -87,6 +88,13 @@ app.locals.User = User;
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
+
+app.use(
+  ...createTrackingMiddlewareStack({
+    appName: "slapp",
+    trackerUrl: process.env.TRACKER_URL,
+  }),
+);
 
 const dbName = "slapp";
 const dbUrl = createMongoDbUrl({ dbName });

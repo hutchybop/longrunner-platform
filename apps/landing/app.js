@@ -39,12 +39,20 @@ import * as policy from "./controllers/policy.js";
 import * as longrunner from "./controllers/longrunner.js";
 import { validateTandC } from "./utils/middleware.js";
 import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
+import { createTrackingMiddlewareStack } from "@longrunner/shared-tracker";
 
 const app = express();
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
+
+app.use(
+  ...createTrackingMiddlewareStack({
+    appName: "landing",
+    trackerUrl: process.env.TRACKER_URL,
+  }),
+);
 
 app.use(favicon(path.join(__dirname, "public", "favicon", "favicon.ico")));
 app.use("/favicon.ico", (req, res) => {

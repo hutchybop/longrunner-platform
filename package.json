@@ -13,6 +13,7 @@
   },
   "workspaces": [
     "packages/*",
+    "apps/tracker",
     "apps/blog",
     "apps/slapp",
     "apps/landing",

@@ -1,5 +1,5 @@
 {
-  "name": "shoppinglist",
+  "name": "slapp",
   "version": "1.0.0",
   "description": "Shopping list app for weekly shopping",
   "main": "app.js",
@@ -17,6 +17,7 @@
     "@longrunner/shared-middleware": "workspace:*",
     "@longrunner/shared-policy": "workspace:*",
     "@longrunner/shared-schemas": "workspace:*",
+    "@longrunner/shared-tracker": "workspace:*",
     "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
     "async": "^3.2.6",

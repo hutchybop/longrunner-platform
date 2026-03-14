@@ -1,0 +1,155 @@
+<% layout('layouts/boilerplate') %>
+
+<% contentTitle = 'Dashboard' %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tachometer-alt me-2"></i>Tracker Dashboard</h1>
+    <form method="GET" class="d-flex gap-2">
+        <select name="app" class="form-select" onchange="this.form.submit()">
+            <option value="all" <%= selectedApp === 'all' ? 'selected' : '' %>>All Apps</option>
+            <% validApps.forEach(function(app) { %>
+                <option value="<%= app %>" <%= selectedApp === app ? 'selected' : '' %>><%= app %></option>
+            <% }) %>
+        </select>
+    </form>
+</div>
+
+<div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+    <div class="col">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Routes</h5>
+                <h2 class="card-text"><%= stats.totalRoutes %></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Unique IPs</h5>
+                <h2 class="card-text"><%= stats.numberOfUniqueIPs %></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Good Routes</h5>
+                <h2 class="card-text"><%= stats.totalGoodRoutes %></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Bad Routes</h5>
+                <h2 class="card-text"><%= stats.totalBadRoutes %></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (selectedApp === 'all') { %>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-apps me-2"></i>Requests by App</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>App</th>
+                                <th>Total Requests</th>
+                                <th>Unique IPs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% appStats.forEach(function(app) { %>
+                                <tr>
+                                    <td><strong><%= app._id %></strong></td>
+                                    <td><%= app.totalRequests %></td>
+                                    <td><%= app.uniqueIPCount %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-globe me-2"></i>Top Countries</h5>
+            </div>
+            <div class="card-body">
+                <% if (countryStats.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Country</th>
+                                    <th>Visits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% countryStats.forEach(function(country) { %>
+                                    <tr>
+                                        <td><%= country._id || 'Unknown' %></td>
+                                        <td><%= country.count %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted">No country data available</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-route me-2"></i>Top Routes</h5>
+            </div>
+            <div class="card-body">
+                <% if (routeStats.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Route</th>
+                                    <th>Requests</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% routeStats.forEach(function(route) { %>
+                                    <tr>
+                                        <td><code><%= route._id %></code></td>
+                                        <td><%= route.total %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted">No route data available</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-3">
+    <a href="/admin/tracker?app=<%= selectedApp %>" class="btn btn-primary">
+        <i class="fas fa-chart-line me-2"></i>View Full Tracker
+    </a>
+</div>

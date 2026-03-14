@@ -45,9 +45,12 @@ export function createAppEslintConfig(options = {}) {
           ...browserGlobals,
         },
       },
+      rules: {
+        "no-console": "off",
+      },
     },
     {
-      files: [withRoot("**/*.js")],
+      files: [withRoot("**/*.{js,mjs,cjs}")],
       ignores: [withRoot("public/**/*.js")],
       languageOptions: {
         ecmaVersion: "latest",
@@ -58,6 +61,9 @@ export function createAppEslintConfig(options = {}) {
           console: "readonly",
           ...nodeGlobals,
         },
+      },
+      rules: {
+        "no-console": "off",
       },
     },
   );

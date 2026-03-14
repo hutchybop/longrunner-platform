@@ -1,0 +1,281 @@
+<% layout('layouts/boilerplate') %>
+
+<% contentTitle = 'Tracker Analytics' %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-chart-line me-2"></i>Tracker Analytics</h1>
+    <form method="GET" class="d-flex gap-2">
+        <select name="app" class="form-select" onchange="this.form.submit()">
+            <option value="all" <%= selectedApp === 'all' ? 'selected' : '' %>>All Apps</option>
+            <% validApps.forEach(function(app) { %>
+                <option value="<%= app %>" <%= selectedApp === app ? 'selected' : '' %>><%= app %></option>
+            <% }) %>
+        </select>
+    </form>
+</div>
+
+<div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+    <div class="col">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Routes</h5>
+                <h2 class="card-text"><%= stats.totalRoutes %></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Unique IPs</h5>
+                <h2 class="card-text"><%= stats.numberOfUniqueIPs %></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Good Routes</h5>
+                <h2 class="card-text"><%= stats.totalGoodRoutes %></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Bad Routes</h5>
+                <h2 class="card-text"><%= stats.totalBadRoutes %></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-globe me-2"></i>Top Countries</h5>
+            </div>
+            <div class="card-body">
+                <% if (countryStats.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Country</th>
+                                    <th>Visits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% countryStats.forEach(function(country) { %>
+                                    <tr>
+                                        <td><%= country._id || 'Unknown' %></td>
+                                        <td><%= country.count %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted">No country data</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-route me-2"></i>Top Routes</h5>
+            </div>
+            <div class="card-body">
+                <% if (routeStats.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Route</th>
+                                    <th>Requests</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% routeStats.forEach(function(route) { %>
+                                    <tr>
+                                        <td><code class="text-break"><%= route._id %></code></td>
+                                        <td><%= route.total %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted">No route data</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-users me-2"></i>Recent Visitor Activity</h5>
+        <div class="btn-group" role="group">
+            <a href="?app=<%= selectedApp %>&limit=25" class="btn btn-sm btn-outline-secondary">25</a>
+            <a href="?app=<%= selectedApp %>&limit=50" class="btn btn-sm btn-outline-secondary">50</a>
+            <a href="?app=<%= selectedApp %>&limit=100" class="btn btn-sm btn-outline-secondary">100</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <% if (trackerData.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>App</th>
+                            <th>Country</th>
+                            <th>City</th>
+                            <th>Visits</th>
+                            <th>Last Visit</th>
+                            <th>Good/Bad</th>
+                            <th>Routes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% trackerData.forEach(function(visitor) { %>
+                            <tr>
+                                <td><code><%= visitor.ip %></code></td>
+                                <td><span class="badge bg-secondary"><%= visitor.appName %></span></td>
+                                <td><%= visitor.country %></td>
+                                <td><%= visitor.city %></td>
+                                <td>
+                                    <span class="badge bg-primary"><%= visitor.timesVisited %></span>
+                                    <% if (visitor.isFirstVisit) { %>
+                                        <span class="badge bg-success ms-1">New</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <small><%= visitor.lastVisitDate %><br><%= visitor.lastVisitTime %></small>
+                                </td>
+                                <td>
+                                    <%
+                                    let totalGoodRequests = 0;
+                                    if (visitor.goodRoutes) {
+                                        for (let count of visitor.goodRoutes.values()) {
+                                            totalGoodRequests += count;
+                                        }
+                                    }
+                                    let totalBadRequests = 0;
+                                    if (visitor.badRoutes) {
+                                        for (let count of visitor.badRoutes.values()) {
+                                            totalBadRequests += count;
+                                        }
+                                    }
+                                    %>
+                                    <span class="badge bg-success"><%= totalGoodRequests %></span>
+                                    <span class="badge bg-danger"><%= totalBadRequests %></span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#routes-<%= visitor._id %>">
+                                        View Routes
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="8" class="p-0">
+                                    <div class="collapse" id="routes-<%= visitor._id %>">
+                                        <div class="card card-body">
+                                            <h6>Route Access History</h6>
+                                            <div class="mb-3">
+                                                <h6 class="text-success">Good Routes</h6>
+                                                <% if (visitor.goodRoutes && visitor.goodRoutes.size > 0) { %>
+                                                    <% Array.from(visitor.goodRoutes.entries()).forEach(function(entry) { %>
+                                                        <div class="d-inline-block me-3 mb-2">
+                                                            <code class="text-break text-success"><%= entry[0] %></code>
+                                                            <span class="badge bg-primary ms-1"><%= entry[1] %></span>
+                                                        </div>
+                                                    <% }) %>
+                                                <% } else { %>
+                                                    <p class="text-muted">No good routes</p>
+                                                <% } %>
+                                            </div>
+                                            <div>
+                                                <h6 class="text-danger">Bad Routes</h6>
+                                                <% if (visitor.badRoutes && visitor.badRoutes.size > 0) { %>
+                                                    <% Array.from(visitor.badRoutes.entries()).forEach(function(entry) { %>
+                                                        <div class="d-inline-block me-3 mb-2">
+                                                            <code class="text-break text-danger"><%= entry[0] %></code>
+                                                            <span class="badge bg-primary ms-1"><%= entry[1] %></span>
+                                                        </div>
+                                                    <% }) %>
+                                                <% } else { %>
+                                                    <p class="text-muted">No bad routes</p>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <% if (pagination.totalPages > 1) { %>
+                <nav aria-label="Tracker pagination">
+                    <ul class="pagination justify-content-center flex-wrap">
+                        <% if (pagination.hasPrevPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.currentPage - 1 %>&limit=<%= pagination.limit %>">Previous</a>
+                            </li>
+                        <% } %>
+                        
+                        <% 
+                        const maxPages = 7;
+                        let startPage = Math.max(1, pagination.currentPage - Math.floor(maxPages / 2));
+                        let endPage = Math.min(pagination.totalPages, startPage + maxPages - 1);
+                        
+                        if (endPage - startPage < maxPages - 1) {
+                            startPage = Math.max(1, endPage - maxPages + 1);
+                        }
+                        
+                        if (startPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=1&limit=<%= pagination.limit %>">1</a>
+                            </li>
+                            <% if (startPage > 2) { %>
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <% } %>
+                        <% } %>
+                        
+                        <% for (let i = startPage; i <= endPage; i++) { %>
+                            <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (endPage < pagination.totalPages) { %>
+                            <% if (endPage < pagination.totalPages - 1) { %>
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <% } %>
+                            <li class="page-item">
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.totalPages %>&limit=<%= pagination.limit %>"><%= pagination.totalPages %></a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (pagination.hasNextPage) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.currentPage + 1 %>&limit=<%= pagination.limit %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No tracker data available</h5>
+                <p class="text-muted">Once other apps start tracking, data will appear here.</p>
+            </div>
+        <% } %>
+    </div>
+</div>

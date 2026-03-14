@@ -60,6 +60,7 @@ import {
   validateTandC,
 } from "./utils/middleware.js";
 import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
+import { createTrackingMiddlewareStack } from "@longrunner/shared-tracker";
 
 // Setting up the app
 const app = express();
@@ -68,6 +69,13 @@ const app = express();
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
+
+app.use(
+  ...createTrackingMiddlewareStack({
+    appName: "quiz",
+    trackerUrl: process.env.TRACKER_URL,
+  }),
+);
 
 // Setting up socket.io
 const server = http.createServer(app);

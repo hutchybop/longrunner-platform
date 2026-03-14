@@ -77,6 +77,7 @@ import {
   isAdmin,
 } from "./utils/middleware.js";
 import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
+import { createTrackingMiddlewareStack } from "@longrunner/shared-tracker";
 
 // Setting up the app
 const app = express();
@@ -86,6 +87,13 @@ app.locals.User = User;
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
+
+app.use(
+  ...createTrackingMiddlewareStack({
+    appName: "blog",
+    trackerUrl: process.env.TRACKER_URL,
+  }),
+);
 
 // Setting Mongodb Atlas
 const dbName = "blog";
@@ -321,7 +329,7 @@ app.use(policy.notFound);
 app.use(errorHandler);
 
 // Start server on port using HTTP
-const port = 3004;
+const port = 3003;
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port} on all interfaces`);
 });
