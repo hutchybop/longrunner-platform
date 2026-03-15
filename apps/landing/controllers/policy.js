@@ -3,14 +3,6 @@ import { createPolicyController } from "@longrunner/shared-policy";
 const policy = createPolicyController({
   domain: "longrunner.co.uk",
   tandcTitle: "longrunner.co.uk Information Page",
-  backLinks: {
-    guest: "/",
-    user: "/",
-  },
-  backLabels: {
-    guest: "Back",
-    user: "Back",
-  },
   policyContent: {
     aboutWebsite:
       "longrunner.co.uk is a landing page that links to the longrunner app ecosystem, including the shopping list app, quiz app, and blog app.",

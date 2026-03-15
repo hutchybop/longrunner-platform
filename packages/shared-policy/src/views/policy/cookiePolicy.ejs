@@ -198,7 +198,12 @@
                         </li>
                     </ul>
                 </div>
-                <a id="backBtn" class="btn btn-primary" href="<%= backHref %>"><%= backLabel %></a>
+                <a
+                    id="backBtn"
+                    class="btn btn-primary"
+                    href="/"
+                    onclick="if (window.history.length > 1) { window.history.back(); return false; }"
+                >Back</a>
             </div>
         </div>
     </div>

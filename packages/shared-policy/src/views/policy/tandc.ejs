@@ -116,7 +116,12 @@
 
                     </ul>
                 </div>
-                    <a id="backBtn" class="btn btn-primary" href="<%= backHref %>"><%= backLabel %></a>
+                    <a
+                        id="backBtn"
+                        class="btn btn-primary"
+                        href="/"
+                        onclick="if (window.history.length > 1) { window.history.back(); return false; }"
+                    >Back</a>
             </div>
         </div>
     </div>
@@ -163,7 +168,12 @@
                         </div>
                         <button class="btn btn-success btn-block" id="submitBtn" disabled>Send</button>
                     </form>
-                    <a id="backBtn" class="btn btn-primary mt-2" href="<%= backHref %>"><%= backLabel %></a>
+                    <a
+                        id="backBtn"
+                        class="btn btn-primary mt-2"
+                        href="/"
+                        onclick="if (window.history.length > 1) { window.history.back(); return false; }"
+                    >Back</a>
                 </div>
             </div>
         </div>
