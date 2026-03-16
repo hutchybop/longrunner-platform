@@ -1,5 +1,29 @@
 # DEVELOPMENT LOG
 
+## Session 4
+
+### Monday March 16th
+
+<br>
+
+**Summary:** This session focused on adding automatic IP blocking functionality to the tracker, updating policy routes, and making improvements to the landing and tracker apps.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+d4888a2, 9792021, 624d355, ea8457f, fb41749
+
+**Session git history:**
+
+- add auto ip blocker - _Added automatic IP blocking functionality to tracker_
+- update policy routes - _Updated policy routes configuration_
+- update tracker - _Made improvements to tracker app_
+- update landing mongodb - _Updated landing app MongoDB configuration_
+- update docs - _Updated project documentation_
+
+---
+
+<br>
+
 ## Session 3
 
 ### Saturday March 14th

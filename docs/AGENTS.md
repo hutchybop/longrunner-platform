@@ -16,6 +16,17 @@ Follow these commands and conventions unless a task explicitly says otherwise.
   - `apps/tracker` (`name: tracker`, port `3004`)
 - Shared packages: `@longrunner/shared-auth`, `@longrunner/shared-config`, `@longrunner/shared-middleware`, `@longrunner/shared-policy`, `@longrunner/shared-schemas`, `@longrunner/shared-ui`, `@longrunner/shared-utils`, `@longrunner/shared-tracker`.
 
+## Shared Packages Overview
+
+- `@longrunner/shared-config` - Configuration helpers (`createMongoConfig`, `createHelmetConfig`, `createSessionConfig`, ESLint config)
+- `@longrunner/shared-utils` - Utilities (`catchAsync`, `ExpressError`, `errorHandler`, rate limiters, flash helpers)
+- `@longrunner/shared-schemas` - Joi validation schemas for request payloads
+- `@longrunner/shared-auth` - Authentication middleware and helpers
+- `@longrunner/shared-middleware` - Shared Express middleware
+- `@longrunner/shared-policy` - Policy pages and assets
+- `@longrunner/shared-ui` - Shared UI components and styling
+- `@longrunner/shared-tracker` - Tracker-specific functionality
+
 ## Environment Setup
 
 - This repo requires a `.env` file to run. Check existing examples or the app's documentation for required environment variables (database connection, session secrets, etc.).
@@ -93,6 +104,15 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 - Follow existing model patterns: schema definition → model export → index re-export.
 - Avoid hardcoding connection strings; use environment variables.
 
+### Formatting
+
+- Use **two-space indentation** and Unix line endings.
+- Keep lines under ~100 characters; split long template literals or chained calls across multiple lines.
+- Prefer **template strings** over concatenation for multi-part text.
+- Use **trailing commas** for multi-line objects/arrays to minimize diff noise.
+- Preserve existing spacing for JSX/EJS templates; align attributes vertically for readability.
+- Avoid introducing Prettier plugins; the base Prettier config handles formatting.
+
 ### Naming conventions
 
 - Variables/functions: `camelCase`.
@@ -138,6 +158,19 @@ Follow these commands and conventions unless a task explicitly says otherwise.
   - `/stylesheets/shared-policy`
   - `/javascripts/shared-policy`
 - For pages using shared boilerplate, pass predictable view locals (`title`, `css_page`, `js_page`).
+
+### EJS templates
+
+- Keep view logic in `views/` with EJS templates.
+- Use consistent locals like `title`, `css_page`, and `js_page` when relying on shared layouts.
+- Keep templates focused on presentation; move complex logic to controllers/helpers.
+
+### Logging
+
+- Logging is allowed (`no-console` is disabled in ESLint).
+- Keep messages clear and descriptive.
+- Avoid logging sensitive data (passwords, tokens, secrets).
+- Use shared flash messaging helpers for user feedback instead of raw alerts.
 
 ## Cursor / Copilot Rules
 

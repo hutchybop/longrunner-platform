@@ -390,6 +390,9 @@ importers:
       '@longrunner/shared-config':
         specifier: workspace:*
         version: link:../shared-config
+      '@longrunner/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
       express:
         specifier: ^5.2.1
         version: 5.2.1
