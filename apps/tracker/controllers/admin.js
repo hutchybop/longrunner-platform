@@ -2,6 +2,7 @@ import Tracker from "../models/tracker.js";
 import {
   blockIpAddress,
   decodeRouteKey,
+  getFlaggedIps,
   unblockIpAddress,
   getBlockedIps,
 } from "@longrunner/shared-tracker";
@@ -277,11 +278,30 @@ export const blockedIPs = async (req, res) => {
   });
 };
 
+export const flaggedIPs = async (req, res) => {
+  const flaggedIPs = await getFlaggedIps();
+
+  res.render("admin/flaggedIPs", {
+    title: "Flagged IPs",
+    flaggedIPs,
+    rollingWindowHours:
+      Number.parseInt(process.env.TRACKER_BAD_ROUTE_WINDOW_HOURS || "24", 10) ||
+      24,
+    flagThreshold:
+      Number.parseInt(process.env.TRACKER_FLAG_THRESHOLD || "10", 10) || 10,
+    whitelistRaw: process.env.IP_WHITE_LIST || "",
+  });
+};
+
 export const blockIP = async (req, res) => {
   const ip = req.body.ip || req.body.origIP;
-  const success = await blockIpAddress(ip);
-  if (success) {
+  const result = await blockIpAddress(ip);
+  if (result.ok) {
     req.flash("success", `IP ${ip} has been blocked`);
+  } else if (result.status === "invalid_ip") {
+    req.flash("error", `Invalid IP address format: ${ip}`);
+  } else if (result.status === "whitelisted") {
+    req.flash("error", `IP ${ip} is in the whitelist and cannot be blocked`);
   } else {
     req.flash("error", `Failed to block IP ${ip}`);
   }
@@ -291,9 +311,13 @@ export const blockIP = async (req, res) => {
 
 export const unblockIP = async (req, res) => {
   const ip = req.body.origIP || req.body.ip;
-  const success = await unblockIpAddress(ip);
-  if (success) {
+  const result = await unblockIpAddress(ip);
+  if (result.ok) {
     req.flash("success", `IP ${ip} has been unblocked`);
+  } else if (result.status === "invalid_ip") {
+    req.flash("error", `Invalid IP address format: ${ip}`);
+  } else if (result.status === "not_found") {
+    req.flash("error", `IP ${ip} was not found in the block list`);
   } else {
     req.flash("error", `Failed to unblock IP ${ip}`);
   }

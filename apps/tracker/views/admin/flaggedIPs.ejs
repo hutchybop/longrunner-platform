@@ -1,0 +1,95 @@
+<% layout('layouts/boilerplate') %>
+
+<% contentTitle = 'Flagged IPs' %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-shield-alt me-2"></i>Flagged IP Addresses</h1>
+</div>
+
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    Showing IPs with more than <strong><%= flagThreshold %></strong> bad routes in the last <strong><%= rollingWindowHours %> hours</strong>.
+    Auto-blocking rules: <strong>20+</strong> bad routes = 30m block, <strong>50</strong> = 24h block, <strong>51+</strong> = permanent block.
+</div>
+
+<% if (whitelistRaw) { %>
+    <div class="alert alert-info">
+        <i class="fas fa-check-circle me-2"></i>
+        Whitelisted IPs from <code>IP_WHITE_LIST</code> are excluded from auto-bans and this list.
+    </div>
+<% } %>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-list me-2"></i>Flagged IPs (<%= flaggedIPs.length %>)</h5>
+    </div>
+    <div class="card-body">
+        <% if (flaggedIPs && flaggedIPs.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>Bad Routes (24h)</th>
+                            <th>Last Seen</th>
+                            <th>Block Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% flaggedIPs.forEach(function(item) { %>
+                            <tr>
+                                <td><code><%= item.ip %></code></td>
+                                <td>
+                                    <span class="badge bg-danger"><%= item.badRouteCount24h %></span>
+                                </td>
+                                <td>
+                                    <% if (item.lastSeenAt) { %>
+                                        <%= new Date(item.lastSeenAt).toLocaleString('en-GB', { hour12: false }) %>
+                                    <% } else { %>
+                                        <span class="text-muted">Unknown</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (item.isBlocked) { %>
+                                        <span class="badge bg-danger text-uppercase"><%= item.blockLevel %></span>
+                                        <% if (item.isPermanent) { %>
+                                            <div><small class="text-muted">Permanent</small></div>
+                                        <% } else if (item.blockedUntil) { %>
+                                            <div><small class="text-muted">Until <%= new Date(item.blockedUntil).toLocaleString('en-GB', { hour12: false }) %></small></div>
+                                        <% } %>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary">Not Blocked</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (item.isBlocked) { %>
+                                        <form method="POST" action="/admin/unblock-ip" style="display: inline;">
+                                            <input type="hidden" name="origIP" value="<%= item.ip %>">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check me-1"></i>Unblock
+                                            </button>
+                                        </form>
+                                    <% } else { %>
+                                        <form method="POST" action="/admin/block-ip" style="display: inline;">
+                                            <input type="hidden" name="ip" value="<%= item.ip %>">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-ban me-1"></i>Block
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-4">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5>No Flagged IPs</h5>
+                <p class="text-muted">No IPs have crossed the bad-route threshold in the rolling window.</p>
+            </div>
+        <% } %>
+    </div>
+</div>

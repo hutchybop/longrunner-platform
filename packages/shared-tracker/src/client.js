@@ -38,9 +38,23 @@ export function normalizeIp(req) {
 }
 
 export function classifyRoute({ method, statusCode, route }) {
-  const isSuccessfulGet =
-    method === "GET" && (statusCode < 300 || statusCode === 304);
-  return isSuccessfulGet || route === "/";
+  const normalizedMethod =
+    typeof method === "string" ? method.toUpperCase() : "";
+  const normalizedStatus = Number.isInteger(statusCode) ? statusCode : 0;
+
+  if (route === "/") {
+    return true;
+  }
+
+  if (
+    normalizedStatus === 404 ||
+    normalizedStatus === 405 ||
+    (normalizedStatus === 400 && normalizedMethod === "GET")
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 export function createIpContextMiddleware() {
@@ -120,7 +134,12 @@ export function createTrackRequestMiddleware(config = {}) {
 }
 
 export function createBlockedIpMiddleware(config = {}) {
-  const { cacheTtlMs = 5 * 60 * 1000 } = config;
+  const envTtlMs = Number.parseInt(
+    process.env.TRACKER_BLOCKED_IP_CACHE_TTL_MS,
+    10,
+  );
+  const defaultTtl = Number.isFinite(envTtlMs) ? envTtlMs : 10 * 1000;
+  const { cacheTtlMs = defaultTtl } = config;
 
   let blockedIpCache = new Set();
   let lastCacheUpdate = 0;

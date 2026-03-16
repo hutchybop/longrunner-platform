@@ -143,6 +143,7 @@ app.get("/", (req, res) => {
 });
 app.get("/admin", catchAsync(admin.dashboard));
 app.get("/admin/tracker", catchAsync(admin.tracker));
+app.get("/admin/flagged-ips", catchAsync(admin.flaggedIPs));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
 app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@longrunner/shared-config": "workspace:*",
+    "@longrunner/shared-utils": "workspace:*",
     "geoip-lite": "^2.0.0",
     "mongoose": "^9.3.0"
   },
