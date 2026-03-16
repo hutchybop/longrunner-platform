@@ -104,6 +104,7 @@ export function createSessionConfig(config = {}) {
     },
     store: MongoStore.create({
       mongoUrl,
+      autoRemove: "native",
     }),
   };
 }
