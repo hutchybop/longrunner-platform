@@ -1,5 +1,26 @@
 # DEVELOPMENT LOG
 
+## Session 8
+
+### Saturday March 21st
+
+<br>
+
+**Summary:** This session focused on updating brand icons across the slapp and blog apps, and improving the tracker display functionality for better visibility.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+a6309a5, c27adcc
+
+**Session git history:**
+
+- update tracker display - _Improved tracker display for better visibility_
+- update slapp n blog brand icons - _Updated brand icons across slapp and blog apps_
+
+---
+
+<br>
+
 ## Session 7
 
 ### Saturday March 21st
