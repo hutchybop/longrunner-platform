@@ -12,6 +12,50 @@ export const DEFAULT_SKIP_PATHS = [
   "/tracker/",
 ];
 
+function normalizePathname(pathname) {
+  if (typeof pathname !== "string") {
+    return "/";
+  }
+
+  const withoutQuery = pathname.split("?")[0] || "/";
+  const withLeadingSlash = withoutQuery.startsWith("/")
+    ? withoutQuery
+    : `/${withoutQuery}`;
+  const collapsedSlashes = withLeadingSlash.replace(/\/{2,}/g, "/");
+
+  if (collapsedSlashes.length > 1 && collapsedSlashes.endsWith("/")) {
+    return collapsedSlashes.slice(0, -1);
+  }
+
+  return collapsedSlashes || "/";
+}
+
+function normalizeSkipPaths(skipPaths = []) {
+  return skipPaths
+    .filter((pathPrefix) => typeof pathPrefix === "string" && pathPrefix.trim())
+    .map((pathPrefix) => {
+      const normalized = normalizePathname(pathPrefix.trim());
+      return pathPrefix.endsWith("/") && !normalized.endsWith("/")
+        ? `${normalized}/`
+        : normalized;
+    });
+}
+
+function getMatchedRouteTemplate(req) {
+  const routePath = req?.route?.path;
+  if (typeof routePath !== "string") {
+    return null;
+  }
+
+  const baseUrl = typeof req?.baseUrl === "string" ? req.baseUrl : "";
+  const combinedPath =
+    routePath === "/"
+      ? baseUrl || "/"
+      : `${baseUrl}${routePath.startsWith("/") ? routePath : `/${routePath}`}`;
+
+  return normalizePathname(combinedPath);
+}
+
 export function normalizeIp(req) {
   const forwardedFor = req?.headers?.["x-forwarded-for"];
   const forwardedIp = Array.isArray(forwardedFor)
@@ -37,24 +81,13 @@ export function normalizeIp(req) {
   return rawIp;
 }
 
-export function classifyRoute({ method, statusCode, route }) {
-  const normalizedMethod =
-    typeof method === "string" ? method.toUpperCase() : "";
+export function classifyRoute({ statusCode, route }) {
   const normalizedStatus = Number.isInteger(statusCode) ? statusCode : 0;
-
-  if (route === "/") {
-    return true;
-  }
-
-  if (
-    normalizedStatus === 404 ||
-    normalizedStatus === 405 ||
-    (normalizedStatus === 400 && normalizedMethod === "GET")
-  ) {
+  if (normalizedStatus >= 500) {
     return false;
   }
 
-  return true;
+  return typeof route === "string" && route.length > 0;
 }
 
 export function createIpContextMiddleware() {
@@ -77,6 +110,7 @@ export function createIpContextMiddleware() {
 
 export function createTrackRequestMiddleware(config = {}) {
   const { appName, skipPaths = DEFAULT_SKIP_PATHS } = config;
+  const normalizedSkipPaths = normalizeSkipPaths(skipPaths);
   let lastTrackErrorLogAt = 0;
 
   if (!appName) {
@@ -84,31 +118,33 @@ export function createTrackRequestMiddleware(config = {}) {
   }
 
   return (req, res, next) => {
-    const shouldSkip = skipPaths.some((pathPrefix) =>
-      req.path.startsWith(pathPrefix),
+    const normalizedPath = normalizePathname(
+      req.originalUrl || req.path || req.url || "/",
+    );
+    const shouldSkip = normalizedSkipPaths.some((pathPrefix) =>
+      normalizedPath.startsWith(pathPrefix),
     );
 
     if (shouldSkip) {
       return next();
     }
 
-    const route = req.route?.path || req.originalUrl || req.path;
-
     res.on("finish", async () => {
       try {
+        const matchedRouteTemplate = getMatchedRouteTemplate(req);
+        const trackedRoute = matchedRouteTemplate || normalizedPath;
         const trackerData = {
           appName,
           ip: req.ipInfo?.ip || normalizeIp(req),
           country: req.ipInfo?.country || "UNKNOWN",
           city: req.ipInfo?.city || "UNKNOWN",
           userAgent: req.get("User-Agent") || "UNKNOWN",
-          route,
+          route: trackedRoute,
           method: req.method,
           statusCode: res.statusCode,
           isGoodRoute: classifyRoute({
-            method: req.method,
             statusCode: res.statusCode,
-            route,
+            route: matchedRouteTemplate,
           }),
           environment: process.env.NODE_ENV || "development",
           host: req.get("Host") || "UNKNOWN",
