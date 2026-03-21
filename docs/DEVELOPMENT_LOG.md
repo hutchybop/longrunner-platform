@@ -1,5 +1,27 @@
 # DEVELOPMENT LOG
 
+## Session 6
+
+### Saturday March 21st
+
+<br>
+
+**Summary:** This session focused on updating favicons across all apps, improving tracker logic, and updating project documentation. The favicon updates ensure consistent branding across the platform.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+2cc160e, dc1ecab, 30e5327
+
+**Session git history:**
+
+- update docs 20260321-0848 - _Updated project documentation_
+- update tracker logic - _Updated tracker logic improvements_
+- update all apps favicon - _Updated favicon across all apps_
+
+---
+
+<br>
+
 ## Session 5
 
 ### Saturday March 21st
