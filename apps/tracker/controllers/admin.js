@@ -138,19 +138,6 @@ export const tracker = async (req, res) => {
   const limit = parseInt(req.query.limit) || 50;
   const skip = (page - 1) * limit;
   const validSortFields = [
-    "updatedAt",
-    "timesVisited",
-    "country",
-    "city",
-    "goodRouteCount",
-    "badRouteCount",
-  ];
-  const sortBy = validSortFields.includes(req.query.sortBy)
-    ? req.query.sortBy
-    : "updatedAt";
-  const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
-
-  const validSortFields = [
     "createdAt",
     "updatedAt",
     "timesVisited",
