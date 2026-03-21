@@ -45,6 +45,14 @@ const trackerSchema = new mongoose.Schema(
       of: Number,
       default: new Map(),
     },
+    goodRouteCount: {
+      type: Number,
+      default: 0,
+    },
+    badRouteCount: {
+      type: Number,
+      default: 0,
+    },
     userAgent: {
       type: String,
       default: "UNKNOWN",
@@ -554,7 +562,16 @@ export async function recordRequest(trackerData = {}) {
 
   const routeMap = safeIsGoodRoute ? tracker.goodRoutes : tracker.badRoutes;
   const currentRouteCount = routeMap.get(safeRouteMapKey) || 0;
+  const isNewRoute = currentRouteCount === 0;
   routeMap.set(safeRouteMapKey, currentRouteCount + 1);
+
+  if (isNewRoute) {
+    if (safeIsGoodRoute) {
+      tracker.goodRouteCount = (tracker.goodRouteCount || 0) + 1;
+    } else {
+      tracker.badRouteCount = (tracker.badRouteCount || 0) + 1;
+    }
+  }
 
   await tracker.save();
 

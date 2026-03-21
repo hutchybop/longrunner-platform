@@ -2,9 +2,25 @@
 
 <% contentTitle = 'Tracker Analytics' %>
 
+<%
+function sortableHeader(label, field) {
+    const isActive = sort.field === field;
+    const icon = isActive
+        ? (sort.order === 'asc'
+            ? '<i class="fas fa-sort-up ms-1"></i>'
+            : '<i class="fas fa-sort-down ms-1"></i>')
+        : '<i class="fas fa-sort ms-1 text-muted"></i>';
+    const nextOrder = isActive ? sort.nextOrder : 'desc';
+    return `<a href="?app=${selectedApp}&page=1&limit=${pagination.limit}&sortBy=${field}&sortOrder=${nextOrder}#recent-visitor-activity" title="Sort by ${label}" class="text-decoration-none text-dark${isActive ? ' fw-bold' : ''}">${label}${icon}</a>`;
+}
+%>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-chart-line me-2"></i>Tracker Analytics</h1>
     <form method="GET" class="d-flex gap-2">
+        <input type="hidden" name="limit" value="<%= pagination.limit %>">
+        <input type="hidden" name="sortBy" value="<%= sort.field %>">
+        <input type="hidden" name="sortOrder" value="<%= sort.order %>">
         <select name="app" class="form-select" onchange="this.form.submit()">
             <option value="all" <%= selectedApp === 'all' ? 'selected' : '' %>>All Apps</option>
             <% validApps.forEach(function(app) { %>
@@ -114,13 +130,13 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card" id="recent-visitor-activity">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-users me-2"></i>Recent Visitor Activity</h5>
         <div class="btn-group" role="group">
-            <a href="?app=<%= selectedApp %>&limit=25" class="btn btn-sm btn-outline-secondary">25</a>
-            <a href="?app=<%= selectedApp %>&limit=50" class="btn btn-sm btn-outline-secondary">50</a>
-            <a href="?app=<%= selectedApp %>&limit=100" class="btn btn-sm btn-outline-secondary">100</a>
+            <a href="?app=<%= selectedApp %>&page=1&limit=25&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>" class="btn btn-sm btn-outline-secondary <%= pagination.limit === 25 ? 'active' : '' %>">25</a>
+            <a href="?app=<%= selectedApp %>&page=1&limit=50&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>" class="btn btn-sm btn-outline-secondary <%= pagination.limit === 50 ? 'active' : '' %>">50</a>
+            <a href="?app=<%= selectedApp %>&page=1&limit=100&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>" class="btn btn-sm btn-outline-secondary <%= pagination.limit === 100 ? 'active' : '' %>">100</a>
         </div>
     </div>
     <div class="card-body">
@@ -131,11 +147,17 @@
                         <tr>
                             <th>IP Address</th>
                             <th>App</th>
-                            <th>Country</th>
-                            <th>City</th>
-                            <th>Visits</th>
-                            <th>Last Visit</th>
-                            <th>Good/Bad</th>
+                            <th><%- sortableHeader('Country', 'country') %></th>
+                            <th><%- sortableHeader('City', 'city') %></th>
+                            <th><%- sortableHeader('Visits', 'timesVisited') %></th>
+                            <th><%- sortableHeader('Last Visit', 'updatedAt') %></th>
+                            <th>
+                                <div class="d-flex gap-1">
+                                    <span><%- sortableHeader('Good', 'goodRouteCount') %></span>
+                                    <span>/</span>
+                                    <span><%- sortableHeader('Bad', 'badRouteCount') %></span>
+                                </div>
+                            </th>
                             <th>Routes</th>
                         </tr>
                     </thead>
@@ -161,22 +183,8 @@
                                     <small><%= visitor.lastVisitDate %><br><%= visitor.lastVisitTime %></small>
                                 </td>
                                 <td>
-                                    <%
-                                    let totalGoodRequests = 0;
-                                    if (visitor.goodRoutes) {
-                                        for (let count of visitor.goodRoutes.values()) {
-                                            totalGoodRequests += count;
-                                        }
-                                    }
-                                    let totalBadRequests = 0;
-                                    if (visitor.badRoutes) {
-                                        for (let count of visitor.badRoutes.values()) {
-                                            totalBadRequests += count;
-                                        }
-                                    }
-                                    %>
-                                    <span class="badge bg-success"><%= totalGoodRequests %></span>
-                                    <span class="badge bg-danger"><%= totalBadRequests %></span>
+                                    <span class="badge bg-success"><%= visitor.goodRouteCount || 0 %></span>
+                                    <span class="badge bg-danger"><%= visitor.badRouteCount || 0 %></span>
                                 </td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
@@ -230,7 +238,7 @@
                     <ul class="pagination justify-content-center flex-wrap">
                         <% if (pagination.hasPrevPage) { %>
                             <li class="page-item">
-                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.currentPage - 1 %>&limit=<%= pagination.limit %>">Previous</a>
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.currentPage - 1 %>&limit=<%= pagination.limit %>&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>">Previous</a>
                             </li>
                         <% } %>
                         
@@ -245,7 +253,7 @@
                         
                         if (startPage > 1) { %>
                             <li class="page-item">
-                                <a class="page-link" href="?app=<%= selectedApp %>&page=1&limit=<%= pagination.limit %>">1</a>
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=1&limit=<%= pagination.limit %>&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>">1</a>
                             </li>
                             <% if (startPage > 2) { %>
                                 <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -254,7 +262,7 @@
                         
                         <% for (let i = startPage; i <= endPage; i++) { %>
                             <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
-                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= i %>&limit=<%= pagination.limit %>&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>"><%= i %></a>
                             </li>
                         <% } %>
                         
@@ -263,13 +271,13 @@
                                 <li class="page-item disabled"><span class="page-link">...</span></li>
                             <% } %>
                             <li class="page-item">
-                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.totalPages %>&limit=<%= pagination.limit %>"><%= pagination.totalPages %></a>
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.totalPages %>&limit=<%= pagination.limit %>&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>"><%= pagination.totalPages %></a>
                             </li>
                         <% } %>
                         
                         <% if (pagination.hasNextPage) { %>
                             <li class="page-item">
-                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.currentPage + 1 %>&limit=<%= pagination.limit %>">Next</a>
+                                <a class="page-link" href="?app=<%= selectedApp %>&page=<%= pagination.currentPage + 1 %>&limit=<%= pagination.limit %>&sortBy=<%= sort.field %>&sortOrder=<%= sort.order %>">Next</a>
                             </li>
                         <% } %>
                     </ul>

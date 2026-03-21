@@ -42,6 +42,14 @@ const trackerSchema = new mongoose.Schema(
       of: Number,
       default: new Map(),
     },
+    goodRouteCount: {
+      type: Number,
+      default: 0,
+    },
+    badRouteCount: {
+      type: Number,
+      default: 0,
+    },
     userAgent: {
       type: String,
       default: "UNKNOWN",
