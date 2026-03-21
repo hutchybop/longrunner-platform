@@ -1,5 +1,56 @@
 # DEVELOPMENT LOG
 
+## Session 9
+
+### Saturday March 21st
+
+<br>
+
+**Summary:** This session focused on a comprehensive review and refactor of the tracker app. Fixed flagging threshold off-by-one bug ($gt to $gte), added favicon/sitemap/robots.txt skip paths to prevent noise, hardened pagination against bad query params, removed unreliable city detection, refactored tracker admin to aggregate by IP with per-app route breakdown badges (B/Q/L/S), restored DEV indicator, added bad-to-good ratio column, and completed env var audit across all apps.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+6cdc686, dc1ecab, 43cc878, 2cc160e, 4523c40, 5c21aa1, ffb27ec, d4888a2, a6309a5, c27adcc
+
+**Session git history:**
+
+- delete unused file - _Removed unused copydb.js file from slapp utils_
+- update dev-log 20260321-2008 - _Updated development log with session 8 summary_
+- update tracker display - _Improved tracker display for better visibility, added ratio column and restored DEV badge_
+- update slapp n blog brand icons - _Updated brand icons across slapp and blog apps_
+- update favicon 20260321-1717 - _Updated favicon assets for apps_
+- update all apps favicon - _Updated favicon across all applications_
+- update tracker logic - _Refactored tracker admin to aggregate by IP, added per-app route badges (B/Q/L/S), removed city detection, fixed flagging threshold ($gte), added favicon/sitemap/robots.txt skip paths, hardened pagination_
+- update blocked ips - _Blocked IPs display improvements_
+- update blocked ips - _Blocked IPs admin page improvements_
+- add tracker table sorting - _Added sortable columns to tracker table_
+- add auto ip blocker - _Auto IP blocking with email notifications, flagging logic, and block policy enforcement_
+- update tracker display - _Tracker display improvements_
+
+---
+
+<br>
+
+## Session 8
+
+### Saturday March 21st
+
+<br>
+
+**Summary:** This session focused on cleaning up unused files in the slapp application by removing the obsolete copydb.js utility.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+6cdc686
+
+**Session git history:**
+
+- delete unused file - _Removed unused copydb.js file from slapp utils_
+
+---
+
+<br>
+
 ## Session 8
 
 ### Saturday March 21st
