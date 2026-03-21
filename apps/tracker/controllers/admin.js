@@ -280,15 +280,21 @@ export const blockedIPs = async (req, res) => {
 
 export const flaggedIPs = async (req, res) => {
   const flaggedIPs = await getFlaggedIps();
+  const parsedBadToGoodRatioThreshold = Number.parseFloat(
+    process.env.TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD || "1.7",
+  );
+  const badToGoodRatioThreshold =
+    Number.isFinite(parsedBadToGoodRatioThreshold) &&
+    parsedBadToGoodRatioThreshold > 0
+      ? parsedBadToGoodRatioThreshold
+      : 1.7;
 
   res.render("admin/flaggedIPs", {
     title: "Flagged IPs",
     flaggedIPs,
-    rollingWindowHours:
-      Number.parseInt(process.env.TRACKER_BAD_ROUTE_WINDOW_HOURS || "24", 10) ||
-      24,
     flagThreshold:
       Number.parseInt(process.env.TRACKER_FLAG_THRESHOLD || "10", 10) || 10,
+    badToGoodRatioThreshold,
     whitelistRaw: process.env.IP_WHITE_LIST || "",
   });
 };
