@@ -134,15 +134,91 @@ export const dashboard = async (req, res) => {
 
 export const tracker = async (req, res) => {
   const selectedApp = req.query.app || "all";
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 50;
+  const parsedPage = Number.parseInt(req.query.page, 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const parsedLimit = Number.parseInt(req.query.limit, 10);
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100
+      ? parsedLimit
+      : 50;
   const skip = (page - 1) * limit;
+  const appLetters = {
+    blog: "B",
+    quiz: "Q",
+    landing: "L",
+    slapp: "S",
+  };
+  const appOrder = Object.keys(appLetters);
+
+  const getAppSortOrder = (appName) => {
+    const index = appOrder.indexOf(appName);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+
+  const buildRouteBreakdown = (routeCollections = []) => {
+    const routeTotals = new Map();
+
+    for (const collection of routeCollections) {
+      const appName = collection?.appName;
+      const routeEntries = Array.isArray(collection?.routes)
+        ? collection.routes
+        : [];
+
+      for (const entry of routeEntries) {
+        if (!entry || typeof entry.k !== "string") {
+          continue;
+        }
+
+        const decodedRoute = decodeRouteKey(entry.k);
+        const count = Number.isFinite(entry.v) ? entry.v : Number(entry.v) || 0;
+        if (count <= 0) {
+          continue;
+        }
+
+        const existing = routeTotals.get(decodedRoute) || {
+          route: decodedRoute,
+          total: 0,
+          apps: new Map(),
+        };
+
+        existing.total += count;
+        existing.apps.set(appName, (existing.apps.get(appName) || 0) + count);
+        routeTotals.set(decodedRoute, existing);
+      }
+    }
+
+    return [...routeTotals.values()]
+      .sort((a, b) => b.total - a.total || a.route.localeCompare(b.route))
+      .map((routeInfo) => {
+        const appBreakdown = [...routeInfo.apps.entries()]
+          .sort(
+            (a, b) =>
+              getAppSortOrder(a[0]) - getAppSortOrder(b[0]) ||
+              String(a[0] || "").localeCompare(String(b[0] || "")),
+          )
+          .map(([appName, count]) => ({
+            appName,
+            letter:
+              appLetters[appName] ||
+              (typeof appName === "string" && appName.length > 0
+                ? appName[0].toUpperCase()
+                : "?"),
+            count,
+          }));
+
+        return {
+          route: routeInfo.route,
+          total: routeInfo.total,
+          apps: appBreakdown,
+        };
+      });
+  };
+
   const validSortFields = [
     "createdAt",
     "updatedAt",
     "timesVisited",
     "country",
-    "city",
     "goodRouteCount",
     "badRouteCount",
   ];
@@ -239,61 +315,94 @@ export const tracker = async (req, res) => {
     _id: decodeRouteKey(route._id),
   }));
 
-  let trackerData;
-  if (sortBy === "goodRouteCount" || sortBy === "badRouteCount") {
-    const sortField =
-      sortBy === "goodRouteCount"
-        ? "computedGoodRouteCount"
-        : "computedBadRouteCount";
+  const sortFieldMap = {
+    createdAt: "firstSeenAt",
+    updatedAt: "lastSeenAt",
+    timesVisited: "timesVisited",
+    country: "country",
+    goodRouteCount: "goodRouteCount",
+    badRouteCount: "badRouteCount",
+  };
+  const sortField = sortFieldMap[sortBy] || "lastSeenAt";
 
-    trackerData = await Tracker.aggregate([
-      { $match: filter },
-      {
-        $addFields: {
-          computedGoodRouteCount: {
-            $size: { $objectToArray: { $ifNull: ["$goodRoutes", {}] } },
+  const trackerRows = await Tracker.aggregate([
+    { $match: filter },
+    { $sort: { updatedAt: -1 } },
+    {
+      $project: {
+        ip: 1,
+        appName: 1,
+        country: 1,
+        timesVisited: 1,
+        lastIsLocalDev: 1,
+        updatedAt: 1,
+        createdAt: 1,
+        goodRouteValues: { $objectToArray: { $ifNull: ["$goodRoutes", {}] } },
+        badRouteValues: { $objectToArray: { $ifNull: ["$badRoutes", {}] } },
+      },
+    },
+    {
+      $project: {
+        ip: 1,
+        appName: 1,
+        country: 1,
+        timesVisited: 1,
+        lastIsLocalDev: 1,
+        updatedAt: 1,
+        createdAt: 1,
+        goodRouteValues: 1,
+        badRouteValues: 1,
+        goodRouteCountAllTime: { $sum: "$goodRouteValues.v" },
+        badRouteCountAllTime: { $sum: "$badRouteValues.v" },
+      },
+    },
+    {
+      $group: {
+        _id: "$ip",
+        country: { $first: "$country" },
+        timesVisited: { $sum: "$timesVisited" },
+        goodRouteCount: { $sum: "$goodRouteCountAllTime" },
+        badRouteCount: { $sum: "$badRouteCountAllTime" },
+        hasLocalDev: {
+          $max: {
+            $cond: [{ $eq: ["$lastIsLocalDev", true] }, 1, 0],
           },
-          computedBadRouteCount: {
-            $size: { $objectToArray: { $ifNull: ["$badRoutes", {}] } },
+        },
+        firstSeenAt: { $min: "$createdAt" },
+        lastSeenAt: { $max: "$updatedAt" },
+        goodRouteCollections: {
+          $push: {
+            appName: "$appName",
+            routes: "$goodRouteValues",
+          },
+        },
+        badRouteCollections: {
+          $push: {
+            appName: "$appName",
+            routes: "$badRouteValues",
           },
         },
       },
-      { $sort: { [sortField]: sortOrder, createdAt: -1 } },
-      { $skip: skip },
-      { $limit: limit },
-    ]);
-  } else {
-    trackerData = await Tracker.find(filter)
-      .sort({ [sortBy]: sortOrder, createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-  }
+    },
+    { $sort: { [sortField]: sortOrder, _id: 1 } },
+    { $skip: skip },
+    { $limit: limit },
+  ]);
 
-  for (const visitor of trackerData) {
-    const goodRouteEntries =
-      visitor.goodRoutes instanceof Map
-        ? visitor.goodRoutes.entries()
-        : Object.entries(visitor.goodRoutes || {});
-    const decodedGoodRoutes = new Map();
-    for (const [routeKey, count] of goodRouteEntries) {
-      decodedGoodRoutes.set(decodeRouteKey(routeKey), count);
-    }
-    visitor.goodRoutes = decodedGoodRoutes;
-    visitor.goodRouteCount = decodedGoodRoutes.size;
+  const trackerData = trackerRows.map((row) => ({
+    ...row,
+    ip: row._id,
+    hasLocalDev: Boolean(row.hasLocalDev),
+    goodRoutes: buildRouteBreakdown(row.goodRouteCollections),
+    badRoutes: buildRouteBreakdown(row.badRouteCollections),
+  }));
 
-    const badRouteEntries =
-      visitor.badRoutes instanceof Map
-        ? visitor.badRoutes.entries()
-        : Object.entries(visitor.badRoutes || {});
-    const decodedBadRoutes = new Map();
-    for (const [routeKey, count] of badRouteEntries) {
-      decodedBadRoutes.set(decodeRouteKey(routeKey), count);
-    }
-    visitor.badRoutes = decodedBadRoutes;
-    visitor.badRouteCount = decodedBadRoutes.size;
-  }
-
-  const totalTrackerEntries = await Tracker.countDocuments(filter);
+  const [trackerCount] = await Tracker.aggregate([
+    { $match: filter },
+    { $group: { _id: "$ip" } },
+    { $count: "total" },
+  ]);
+  const totalTrackerEntries = trackerCount?.total || 0;
   const totalPages = Math.ceil(totalTrackerEntries / limit);
 
   res.render("admin/tracker", {

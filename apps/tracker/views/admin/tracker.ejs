@@ -13,6 +13,13 @@ function sortableHeader(label, field) {
     const nextOrder = isActive ? sort.nextOrder : 'desc';
     return `<a href="?app=${selectedApp}&page=1&limit=${pagination.limit}&sortBy=${field}&sortOrder=${nextOrder}#recent-visitor-activity" title="Sort by ${label}" class="text-decoration-none text-dark${isActive ? ' fw-bold' : ''}">${label}${icon}</a>`;
 }
+
+const appBadgeClasses = {
+    B: 'bg-primary',
+    Q: 'bg-success',
+    L: 'bg-warning text-dark',
+    S: 'bg-info text-dark',
+};
 %>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -146,9 +153,7 @@ function sortableHeader(label, field) {
                     <thead>
                         <tr>
                             <th>IP Address</th>
-                            <th>App</th>
                             <th><%- sortableHeader('Country', 'country') %></th>
-                            <th><%- sortableHeader('City', 'city') %></th>
                             <th><%- sortableHeader('Visits', 'timesVisited') %></th>
                             <th><%- sortableHeader('Last Visit', 'updatedAt') %></th>
                             <th>
@@ -158,53 +163,72 @@ function sortableHeader(label, field) {
                                     <span><%- sortableHeader('Bad', 'badRouteCount') %></span>
                                 </div>
                             </th>
+                            <th>Bad/Good Ratio</th>
                             <th>Routes</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% trackerData.forEach(function(visitor) { %>
+                        <% trackerData.forEach(function(visitor, index) { %>
                             <tr>
-                                <td><code><%= visitor.ip %></code></td>
                                 <td>
-                                    <span class="badge bg-secondary"><%= visitor.appName %></span>
-                                    <% if (visitor.lastIsLocalDev) { %>
-                                        <span class="badge bg-warning text-dark ms-1">DEV</span>
+                                    <code><%= visitor.ip %></code>
+                                    <% if (visitor.hasLocalDev) { %>
+                                        <span class="badge bg-warning text-dark ms-1" title="Detected local development traffic for this IP">DEV</span>
                                     <% } %>
                                 </td>
                                 <td><%= visitor.country %></td>
-                                <td><%= visitor.city %></td>
                                 <td>
                                     <span class="badge bg-primary"><%= visitor.timesVisited %></span>
-                                    <% if (visitor.isFirstVisit) { %>
-                                        <span class="badge bg-success ms-1">New</span>
-                                    <% } %>
                                 </td>
                                 <td>
-                                    <small><%= visitor.lastVisitDate %><br><%= visitor.lastVisitTime %></small>
+                                    <% if (visitor.lastSeenAt) { %>
+                                        <small><%= new Date(visitor.lastSeenAt).toLocaleString('en-GB', { hour12: false }) %></small>
+                                    <% } else { %>
+                                        <small class="text-muted">Unknown</small>
+                                    <% } %>
                                 </td>
                                 <td>
                                     <span class="badge bg-success"><%= visitor.goodRouteCount || 0 %></span>
                                     <span class="badge bg-danger"><%= visitor.badRouteCount || 0 %></span>
                                 </td>
                                 <td>
+                                    <% const goodCount = visitor.goodRouteCount || 0; %>
+                                    <% const badCount = visitor.badRouteCount || 0; %>
+                                    <% if (badCount <= 0) { %>
+                                        <span class="badge bg-secondary">0.00</span>
+                                    <% } else if (goodCount <= 0) { %>
+                                        <span class="badge bg-danger">INF</span>
+                                    <% } else { %>
+                                        <span class="badge bg-warning text-dark"><%= (badCount / goodCount).toFixed(2) %></span>
+                                    <% } %>
+                                </td>
+                                <td>
                                     <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
-                                            data-bs-target="#routes-<%= visitor._id %>">
+                                            data-bs-target="#routes-<%= index %>">
                                         View Routes
                                     </button>
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="8" class="p-0">
-                                    <div class="collapse" id="routes-<%= visitor._id %>">
+                                <td colspan="7" class="p-0">
+                                    <div class="collapse" id="routes-<%= index %>">
                                         <div class="card card-body">
                                             <h6>Route Access History</h6>
                                             <div class="mb-3">
                                                 <h6 class="text-success">Good Routes</h6>
-                                                <% if (visitor.goodRoutes && visitor.goodRoutes.size > 0) { %>
-                                                    <% Array.from(visitor.goodRoutes.entries()).forEach(function(entry) { %>
+                                                <% if (visitor.goodRoutes && visitor.goodRoutes.length > 0) { %>
+                                                    <% visitor.goodRoutes.forEach(function(routeItem) { %>
                                                         <div class="d-inline-block me-3 mb-2">
-                                                            <code class="text-break text-success"><%= entry[0] %></code>
-                                                            <span class="badge bg-primary ms-1"><%= entry[1] %></span>
+                                                            <code class="text-break text-success"><%= routeItem.route %></code>
+                                                            <span class="badge bg-primary ms-1"><%= routeItem.total %></span>
+                                                            <% routeItem.apps.forEach(function(appInfo) { %>
+                                                                <span
+                                                                    class="badge ms-1 <%= appBadgeClasses[appInfo.letter] || 'bg-secondary' %>"
+                                                                    title="<%= appInfo.appName %>"
+                                                                >
+                                                                    <i class="fas fa-circle-dot me-1"></i><%= appInfo.letter %> <%= appInfo.count %>
+                                                                </span>
+                                                            <% }) %>
                                                         </div>
                                                     <% }) %>
                                                 <% } else { %>
@@ -213,11 +237,19 @@ function sortableHeader(label, field) {
                                             </div>
                                             <div>
                                                 <h6 class="text-danger">Bad Routes</h6>
-                                                <% if (visitor.badRoutes && visitor.badRoutes.size > 0) { %>
-                                                    <% Array.from(visitor.badRoutes.entries()).forEach(function(entry) { %>
+                                                <% if (visitor.badRoutes && visitor.badRoutes.length > 0) { %>
+                                                    <% visitor.badRoutes.forEach(function(routeItem) { %>
                                                         <div class="d-inline-block me-3 mb-2">
-                                                            <code class="text-break text-danger"><%= entry[0] %></code>
-                                                            <span class="badge bg-primary ms-1"><%= entry[1] %></span>
+                                                            <code class="text-break text-danger"><%= routeItem.route %></code>
+                                                            <span class="badge bg-primary ms-1"><%= routeItem.total %></span>
+                                                            <% routeItem.apps.forEach(function(appInfo) { %>
+                                                                <span
+                                                                    class="badge ms-1 <%= appBadgeClasses[appInfo.letter] || 'bg-secondary' %>"
+                                                                    title="<%= appInfo.appName %>"
+                                                                >
+                                                                    <i class="fas fa-circle-dot me-1"></i><%= appInfo.letter %> <%= appInfo.count %>
+                                                                </span>
+                                                            <% }) %>
                                                         </div>
                                                     <% }) %>
                                                 <% } else { %>

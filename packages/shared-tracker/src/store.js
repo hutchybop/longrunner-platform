@@ -757,7 +757,7 @@ export async function getFlaggedIps() {
     },
     {
       $match: {
-        badRouteCountAllTime: { $gt: TRACKER_FLAG_THRESHOLD },
+        badRouteCountAllTime: { $gte: TRACKER_FLAG_THRESHOLD },
         $expr: {
           $or: [
             {

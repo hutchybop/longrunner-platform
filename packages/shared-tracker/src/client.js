@@ -4,6 +4,11 @@ import { getBlockedIps, recordRequest } from "./store.js";
 export const DEFAULT_SKIP_PATHS = [
   "/favicon.ico",
   "/favicon/",
+  "/favicon-",
+  "/apple-touch-icon",
+  "/browserconfig.xml",
+  "/robots.txt",
+  "/sitemap.xml",
   "/stylesheets/",
   "/javascripts/",
   "/images/",
@@ -99,7 +104,7 @@ export function createIpContextMiddleware() {
       ip,
       country: geo?.country || "UNKNOWN",
       region: geo?.region || "UNKNOWN",
-      city: geo?.city || "UNKNOWN",
+      city: "UNKNOWN",
       timezone: geo?.timezone || "UNKNOWN",
       ll: geo?.ll || null,
     };
