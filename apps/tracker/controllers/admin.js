@@ -137,6 +137,18 @@ export const tracker = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 50;
   const skip = (page - 1) * limit;
+  const validSortFields = [
+    "updatedAt",
+    "timesVisited",
+    "country",
+    "city",
+    "goodRouteCount",
+    "badRouteCount",
+  ];
+  const sortBy = validSortFields.includes(req.query.sortBy)
+    ? req.query.sortBy
+    : "updatedAt";
+  const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
   const filter = selectedApp !== "all" ? { appName: selectedApp } : {};
 
@@ -226,27 +238,58 @@ export const tracker = async (req, res) => {
     _id: decodeRouteKey(route._id),
   }));
 
-  const trackerData = await Tracker.find(filter)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
+  let trackerData;
+  if (sortBy === "goodRouteCount" || sortBy === "badRouteCount") {
+    const sortField =
+      sortBy === "goodRouteCount"
+        ? "computedGoodRouteCount"
+        : "computedBadRouteCount";
+
+    trackerData = await Tracker.aggregate([
+      { $match: filter },
+      {
+        $addFields: {
+          computedGoodRouteCount: {
+            $size: { $objectToArray: { $ifNull: ["$goodRoutes", {}] } },
+          },
+          computedBadRouteCount: {
+            $size: { $objectToArray: { $ifNull: ["$badRoutes", {}] } },
+          },
+        },
+      },
+      { $sort: { [sortField]: sortOrder, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
+  } else {
+    trackerData = await Tracker.find(filter)
+      .sort({ [sortBy]: sortOrder, createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+  }
 
   for (const visitor of trackerData) {
-    if (visitor.goodRoutes instanceof Map) {
-      const decodedGoodRoutes = new Map();
-      for (const [routeKey, count] of visitor.goodRoutes.entries()) {
-        decodedGoodRoutes.set(decodeRouteKey(routeKey), count);
-      }
-      visitor.goodRoutes = decodedGoodRoutes;
+    const goodRouteEntries =
+      visitor.goodRoutes instanceof Map
+        ? visitor.goodRoutes.entries()
+        : Object.entries(visitor.goodRoutes || {});
+    const decodedGoodRoutes = new Map();
+    for (const [routeKey, count] of goodRouteEntries) {
+      decodedGoodRoutes.set(decodeRouteKey(routeKey), count);
     }
+    visitor.goodRoutes = decodedGoodRoutes;
+    visitor.goodRouteCount = decodedGoodRoutes.size;
 
-    if (visitor.badRoutes instanceof Map) {
-      const decodedBadRoutes = new Map();
-      for (const [routeKey, count] of visitor.badRoutes.entries()) {
-        decodedBadRoutes.set(decodeRouteKey(routeKey), count);
-      }
-      visitor.badRoutes = decodedBadRoutes;
+    const badRouteEntries =
+      visitor.badRoutes instanceof Map
+        ? visitor.badRoutes.entries()
+        : Object.entries(visitor.badRoutes || {});
+    const decodedBadRoutes = new Map();
+    for (const [routeKey, count] of badRouteEntries) {
+      decodedBadRoutes.set(decodeRouteKey(routeKey), count);
     }
+    visitor.badRoutes = decodedBadRoutes;
+    visitor.badRouteCount = decodedBadRoutes.size;
   }
 
   const totalTrackerEntries = await Tracker.countDocuments(filter);
@@ -266,6 +309,11 @@ export const tracker = async (req, res) => {
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1,
       limit,
+    },
+    sort: {
+      field: sortBy,
+      order: sortOrder === 1 ? "asc" : "desc",
+      nextOrder: sortOrder === 1 ? "desc" : "asc",
     },
   });
 };
