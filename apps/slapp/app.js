@@ -105,9 +105,6 @@ db.once("open", () => {
 });
 
 app.use(favicon(path.join(__dirname, "public", "favicon", "favicon.ico")));
-app.use("/favicon.ico", (req, res) => {
-  res.sendStatus(204);
-});
 
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");

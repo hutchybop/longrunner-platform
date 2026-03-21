@@ -108,10 +108,6 @@ db.once("open", () => {
 
 // Serve favicon from public/favicon directory
 app.use(favicon(path.join(__dirname, "public", "favicon", "favicon.ico")));
-// Handle favicon requests explicitly
-app.use("/favicon.ico", (req, res) => {
-  res.sendStatus(204); // No Content
-});
 
 // Setting up the app
 app.engine("ejs", ejsMate); // Tells express to use ejsmate for rendering .ejs html files

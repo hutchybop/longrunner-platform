@@ -61,9 +61,6 @@ app.use(
 );
 
 app.use(favicon(path.join(__dirname, "public", "favicon", "favicon.ico")));
-app.use("/favicon.ico", (req, res) => {
-  res.sendStatus(204);
-});
 
 // Setting up the app
 app.engine("ejs", ejsMate);
