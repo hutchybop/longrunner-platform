@@ -1,19 +1,21 @@
 {
-    "name": "Longrunner Quiz - Take a general knowledge quiz",
-    "short_name": "Longrunner Quiz",
-    "description": "Take a general knowledge quiz on longrunner. Play on your own or with friends. Choose between 10-50 questions and select your difficulty level.",
-    "start_url": "/",
-    "background_color": "#000000",
-    "theme_color": "#FF6F91",
-    "display":"standalone",
-    "icons":[
-      {
-      "src":"/favicon/android-chrome-192x192.png",
-      "sizes":"192x192",
-      "type":"image/png"
-      },
-      {
-        "src":"/favicon/android-chrome-512x512.png","sizes":"512x512","type":"image/png"
-        }
-      ]
-  }
+  "name": "Longrunner Quiz - Take a general knowledge quiz",
+  "short_name": "Longrunner Quiz",
+  "description": "Take a general knowledge quiz on longrunner. Play on your own or with friends. Choose between 10-50 questions and select your difficulty level.",
+  "start_url": "/",
+  "background_color": "#000000",
+  "theme_color": "#FF6F91",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/favicon/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/favicon-310x310.png",
+      "sizes": "310x310",
+      "type": "image/png"
+    }
+  ]
+}

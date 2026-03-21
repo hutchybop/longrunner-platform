@@ -1,19 +1,21 @@
 {
-    "name": "MY IRONMAN BLOG - From start to finish, follow my journey.",
-    "short_name": "Ironman Blog",
-    "description": "A blog about my Ironman triathlon journey. Follow me from my first day of training to the big day. I discuss nutrition, training plans, triathlon kit and ups and downs.",
-    "start_url": "/",
-    "background_color": "#000000",
-    "theme_color": "#FF6F91",
-    "display":"standalone",
-    "icons":[
-      {
-      "src":"/favicon/android-chrome-192x192.png",
-      "sizes":"192x192",
-      "type":"image/png"
-      },
-      {
-        "src":"/favicon/android-chrome-512x512.png","sizes":"512x512","type":"image/png"
-        }
-      ]
-  }
+  "name": "MY IRONMAN BLOG - From start to finish, follow my journey.",
+  "short_name": "Ironman Blog",
+  "description": "A blog about my Ironman triathlon journey. Follow me from my first day of training to the big day. I discuss nutrition, training plans, triathlon kit and ups and downs.",
+  "start_url": "/",
+  "background_color": "#000000",
+  "theme_color": "#FF6F91",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/favicon/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/favicon-310x310.png",
+      "sizes": "310x310",
+      "type": "image/png"
+    }
+  ]
+}

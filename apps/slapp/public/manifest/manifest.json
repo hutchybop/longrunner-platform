@@ -1,19 +1,21 @@
 {
-    "name": "Shopping List App - Weekly shopping list creator",
-    "short_name": "SLApp",
-    "description": "Create meals, add ingredients and recipes, choose a weekly meal plan, and create your shopping list.",
-    "start_url": "/",
-    "background_color": "#000000",
-    "theme_color": "#FF6F91",
-    "display":"standalone",
-    "icons":[
-      {
-      "src":"/favicon/android-chrome-192x192.png",
-      "sizes":"192x192",
-      "type":"image/png"
-      },
-      {
-        "src":"/favicon/android-chrome-512x512.png","sizes":"512x512","type":"image/png"
-        }
-      ]
-  }
+  "name": "Shopping List App - Weekly shopping list creator",
+  "short_name": "SLApp",
+  "description": "Create meals, add ingredients and recipes, choose a weekly meal plan, and create your shopping list.",
+  "start_url": "/",
+  "background_color": "#000000",
+  "theme_color": "#FF6F91",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/favicon/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/favicon-310x310.png",
+      "sizes": "310x310",
+      "type": "image/png"
+    }
+  ]
+}

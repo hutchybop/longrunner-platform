@@ -3,9 +3,13 @@ body {
   font-size: 1.3em;
   color: #1f306e;
 }
-#home {
-  font-size: 1.2em;
-  color: #ff6f91;
+#home img {
+  height: 35px !important;
+  width: 35px !important;
+  border: none;
+  margin: 0px;
+  padding: 0px;
+  border-radius: 0px;
 }
 .navbar {
   display: block;
