@@ -101,8 +101,14 @@ const TRACKER_BLOCK_30M_DURATION_MINUTES =
 const TRACKER_BLOCK_24H_DURATION_HOURS =
   Number.parseInt(process.env.TRACKER_BLOCK_24H_DURATION_HOURS || "24", 10) ||
   24;
-const TRACKER_BAD_ROUTE_WINDOW_HOURS =
-  Number.parseInt(process.env.TRACKER_BAD_ROUTE_WINDOW_HOURS || "24", 10) || 24;
+const parsedBadToGoodRatioThreshold = Number.parseFloat(
+  process.env.TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD || "1.7",
+);
+const TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD =
+  Number.isFinite(parsedBadToGoodRatioThreshold) &&
+  parsedBadToGoodRatioThreshold > 0
+    ? parsedBadToGoodRatioThreshold
+    : 1.7;
 const TRACKER_AUTO_BLOCK_EMAIL_ENABLED =
   process.env.TRACKER_AUTO_BLOCK_EMAIL_ENABLED !== "false";
 
@@ -288,23 +294,81 @@ function normalizeAndValidateIp(input) {
   return null;
 }
 
-function getWindowStartDate() {
-  const now = Date.now();
-  return new Date(now - TRACKER_BAD_ROUTE_WINDOW_HOURS * 60 * 60 * 1000);
+function calculateBadToGoodRatio(badRouteCount, goodRouteCount) {
+  if (badRouteCount <= 0) return 0;
+  if (goodRouteCount <= 0) return Number.POSITIVE_INFINITY;
+  return badRouteCount / goodRouteCount;
 }
 
-function buildAutoBlockPolicy(badRouteCount24h) {
-  if (badRouteCount24h > TRACKER_BLOCK_24H_THRESHOLD) {
+function meetsBadToGoodRatioThreshold(badRouteCount, goodRouteCount) {
+  return (
+    badRouteCount > 0 &&
+    (goodRouteCount <= 0 ||
+      badRouteCount >= goodRouteCount * TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD)
+  );
+}
+
+async function getIpRouteTotals(Tracker, ip) {
+  if (!ip || ip === "UNKNOWN") {
+    return {
+      badRouteCountAllTime: 0,
+      goodRouteCountAllTime: 0,
+    };
+  }
+
+  const [totals] = await Tracker.aggregate([
+    { $match: { ip } },
+    {
+      $project: {
+        goodRouteValues: { $objectToArray: { $ifNull: ["$goodRoutes", {}] } },
+        badRouteValues: { $objectToArray: { $ifNull: ["$badRoutes", {}] } },
+      },
+    },
+    {
+      $project: {
+        goodRouteCountAllTime: { $sum: "$goodRouteValues.v" },
+        badRouteCountAllTime: { $sum: "$badRouteValues.v" },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        goodRouteCountAllTime: { $sum: "$goodRouteCountAllTime" },
+        badRouteCountAllTime: { $sum: "$badRouteCountAllTime" },
+      },
+    },
+  ]);
+
+  return {
+    badRouteCountAllTime: totals?.badRouteCountAllTime || 0,
+    goodRouteCountAllTime: totals?.goodRouteCountAllTime || 0,
+  };
+}
+
+function buildAutoBlockPolicy({ badRouteCountAllTime, goodRouteCountAllTime }) {
+  if (
+    !meetsBadToGoodRatioThreshold(badRouteCountAllTime, goodRouteCountAllTime)
+  ) {
+    return null;
+  }
+
+  const ratio = calculateBadToGoodRatio(
+    badRouteCountAllTime,
+    goodRouteCountAllTime,
+  );
+  const ratioText = Number.isFinite(ratio) ? ratio.toFixed(2) : "INF";
+
+  if (badRouteCountAllTime > TRACKER_BLOCK_24H_THRESHOLD) {
     return {
       blockLevel: "permanent",
       isPermanent: true,
       blockedUntil: null,
       rank: 3,
-      reason: `Auto blocked: ${badRouteCount24h} bad routes in rolling ${TRACKER_BAD_ROUTE_WINDOW_HOURS}h window`,
+      reason: `Auto blocked: ${badRouteCountAllTime} bad / ${goodRouteCountAllTime} good routes (ratio ${ratioText}, threshold ${TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD})`,
     };
   }
 
-  if (badRouteCount24h >= TRACKER_BLOCK_24H_THRESHOLD) {
+  if (badRouteCountAllTime >= TRACKER_BLOCK_24H_THRESHOLD) {
     return {
       blockLevel: "temporary_24h",
       isPermanent: false,
@@ -312,11 +376,11 @@ function buildAutoBlockPolicy(badRouteCount24h) {
         Date.now() + TRACKER_BLOCK_24H_DURATION_HOURS * 60 * 60 * 1000,
       ),
       rank: 2,
-      reason: `Auto blocked: ${badRouteCount24h} bad routes in rolling ${TRACKER_BAD_ROUTE_WINDOW_HOURS}h window`,
+      reason: `Auto blocked: ${badRouteCountAllTime} bad / ${goodRouteCountAllTime} good routes (ratio ${ratioText}, threshold ${TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD})`,
     };
   }
 
-  if (badRouteCount24h >= TRACKER_BLOCK_30M_THRESHOLD) {
+  if (badRouteCountAllTime >= TRACKER_BLOCK_30M_THRESHOLD) {
     return {
       blockLevel: "temporary_30m",
       isPermanent: false,
@@ -324,7 +388,7 @@ function buildAutoBlockPolicy(badRouteCount24h) {
         Date.now() + TRACKER_BLOCK_30M_DURATION_MINUTES * 60 * 1000,
       ),
       rank: 1,
-      reason: `Auto blocked: ${badRouteCount24h} bad routes in rolling ${TRACKER_BAD_ROUTE_WINDOW_HOURS}h window`,
+      reason: `Auto blocked: ${badRouteCountAllTime} bad / ${goodRouteCountAllTime} good routes (ratio ${ratioText}, threshold ${TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD})`,
     };
   }
 
@@ -361,7 +425,8 @@ function buildActiveBlockQuery(now = new Date()) {
 
 async function sendAutoBlockEmail({
   ip,
-  badRouteCount24h,
+  badRouteCountAllTime,
+  goodRouteCountAllTime,
   blockLevel,
   blockedUntil,
   reason,
@@ -377,7 +442,9 @@ async function sendAutoBlockEmail({
     "",
     `IP: ${ip}`,
     `Block level: ${blockLevel}`,
-    `Bad routes (${TRACKER_BAD_ROUTE_WINDOW_HOURS}h rolling): ${badRouteCount24h}`,
+    `Bad routes (all-time): ${badRouteCountAllTime}`,
+    `Good routes (all-time): ${goodRouteCountAllTime}`,
+    `Bad/Good ratio threshold: ${TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD}`,
     `Blocked until: ${untilText}`,
     `Reason: ${reason}`,
     `Triggered at: ${new Date().toISOString()}`,
@@ -390,17 +457,12 @@ async function sendAutoBlockEmail({
   }
 }
 
-async function countBadRoutesForIpInWindow(TrackerEvent, ip) {
-  if (!ip || ip === "UNKNOWN") return 0;
-  const windowStart = getWindowStartDate();
-  return TrackerEvent.countDocuments({
-    ip,
-    isGoodRoute: false,
-    createdAt: { $gte: windowStart },
-  });
-}
-
-async function applyAutoBlockForIp({ IpBlock, ip, badRouteCount24h }) {
+async function applyAutoBlockForIp({
+  IpBlock,
+  ip,
+  badRouteCountAllTime,
+  goodRouteCountAllTime,
+}) {
   if (!ip || ip === "UNKNOWN" || isWhitelistedIp(ip)) {
     return;
   }
@@ -409,7 +471,10 @@ async function applyAutoBlockForIp({ IpBlock, ip, badRouteCount24h }) {
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const now = new Date();
-    const policy = buildAutoBlockPolicy(badRouteCount24h);
+    const policy = buildAutoBlockPolicy({
+      badRouteCountAllTime,
+      goodRouteCountAllTime,
+    });
     if (!policy) return;
 
     const existing = await IpBlock.findOne({ ip }).lean();
@@ -427,7 +492,7 @@ async function applyAutoBlockForIp({ IpBlock, ip, badRouteCount24h }) {
       source: "auto",
       reason: policy.reason,
       blockLevel: policy.blockLevel,
-      badRouteCountAtBlock: badRouteCount24h,
+      badRouteCountAtBlock: badRouteCountAllTime,
       blockedAt: now,
       blockedUntil: policy.blockedUntil,
       isPermanent: policy.isPermanent,
@@ -438,7 +503,8 @@ async function applyAutoBlockForIp({ IpBlock, ip, badRouteCount24h }) {
         await IpBlock.create({ ip, ...update });
         await sendAutoBlockEmail({
           ip,
-          badRouteCount24h,
+          badRouteCountAllTime,
+          goodRouteCountAllTime,
           blockLevel: policy.blockLevel,
           blockedUntil: policy.blockedUntil,
           reason: policy.reason,
@@ -466,7 +532,8 @@ async function applyAutoBlockForIp({ IpBlock, ip, badRouteCount24h }) {
     if (result.modifiedCount === 1) {
       await sendAutoBlockEmail({
         ip,
-        badRouteCount24h,
+        badRouteCountAllTime,
+        goodRouteCountAllTime,
         blockLevel: policy.blockLevel,
         blockedUntil: policy.blockedUntil,
         reason: policy.reason,
@@ -576,14 +643,14 @@ export async function recordRequest(trackerData = {}) {
   await tracker.save();
 
   if (!safeIsGoodRoute) {
-    const badRouteCount24h = await countBadRoutesForIpInWindow(
-      TrackerEvent,
-      safeIp,
-    );
+    const { badRouteCountAllTime, goodRouteCountAllTime } =
+      await getIpRouteTotals(Tracker, safeIp);
+
     await applyAutoBlockForIp({
       IpBlock,
       ip: safeIp,
-      badRouteCount24h,
+      badRouteCountAllTime,
+      goodRouteCountAllTime,
     });
   }
 }
@@ -654,34 +721,69 @@ export async function unblockIpAddress(ip) {
 
 export async function getFlaggedIps() {
   const connection = await getTrackerConnection();
-  const { TrackerEvent, IpBlock } = getModels(connection);
-  const windowStart = getWindowStartDate();
+  const { Tracker, IpBlock } = getModels(connection);
   const whitelist = getIpWhitelistSet();
   const now = new Date();
 
-  const flagged = await TrackerEvent.aggregate([
+  const flagged = await Tracker.aggregate([
     {
       $match: {
-        isGoodRoute: false,
-        createdAt: { $gte: windowStart },
         ip: { $nin: ["UNKNOWN", ""] },
+      },
+    },
+    {
+      $project: {
+        ip: 1,
+        updatedAt: 1,
+        goodRouteValues: { $objectToArray: { $ifNull: ["$goodRoutes", {}] } },
+        badRouteValues: { $objectToArray: { $ifNull: ["$badRoutes", {}] } },
+      },
+    },
+    {
+      $project: {
+        ip: 1,
+        lastSeenAt: "$updatedAt",
+        goodRouteCountAllTime: { $sum: "$goodRouteValues.v" },
+        badRouteCountAllTime: { $sum: "$badRouteValues.v" },
       },
     },
     {
       $group: {
         _id: "$ip",
-        badRouteCount24h: { $sum: 1 },
-        lastSeenAt: { $max: "$createdAt" },
+        goodRouteCountAllTime: { $sum: "$goodRouteCountAllTime" },
+        badRouteCountAllTime: { $sum: "$badRouteCountAllTime" },
+        lastSeenAt: { $max: "$lastSeenAt" },
       },
     },
     {
       $match: {
-        badRouteCount24h: { $gt: TRACKER_FLAG_THRESHOLD },
+        badRouteCountAllTime: { $gt: TRACKER_FLAG_THRESHOLD },
+        $expr: {
+          $or: [
+            {
+              $and: [
+                { $eq: ["$goodRouteCountAllTime", 0] },
+                { $gt: ["$badRouteCountAllTime", 0] },
+              ],
+            },
+            {
+              $gte: [
+                "$badRouteCountAllTime",
+                {
+                  $multiply: [
+                    "$goodRouteCountAllTime",
+                    TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       },
     },
     {
       $sort: {
-        badRouteCount24h: -1,
+        badRouteCountAllTime: -1,
         lastSeenAt: -1,
       },
     },
@@ -699,10 +801,18 @@ export async function getFlaggedIps() {
     .map((item) => {
       const ip = item._id.trim();
       const activeBlock = activeBlockMap.get(ip);
+      const badToGoodRatio = calculateBadToGoodRatio(
+        item.badRouteCountAllTime,
+        item.goodRouteCountAllTime,
+      );
 
       return {
         ip,
-        badRouteCount24h: item.badRouteCount24h,
+        badRouteCountAllTime: item.badRouteCountAllTime,
+        goodRouteCountAllTime: item.goodRouteCountAllTime,
+        badToGoodRatio: Number.isFinite(badToGoodRatio)
+          ? Number(badToGoodRatio.toFixed(2))
+          : null,
         lastSeenAt: item.lastSeenAt,
         isBlocked: Boolean(activeBlock),
         blockLevel: activeBlock?.blockLevel || "none",
