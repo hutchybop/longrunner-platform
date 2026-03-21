@@ -1,5 +1,31 @@
 # DEVELOPMENT LOG
 
+## Session 5
+
+### Saturday March 21st
+
+<br>
+
+**Summary:** This session focused on fixing linting errors, adding tracker table sorting functionality, updating blocked IPs features, and configuring MongoStore session auto-cleanup. Documentation was also updated to reflect recent changes.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+e328cbe, 427c48d, 4523c40, 5c21aa1, ffb27ec, 62110e4, 97d331e
+
+**Session git history:**
+
+- update linting error - _Fixed linting errors across the codebase_
+- Merge branch '24' - _Merged branch 24 with new features_
+- update blocked ips - _Updated blocked IPs functionality in tracker_
+- update blocked ips - _Additional improvements to IP blocking logic_
+- add tracker table sorting - _Added sortable columns to tracker dashboard table_
+- update MongoStore auto delete - _Configured MongoStore session auto-delete for cleanup_
+- update docs - _Updated project documentation_
+
+---
+
+<br>
+
 ## Session 4
 
 ### Monday March 16th
