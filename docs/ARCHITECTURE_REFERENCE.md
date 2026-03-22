@@ -121,12 +121,12 @@ sequenceDiagram
 
 #### `apps/landing/`
 
-| File                        | Purpose                                           | Key Exports                          |
-| --------------------------- | ------------------------------------------------- | ------------------------------------ |
-| `app.js`                    | Entry point, middleware setup, route registration | Express app instance                 |
-| `controllers/policy.js`     | Cookie/T&Cs page handlers                         | `cookiePolicy`, `tandc`, `tandcPost` |
-| `controllers/longrunner.js` | Landing page handler                              | `landing`                            |
-| `utils/middleware.js`       | T&Cs validation middleware                        | `validateTandC`                      |
+| File                        | Purpose                                               | Key Exports                                      |
+| --------------------------- | ----------------------------------------------------- | ------------------------------------------------ |
+| `app.js`                    | Entry point, middleware setup, route registration     | Express app instance                             |
+| `controllers/policy.js`     | Cookie/T&Cs handlers + 404 (notFound defined locally) | `cookiePolicy`, `tandc`, `tandcPost`, `notFound` |
+| `controllers/longrunner.js` | Landing page handler                                  | `landing`                                        |
+| `utils/middleware.js`       | T&Cs validation middleware                            | `validateTandC`                                  |
 
 #### `apps/blog/`
 
@@ -137,22 +137,31 @@ sequenceDiagram
 | `controllers/blogsIM.js` | Blog post CRUD                                 | `index`, `show`                      |
 | `controllers/reviews.js` | Review creation/deletion                       | `create`, `deleteReview`             |
 | `controllers/admin.js`   | Admin dashboard & moderation                   | `dashboard`, `flaggedReviews`        |
+| `controllers/policy.js`  | Policy routes + 404 handler                    | `cookiePolicy`, `tandc`, `notFound`  |
 | `models/user.js`         | User model (extends shared-auth)               | Mongoose model                       |
 | `models/blogIM.js`       | Blog post schema                               | Mongoose model                       |
 | `models/review.js`       | Review schema                                  | Mongoose model                       |
+| `models/schemas.js`      | Mongoose schema options/helper                 | -                                    |
 | `utils/middleware.js`    | Auth/validation middleware                     | `isLoggedIn`, `isAdmin`, `validate*` |
 
 #### `apps/slapp/` (Shopping List App)
 
-| File                                                                | Purpose                            |
-| ------------------------------------------------------------------- | ---------------------------------- |
-| `app.js`                                                            | Entry point with full auth stack   |
-| `controllers/meals.js`                                              | Meal CRUD operations               |
-| `controllers/ingredients.js`                                        | Ingredient management              |
-| `controllers/shoppingLists.js`                                      | Shopping list generation           |
-| `controllers/categories.js`                                         | Category customization             |
-| `models/meal.js`, `ingredient.js`, `shoppingList.js`, `category.js` | Mongoose schemas                   |
-| `utils/middleware.js`                                               | Auth middleware + ownership checks |
+| File                           | Purpose                            |
+| ------------------------------ | ---------------------------------- |
+| `app.js`                       | Entry point with full auth stack   |
+| `controllers/meals.js`         | Meal CRUD operations               |
+| `controllers/ingredients.js`   | Ingredient management              |
+| `controllers/shoppingLists.js` | Shopping list generation           |
+| `controllers/categories.js`    | Category customization             |
+| `controllers/users.js`         | User account management            |
+| `controllers/policy.js`        | Policy routes (uses shared-policy) |
+| `models/user.js`               | User model (extends shared-auth)   |
+| `models/meal.js`               | Meal schema                        |
+| `models/ingredient.js`         | Ingredient schema                  |
+| `models/shoppingList.js`       | Shopping list schema               |
+| `models/category.js`           | Category schema                    |
+| `models/schemas.js`            | Mongoose schema options/helper     |
+| `utils/middleware.js`          | Auth middleware + ownership checks |
 
 #### `apps/quiz/`
 
@@ -161,23 +170,28 @@ sequenceDiagram
 | `app.js`                          | Entry point with Socket.io (uses `server.listen()` not `app.listen()`) |
 | `controllers/quiz.js`             | Quiz lobby/game handlers (lobby creation, joining, kicking)            |
 | `controllers/api.js`              | AJAX endpoints for quiz state management                               |
-| `controllers/policy.js`           | Policy routes (uses shared-policy)                                     |
+| `controllers/policy.js`           | Policy routes + 404 handler                                            |
 | `utils/quizChecks.js`             | Quiz state validation middleware                                       |
 | `utils/middleware.js`             | Validation middleware (Joi schemas), T&Cs validation                   |
-| `models/quiz.js`, `question.js`   | Quiz session schemas                                                   |
+| `utils/comments.js`               | Quiz comments/note helper                                              |
+| `models/quiz.js`                  | Quiz session schema                                                    |
+| `models/question.js`              | Question schema                                                        |
 | `models/user-session-template.js` | User session state template                                            |
+| `models/schemas.js`               | Mongoose schema options/helper                                         |
 | `public/javascripts/`             | Client-side quiz logic (Socket.io client, AJAX polling)                |
 
 #### `apps/tracker/`
 
-| File                    | Purpose                                                        |
-| ----------------------- | -------------------------------------------------------------- |
-| `app.js`                | Minimal entry, uses shared-tracker for global tracking         |
-| `controllers/admin.js`  | IP tracking dashboard (dashboard, flagged IPs, blocked IPs)    |
-| `controllers/policy.js` | Policy routes (uses shared-policy)                             |
-| `models/tracker.js`     | Tracker data schema (local, though shared-tracker has its own) |
-| `utils/cleaner.js`      | Utility for cleaning/resetting tracker data                    |
-| `views/`                | EJS templates for tracker dashboard                            |
+| File                    | Purpose                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `app.js`                | Minimal entry, uses shared-tracker for global tracking                                             |
+| `controllers/admin.js`  | IP tracking dashboard (`dashboard`, `tracker`, `flaggedIPs`, `blockedIPs`, `blockIP`, `unblockIP`) |
+| `controllers/policy.js` | Policy routes + 404 handler                                                                        |
+| `models/tracker.js`     | Tracker data schema                                                                                |
+| `utils/cleaner.js`      | Utility for cleaning/resetting tracker data                                                        |
+| `views/`                | EJS templates for tracker dashboard                                                                |
+
+**Note**: Tracker does not use helmet, rate limiting, or shared-auth. Admin access is handled separately.
 
 ### Shared Packages
 
@@ -235,7 +249,7 @@ sequenceDiagram
 | File                   | Exports                                                             |
 | ---------------------- | ------------------------------------------------------------------- |
 | `boilerplateHelper.js` | `boilerplateHelper({ appRoot, meta })` - Res.locals setup for views |
-| `index.js`             | Package entry (minimal)                                             |
+| `index.js`             | Package entry (empty export, just documentation)                    |
 | `src/views/layouts/`   | `boilerplate.ejs` - Main layout template                            |
 | `src/views/partials/`  | `cookieAlert.ejs`, `flash.ejs` - Reusable partials                  |
 | `public/`              | CSS/JS assets for shared UI components                              |
@@ -247,6 +261,8 @@ sequenceDiagram
 | `createPolicyController(config)` | Factory for cookie policy & T&Cs handlers    |
 | `src/views/policy/`              | `cookiePolicy.ejs`, `tandc.ejs`, `error.ejs` |
 | `public/`                        | CSS/JS assets for policy pages               |
+
+**Note**: The `notFound` 404 handler is defined locally in each app's `controllers/policy.js`, not exported from shared-policy.
 
 #### `@longrunner/shared-middleware/src/index.js`
 

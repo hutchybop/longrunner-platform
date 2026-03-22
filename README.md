@@ -4,12 +4,13 @@ pnpm workspace monorepo for Longrunner applications, migrated to ES modules with
 
 ## Apps
 
-| App               | Directory      | Port | Description                                                      |
-| ----------------- | -------------- | ---- | ---------------------------------------------------------------- |
-| `landing`         | `apps/landing` | 3000 | Landing page linking to other apps, policy pages                 |
-| `shoppinglist`    | `apps/slapp`   | 3001 | Meal planner, ingredient catalog, weekly shopping list generator |
-| `longrunner-quiz` | `apps/quiz`    | 3002 | General knowledge quiz with real-time multiplayer via Socket.io  |
-| `ironman-blog`    | `apps/blog`    | 3004 | Ironman training blog with reviews and admin moderation          |
+| App                  | Directory      | Port | Description                                                      |
+| -------------------- | -------------- | ---- | ---------------------------------------------------------------- |
+| `landing`            | `apps/landing` | 3000 | Landing page linking to other apps, policy pages                 |
+| `shoppinglist`       | `apps/slapp`   | 3001 | Meal planner, ingredient catalog, weekly shopping list generator |
+| `longrunner-quiz`    | `apps/quiz`    | 3002 | General knowledge quiz with real-time multiplayer via Socket.io  |
+| `ironman-blog`       | `apps/blog`    | 3003 | Ironman training blog with reviews and admin moderation          |
+| `longrunner-tracker` | `apps/tracker` | 3004 | Global IP tracking and analytics across all Longrunner apps      |
 
 ## Packages
 
@@ -26,10 +27,11 @@ pnpm workspace monorepo for Longrunner applications, migrated to ES modules with
 ```
 longrunner-platform/
 ├── apps/
-│   ├── blog/         (port 3004)
+│   ├── blog/         (port 3003)
 │   ├── landing/      (port 3000)
 │   ├── quiz/        (port 3002)
-│   └── slapp/       (port 3001)
+│   ├── slapp/       (port 3001)
+│   └── tracker/     (port 3004)
 ├── packages/
 │   ├── shared-auth/
 │   ├── shared-config/
@@ -57,12 +59,14 @@ pnpm --filter landing lint
 pnpm --filter shoppinglist lint
 pnpm --filter longrunner-quiz lint
 pnpm --filter ironman-blog lint
+pnpm --filter longrunner-tracker lint
 
 # Run apps
 pnpm --filter landing exec node app.js
 pnpm --filter shoppinglist exec node app.js
 pnpm --filter longrunner-quiz exec node app.js
 pnpm --filter ironman-blog exec node app.js
+pnpm --filter longrunner-tracker exec node app.js
 ```
 
 ## Environment
