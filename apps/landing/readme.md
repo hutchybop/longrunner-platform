@@ -42,6 +42,8 @@ Runs on port `3000`.
 
 ### Environment Variables
 
+Set these in the root `.env.shared` file:
+
 - `SESSION_KEY`
 - `SITEKEY`
 - `SECRETKEY`

@@ -29,7 +29,7 @@ Follow these commands and conventions unless a task explicitly says otherwise.
 
 ## Environment Setup
 
-- This repo requires a `.env` file to run. Check existing examples or the app's documentation for required environment variables (database connection, session secrets, etc.).
+- This repo requires a root `.env.shared` file to run. Copy from `.env.shared.example` and provide the required credentials/secrets.
 - Install all workspace dependencies:
   - `pnpm install`
 

@@ -43,6 +43,8 @@ Runs on port `3001`.
 
 ### Environment Variables
 
+Set these in the root `.env.shared` file:
+
 - `MONGODB`
 - `SESSION_KEY`
 - `SITEKEY`

@@ -183,13 +183,13 @@ sequenceDiagram
 
 #### `@longrunner/shared-config/src/index.js`
 
-| Function                                              | Purpose                             |
-| ----------------------------------------------------- | ----------------------------------- |
-| `loadAppEnv({ appRoot })`                             | Load .env.shared and app .env files |
-| `createMongoDbUrl({ dbName })`                        | Build Atlas connection string       |
-| `createSessionConfig({ name, mongoUrl, MongoStore })` | Session middleware config           |
-| `createHelmetConfig()`                                | CSP and security headers            |
-| `createCspSources()`                                  | Allowed CDN sources                 |
+| Function                                              | Purpose                           |
+| ----------------------------------------------------- | --------------------------------- |
+| `loadAppEnv({ appRoot })`                             | Load root `.env.shared` variables |
+| `createMongoDbUrl({ dbName })`                        | Build Atlas connection string     |
+| `createSessionConfig({ name, mongoUrl, MongoStore })` | Session middleware config         |
+| `createHelmetConfig()`                                | CSP and security headers          |
+| `createCspSources()`                                  | Allowed CDN sources               |
 
 #### `@longrunner/shared-utils/src/`
 
@@ -562,8 +562,7 @@ Static assets follow a similar pattern with `app.use()` routes mapping to packag
 ### Configuration Files
 
 - `.env.shared` - Shared across all apps (root)
-- `.env` - App-specific (in each app directory)
-- `.env.example` - Template for new developers
+- `.env.shared.example` - Template for new developers
 
 ---
 

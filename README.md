@@ -67,7 +67,9 @@ pnpm --filter ironman-blog exec node app.js
 
 ## Environment
 
-All apps expect environment variables such as:
+All apps load variables from the root `.env.shared` file.
+
+Core variables:
 
 - `MONGODB`
 - `SESSION_KEY`
@@ -76,6 +78,21 @@ All apps expect environment variables such as:
 - `EMAIL_USER`
 - `ALIAS_EMAIL`
 - `ZOHOPW`
+
+Additional app-specific variables used from `.env.shared`:
+
+- `DEFAULT_USER_ID`
+- `TRACKER_AUTO_BLOCK_NOTIFY_TO`
+- `TRACKER_FLAG_THRESHOLD`
+- `TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD`
+- `TRACKER_BLOCK_30M_THRESHOLD`
+- `TRACKER_BLOCK_24H_THRESHOLD`
+- `TRACKER_BLOCK_30M_DURATION_MINUTES`
+- `TRACKER_BLOCK_24H_DURATION_HOURS`
+- `TRACKER_AUTO_BLOCK_EMAIL_ENABLED`
+- `IP_WHITE_LIST`
+- `TRACKER_EVENT_RETENTION_DAYS`
+- `TRACKER_BLOCKED_IP_CACHE_TTL_MS`
 
 ## Core Technologies
 

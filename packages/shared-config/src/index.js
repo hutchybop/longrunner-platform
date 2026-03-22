@@ -4,11 +4,7 @@ import dotenv from "dotenv";
 import { createAppEslintConfig } from "./eslint.js";
 
 export function loadAppEnv(config = {}) {
-  const {
-    appRoot,
-    sharedEnvFile = ".env.shared",
-    appEnvFile = ".env",
-  } = config;
+  const { appRoot, sharedEnvFile = ".env.shared" } = config;
 
   if (!appRoot) {
     throw new Error("loadAppEnv requires appRoot");
@@ -16,7 +12,6 @@ export function loadAppEnv(config = {}) {
 
   const repoRoot = path.resolve(appRoot, "../..");
   const sharedPath = path.join(repoRoot, sharedEnvFile);
-  const appPath = path.join(appRoot, appEnvFile);
 
   const readEnv = (filePath) => {
     if (!fs.existsSync(filePath)) {
@@ -26,12 +21,7 @@ export function loadAppEnv(config = {}) {
     return dotenv.parse(fs.readFileSync(filePath));
   };
 
-  const merged = {
-    ...readEnv(sharedPath),
-    ...readEnv(appPath),
-  };
-
-  for (const [key, value] of Object.entries(merged)) {
+  for (const [key, value] of Object.entries(readEnv(sharedPath))) {
     if (process.env[key] === undefined) {
       process.env[key] = value;
     }
