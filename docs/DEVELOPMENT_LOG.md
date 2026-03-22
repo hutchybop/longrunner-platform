@@ -1,5 +1,27 @@
 # DEVELOPMENT LOG
 
+## Session 11
+
+### Sunday March 22nd
+
+<br>
+
+**Summary:** This session focused on updating the repository license, refreshing the project README.md with current information, and updating documentation files to reflect recent platform changes.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+2d4cfdb, 753ec28, af73a69
+
+**Session git history:**
+
+- update repo license - _Updated repository license file with current information_
+- update project readme.md - _Refreshed project README.md with updated project details_
+- Update docs and readme files 20260322-1432 - _Updated documentation and README files_
+
+---
+
+<br>
+
 ## Session 10
 
 ### Sunday March 22nd
