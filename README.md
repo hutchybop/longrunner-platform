@@ -67,7 +67,14 @@ pnpm --filter shoppinglist exec node app.js
 pnpm --filter longrunner-quiz exec node app.js
 pnpm --filter ironman-blog exec node app.js
 pnpm --filter longrunner-tracker exec node app.js
+
+# Run all apps in dev
+pnpm -r --parallel run dev
+# Run all apps in production
+pnpm -r --parallel run start
 ```
+
+
 
 ## Environment
 
