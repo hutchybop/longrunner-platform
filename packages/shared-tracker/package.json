@@ -17,8 +17,8 @@
   "dependencies": {
     "@longrunner/shared-config": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
-    "geoip-lite": "^2.0.0",
-    "mongoose": "^9.3.0"
+    "geoip-lite": "^2.0.1",
+    "mongoose": "^9.3.1"
   },
   "peerDependencies": {
     "express": "^5.2.1"

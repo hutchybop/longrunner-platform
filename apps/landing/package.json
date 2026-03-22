@@ -21,12 +21,13 @@
     "express-recaptcha": "^5.1.0",
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
-    "mongoose": "^9.3.0",
+    "mongoose": "^9.3.1",
     "serve-favicon": "^2.5.1"
   },
   "scripts": {
-    "start": "node app.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "dev": "nodemon app.js",
+    "start": "node app.js"
   }
 }

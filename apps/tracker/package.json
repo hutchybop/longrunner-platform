@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "cleanup:routes": "node utils/reclassifySuspiciousRoutes.js"
+    "dev": "nodemon app.js",
+    "start": "node app.js"
   },
   "author": "hutchyBop",
   "license": "MIT",
@@ -20,14 +21,14 @@
     "@longrunner/shared-utils": "workspace:*",
     "compression": "^1.8.1",
     "connect-mongo": "^6.0.0",
-    "ejs": "^4.0.1",
+    "ejs": "^5.0.1",
     "ejs-mate": "^4.0.0",
     "express": "^5.2.1",
     "express-back": "0.0.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-session": "^1.19.0",
     "method-override": "^3.0.0",
-    "mongoose": "^9.3.0",
+    "mongoose": "^9.3.1",
     "serve-favicon": "^2.5.1"
   }
 }
