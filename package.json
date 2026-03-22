@@ -1,6 +1,7 @@
 {
   "name": "longrunner",
   "private": true,
+  "license": "MIT",
   "dependencies": {
     "@longrunner/shared-config": "workspace:*"
   },

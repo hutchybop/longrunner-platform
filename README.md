@@ -74,8 +74,6 @@ pnpm -r --parallel run dev
 pnpm -r --parallel run start
 ```
 
-
-
 ## Environment
 
 All apps load variables from the root `.env.shared` file.
@@ -113,3 +111,8 @@ Additional app-specific variables used from `.env.shared`:
 - EJS templating with ejs-mate
 - Session auth with MongoStore
 - Security: helmet, express-mongo-sanitize, express-rate-limit, recaptcha
+
+## License
+
+This monorepo and all included apps/packages are licensed under the MIT License.
+See `LICENSE` at the repository root.

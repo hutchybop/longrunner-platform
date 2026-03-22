@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
+  "license": "MIT",
   "dependencies": {
     "@longrunner/shared-utils": "workspace:*"
   },

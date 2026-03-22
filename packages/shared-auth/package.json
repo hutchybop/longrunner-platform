@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
+  "license": "MIT",
   "dependencies": {
     "@longrunner/shared-utils": "workspace:*",
     "bcrypt": "^6.0.0"

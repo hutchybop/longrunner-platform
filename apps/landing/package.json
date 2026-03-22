@@ -4,6 +4,7 @@
   "description": "Longrunner landing page application",
   "main": "app.js",
   "type": "module",
+  "license": "MIT",
   "dependencies": {
     "@longrunner/shared-config": "workspace:*",
     "@longrunner/shared-middleware": "workspace:*",
