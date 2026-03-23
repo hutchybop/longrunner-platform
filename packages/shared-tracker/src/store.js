@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import net from "net";
-import mail from "@longrunner/shared-utils/mail.js";
 import { getTrackerConnection } from "./db.js";
 
 const trackerSchema = new mongoose.Schema(
@@ -109,8 +108,8 @@ const TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD =
   parsedBadToGoodRatioThreshold > 0
     ? parsedBadToGoodRatioThreshold
     : 1.7;
-const TRACKER_AUTO_BLOCK_EMAIL_ENABLED =
-  process.env.TRACKER_AUTO_BLOCK_EMAIL_ENABLED !== "false";
+const TRACKER_WEEKLY_SUMMARY_TIMEZONE =
+  process.env.TRACKER_WEEKLY_SUMMARY_TIMEZONE || "Europe/London";
 
 const trackerEventSchema = new mongoose.Schema(
   {
@@ -224,6 +223,215 @@ const ipBlockSchema = new mongoose.Schema(
 
 ipBlockSchema.index({ blockedUntil: 1 });
 
+const trackerBlockEventSchema = new mongoose.Schema(
+  {
+    ip: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    source: {
+      type: String,
+      enum: ["manual", "auto"],
+      default: "auto",
+      index: true,
+    },
+    blockLevel: {
+      type: String,
+      enum: ["manual", "temporary_30m", "temporary_24h", "permanent"],
+      required: true,
+      index: true,
+    },
+    blockedAt: {
+      type: Date,
+      required: true,
+    },
+    blockedUntil: {
+      type: Date,
+      default: null,
+    },
+    badRouteCountAtBlock: {
+      type: Number,
+      default: 0,
+    },
+    goodRouteCountAtBlock: {
+      type: Number,
+      default: 0,
+    },
+    ratioThreshold: {
+      type: Number,
+      default: TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+    },
+    reason: {
+      type: String,
+      default: "",
+    },
+    weekKey: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    weekStartDate: {
+      type: String,
+      required: true,
+    },
+    weekEndDate: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+trackerBlockEventSchema.index({ ip: 1, blockedAt: -1 });
+trackerBlockEventSchema.index({ weekKey: 1, blockLevel: 1 });
+trackerBlockEventSchema.index({ source: 1, weekKey: 1 });
+
+const trackerWeeklyIpSummarySchema = new mongoose.Schema(
+  {
+    weekKey: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    weekStartDate: {
+      type: String,
+      required: true,
+    },
+    weekEndDate: {
+      type: String,
+      required: true,
+    },
+    ip: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    has30m: {
+      type: Boolean,
+      default: false,
+    },
+    has24h: {
+      type: Boolean,
+      default: false,
+    },
+    hasPermanent: {
+      type: Boolean,
+      default: false,
+    },
+    blocked30mAt: {
+      type: Date,
+      default: null,
+    },
+    blocked24hAt: {
+      type: Date,
+      default: null,
+    },
+    blockedPermanentAt: {
+      type: Date,
+      default: null,
+    },
+    lastBlockLevel: {
+      type: String,
+      enum: ["manual", "temporary_30m", "temporary_24h", "permanent"],
+      default: "temporary_30m",
+    },
+    lastBlockedAt: {
+      type: Date,
+      default: null,
+    },
+    lastBlockedUntil: {
+      type: Date,
+      default: null,
+    },
+    badRouteCountAllTime: {
+      type: Number,
+      default: 0,
+    },
+    goodRouteCountAllTime: {
+      type: Number,
+      default: 0,
+    },
+    ratioThreshold: {
+      type: Number,
+      default: TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+trackerWeeklyIpSummarySchema.index({ weekKey: 1, ip: 1 }, { unique: true });
+trackerWeeklyIpSummarySchema.index({ weekKey: 1, lastBlockedAt: -1 });
+
+const trackerIpBlockLifecycleSchema = new mongoose.Schema(
+  {
+    ip: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    has30m: {
+      type: Boolean,
+      default: false,
+    },
+    has24h: {
+      type: Boolean,
+      default: false,
+    },
+    hasPermanent: {
+      type: Boolean,
+      default: false,
+    },
+    blocked30mAt: {
+      type: Date,
+      default: null,
+    },
+    blocked24hAt: {
+      type: Date,
+      default: null,
+    },
+    blockedPermanentAt: {
+      type: Date,
+      default: null,
+    },
+    lastBlockLevel: {
+      type: String,
+      enum: ["manual", "temporary_30m", "temporary_24h", "permanent"],
+      default: "temporary_30m",
+    },
+    lastBlockedAt: {
+      type: Date,
+      default: null,
+    },
+    lastBlockedUntil: {
+      type: Date,
+      default: null,
+    },
+    badRouteCountAllTime: {
+      type: Number,
+      default: 0,
+    },
+    goodRouteCountAllTime: {
+      type: Number,
+      default: 0,
+    },
+    ratioThreshold: {
+      type: Number,
+      default: TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+trackerIpBlockLifecycleSchema.index({ hasPermanent: 1, has24h: 1, has30m: 1 });
+
 function sanitizeRouteKey(route) {
   return String(route)
     .replaceAll("%", "%25")
@@ -236,6 +444,297 @@ function decodeRouteKey(route) {
     .replaceAll("%24", "$")
     .replaceAll("%2E", ".")
     .replaceAll("%25", "%");
+}
+
+const SUMMARY_WEEKDAY_TO_INDEX = {
+  Monday: 0,
+  Tuesday: 1,
+  Wednesday: 2,
+  Thursday: 3,
+  Friday: 4,
+  Saturday: 5,
+  Sunday: 6,
+};
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function toIsoDateString(date) {
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(
+    date.getUTCDate(),
+  )}`;
+}
+
+function addDaysToIsoDate(isoDate, days) {
+  const date = new Date(`${isoDate}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return toIsoDateString(date);
+}
+
+function getWeekInfoForDate(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TRACKER_WEEKLY_SUMMARY_TIMEZONE,
+    weekday: "long",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(date);
+  const partMap = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+  const dayIndex = SUMMARY_WEEKDAY_TO_INDEX[partMap.weekday] ?? 0;
+  const year = Number.parseInt(partMap.year, 10);
+  const month = Number.parseInt(partMap.month, 10);
+  const day = Number.parseInt(partMap.day, 10);
+
+  const weekStartDateObj = new Date(Date.UTC(year, month - 1, day, 12));
+  weekStartDateObj.setUTCDate(weekStartDateObj.getUTCDate() - dayIndex);
+
+  const weekStartDate = toIsoDateString(weekStartDateObj);
+  const weekEndDate = addDaysToIsoDate(weekStartDate, 6);
+
+  return {
+    weekKey: weekStartDate,
+    weekStartDate,
+    weekEndDate,
+  };
+}
+
+function getWeekInfoFromWeekKey(weekKey) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(weekKey || ""))) {
+    return null;
+  }
+
+  const parsed = new Date(`${weekKey}T12:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  if (toIsoDateString(parsed) !== weekKey) {
+    return null;
+  }
+
+  if (parsed.getUTCDay() !== 1) {
+    return null;
+  }
+
+  return {
+    weekKey,
+    weekStartDate: weekKey,
+    weekEndDate: addDaysToIsoDate(weekKey, 6),
+  };
+}
+
+function formatIsoDateToDisplay(isoDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(isoDate || ""))) {
+    return "N/A";
+  }
+
+  const [year, month, day] = isoDate.split("-");
+  return `${day} ${month} ${year.slice(2)}`;
+}
+
+function buildDefaultBlockTotals() {
+  return {
+    total30mOnlyBlocks: 0,
+    total30mAnd24hOnlyBlocks: 0,
+    totalPermanentBlocks: 0,
+  };
+}
+
+async function getBlockTotals(Model, filter = {}) {
+  const [totals] = await Model.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: null,
+        total30mOnlyBlocks: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $eq: ["$has30m", true] },
+                  { $ne: ["$has24h", true] },
+                  { $ne: ["$hasPermanent", true] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+        total30mAnd24hOnlyBlocks: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $eq: ["$has24h", true] },
+                  { $ne: ["$hasPermanent", true] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+        totalPermanentBlocks: {
+          $sum: {
+            $cond: [{ $eq: ["$hasPermanent", true] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  if (!totals) {
+    return buildDefaultBlockTotals();
+  }
+
+  return {
+    total30mOnlyBlocks: totals.total30mOnlyBlocks || 0,
+    total30mAnd24hOnlyBlocks: totals.total30mAnd24hOnlyBlocks || 0,
+    totalPermanentBlocks: totals.totalPermanentBlocks || 0,
+  };
+}
+
+async function updateBlockProgressDocument({
+  Model,
+  filter,
+  blockLevel,
+  blockedAt,
+  blockedUntil,
+  badRouteCountAllTime,
+  goodRouteCountAllTime,
+  ratioThreshold,
+  insertDefaults = {},
+}) {
+  const existing = await Model.findOne(filter).lean();
+
+  const update = {
+    lastBlockLevel: blockLevel,
+    lastBlockedAt: blockedAt,
+    lastBlockedUntil: blockedUntil || null,
+    badRouteCountAllTime,
+    goodRouteCountAllTime,
+    ratioThreshold,
+  };
+
+  if (blockLevel === "temporary_30m") {
+    update.has30m = true;
+    if (!existing?.blocked30mAt) {
+      update.blocked30mAt = blockedAt;
+    }
+  }
+
+  if (blockLevel === "temporary_24h") {
+    update.has24h = true;
+    if (!existing?.blocked24hAt) {
+      update.blocked24hAt = blockedAt;
+    }
+  }
+
+  if (blockLevel === "permanent") {
+    update.hasPermanent = true;
+    if (!existing?.blockedPermanentAt) {
+      update.blockedPermanentAt = blockedAt;
+    }
+  }
+
+  const updateCommand = {
+    $set: update,
+    $setOnInsert: insertDefaults,
+  };
+
+  try {
+    await Model.updateOne(filter, updateCommand, {
+      upsert: true,
+    });
+  } catch (error) {
+    if (error?.code !== 11000) {
+      throw error;
+    }
+
+    await Model.updateOne(filter, { $set: update });
+  }
+}
+
+async function recordBlockTransition({
+  TrackerBlockEvent,
+  TrackerWeeklyIpSummary,
+  TrackerIpBlockLifecycle,
+  ip,
+  blockLevel,
+  blockedAt,
+  blockedUntil,
+  source,
+  reason,
+  badRouteCountAllTime,
+  goodRouteCountAllTime,
+}) {
+  const weekInfo = getWeekInfoForDate(blockedAt);
+
+  await TrackerBlockEvent.create({
+    ip,
+    source,
+    blockLevel,
+    blockedAt,
+    blockedUntil: blockedUntil || null,
+    badRouteCountAtBlock: badRouteCountAllTime,
+    goodRouteCountAtBlock: goodRouteCountAllTime,
+    ratioThreshold: TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+    reason,
+    weekKey: weekInfo.weekKey,
+    weekStartDate: weekInfo.weekStartDate,
+    weekEndDate: weekInfo.weekEndDate,
+  });
+
+  await updateBlockProgressDocument({
+    Model: TrackerWeeklyIpSummary,
+    filter: {
+      weekKey: weekInfo.weekKey,
+      ip,
+    },
+    blockLevel,
+    blockedAt,
+    blockedUntil,
+    badRouteCountAllTime,
+    goodRouteCountAllTime,
+    ratioThreshold: TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+    insertDefaults: {
+      weekKey: weekInfo.weekKey,
+      weekStartDate: weekInfo.weekStartDate,
+      weekEndDate: weekInfo.weekEndDate,
+      ip,
+      has30m: false,
+      has24h: false,
+      hasPermanent: false,
+      blocked30mAt: null,
+      blocked24hAt: null,
+      blockedPermanentAt: null,
+    },
+  });
+
+  await updateBlockProgressDocument({
+    Model: TrackerIpBlockLifecycle,
+    filter: { ip },
+    blockLevel,
+    blockedAt,
+    blockedUntil,
+    badRouteCountAllTime,
+    goodRouteCountAllTime,
+    ratioThreshold: TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+    insertDefaults: {
+      ip,
+      has30m: false,
+      has24h: false,
+      hasPermanent: false,
+      blocked30mAt: null,
+      blocked24hAt: null,
+      blockedPermanentAt: null,
+    },
+  });
 }
 
 function getModels(connection) {
@@ -251,7 +750,38 @@ function getModels(connection) {
     connection.models.IpBlock ||
     connection.model("IpBlock", ipBlockSchema, "ipblocks");
 
-  return { Tracker, TrackerEvent, IpBlock };
+  const TrackerBlockEvent =
+    connection.models.TrackerBlockEvent ||
+    connection.model(
+      "TrackerBlockEvent",
+      trackerBlockEventSchema,
+      "trackerblockevents",
+    );
+
+  const TrackerWeeklyIpSummary =
+    connection.models.TrackerWeeklyIpSummary ||
+    connection.model(
+      "TrackerWeeklyIpSummary",
+      trackerWeeklyIpSummarySchema,
+      "trackerweeklyipsummaries",
+    );
+
+  const TrackerIpBlockLifecycle =
+    connection.models.TrackerIpBlockLifecycle ||
+    connection.model(
+      "TrackerIpBlockLifecycle",
+      trackerIpBlockLifecycleSchema,
+      "trackeripblocklifecycles",
+    );
+
+  return {
+    Tracker,
+    TrackerEvent,
+    IpBlock,
+    TrackerBlockEvent,
+    TrackerWeeklyIpSummary,
+    TrackerIpBlockLifecycle,
+  };
 }
 
 function parseWhitelistEnv(rawValue) {
@@ -423,42 +953,11 @@ function buildActiveBlockQuery(now = new Date()) {
   };
 }
 
-async function sendAutoBlockEmail({
-  ip,
-  badRouteCountAllTime,
-  goodRouteCountAllTime,
-  blockLevel,
-  blockedUntil,
-  reason,
-}) {
-  if (!TRACKER_AUTO_BLOCK_EMAIL_ENABLED) return;
-
-  const subject = `Tracker Auto Block: ${ip} (${blockLevel})`;
-  const untilText = blockedUntil
-    ? blockedUntil.toISOString()
-    : "indefinite / permanent";
-  const text = [
-    "An IP address has been auto blocked by tracker.",
-    "",
-    `IP: ${ip}`,
-    `Block level: ${blockLevel}`,
-    `Bad routes (all-time): ${badRouteCountAllTime}`,
-    `Good routes (all-time): ${goodRouteCountAllTime}`,
-    `Bad/Good ratio threshold: ${TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD}`,
-    `Blocked until: ${untilText}`,
-    `Reason: ${reason}`,
-    `Triggered at: ${new Date().toISOString()}`,
-  ].join("\n");
-
-  try {
-    await mail(subject, text, process.env.TRACKER_AUTO_BLOCK_NOTIFY_TO);
-  } catch (error) {
-    console.error("Failed to send auto-block email:", error.message);
-  }
-}
-
 async function applyAutoBlockForIp({
   IpBlock,
+  TrackerBlockEvent,
+  TrackerWeeklyIpSummary,
+  TrackerIpBlockLifecycle,
   ip,
   badRouteCountAllTime,
   goodRouteCountAllTime,
@@ -501,14 +1000,21 @@ async function applyAutoBlockForIp({
     if (!existing) {
       try {
         await IpBlock.create({ ip, ...update });
-        await sendAutoBlockEmail({
+
+        await recordBlockTransition({
+          TrackerBlockEvent,
+          TrackerWeeklyIpSummary,
+          TrackerIpBlockLifecycle,
           ip,
+          source: "auto",
           badRouteCountAllTime,
           goodRouteCountAllTime,
           blockLevel: policy.blockLevel,
+          blockedAt: update.blockedAt,
           blockedUntil: policy.blockedUntil,
           reason: policy.reason,
         });
+
         return;
       } catch (error) {
         if (error?.code === 11000) {
@@ -530,14 +1036,20 @@ async function applyAutoBlockForIp({
     );
 
     if (result.modifiedCount === 1) {
-      await sendAutoBlockEmail({
+      await recordBlockTransition({
+        TrackerBlockEvent,
+        TrackerWeeklyIpSummary,
+        TrackerIpBlockLifecycle,
         ip,
+        source: "auto",
         badRouteCountAllTime,
         goodRouteCountAllTime,
         blockLevel: policy.blockLevel,
+        blockedAt: update.blockedAt,
         blockedUntil: policy.blockedUntil,
         reason: policy.reason,
       });
+
       return;
     }
   }
@@ -545,7 +1057,14 @@ async function applyAutoBlockForIp({
 
 export async function recordRequest(trackerData = {}) {
   const connection = await getTrackerConnection();
-  const { Tracker, TrackerEvent, IpBlock } = getModels(connection);
+  const {
+    Tracker,
+    TrackerEvent,
+    IpBlock,
+    TrackerBlockEvent,
+    TrackerWeeklyIpSummary,
+    TrackerIpBlockLifecycle,
+  } = getModels(connection);
 
   const {
     appName,
@@ -648,6 +1167,9 @@ export async function recordRequest(trackerData = {}) {
 
     await applyAutoBlockForIp({
       IpBlock,
+      TrackerBlockEvent,
+      TrackerWeeklyIpSummary,
+      TrackerIpBlockLifecycle,
       ip: safeIp,
       badRouteCountAllTime,
       goodRouteCountAllTime,
@@ -656,6 +1178,80 @@ export async function recordRequest(trackerData = {}) {
 }
 
 export { decodeRouteKey };
+
+export async function getTrackerSummary({ weekKey } = {}) {
+  const connection = await getTrackerConnection();
+  const { TrackerWeeklyIpSummary, TrackerIpBlockLifecycle } =
+    getModels(connection);
+
+  const currentWeekInfo = getWeekInfoForDate(new Date());
+  const requestedWeekInfo = weekKey ? getWeekInfoFromWeekKey(weekKey) : null;
+  const selectedWeekInfo = requestedWeekInfo || currentWeekInfo;
+
+  const availableWeekKeysRaw = await TrackerWeeklyIpSummary.distinct("weekKey");
+  const allWeekKeys = new Set(
+    availableWeekKeysRaw
+      .map((key) => getWeekInfoFromWeekKey(key)?.weekKey)
+      .filter(Boolean),
+  );
+  allWeekKeys.add(currentWeekInfo.weekKey);
+  allWeekKeys.add(selectedWeekInfo.weekKey);
+
+  const availableWeeks = [...allWeekKeys]
+    .map((key) => getWeekInfoFromWeekKey(key))
+    .filter(Boolean)
+    .sort((a, b) => (a.weekKey < b.weekKey ? 1 : -1))
+    .map((info) => ({
+      weekKey: info.weekKey,
+      weekStartDate: info.weekStartDate,
+      weekEndDate: info.weekEndDate,
+      label: `${formatIsoDateToDisplay(info.weekStartDate)} - ${formatIsoDateToDisplay(info.weekEndDate)}`,
+    }));
+
+  const weeklyTotals = await getBlockTotals(TrackerWeeklyIpSummary, {
+    weekKey: selectedWeekInfo.weekKey,
+  });
+  const allTimeTotals = await getBlockTotals(TrackerIpBlockLifecycle);
+
+  const weeklyIpSummaries = await TrackerWeeklyIpSummary.find({
+    weekKey: selectedWeekInfo.weekKey,
+  })
+    .sort({
+      hasPermanent: -1,
+      has24h: -1,
+      has30m: -1,
+      blockedPermanentAt: -1,
+      blocked24hAt: -1,
+      blocked30mAt: -1,
+      ip: 1,
+    })
+    .lean();
+
+  const weeklyIps = weeklyIpSummaries.map((item) => ({
+    ip: item.ip,
+    blocked30mAt: item.blocked30mAt || null,
+    blocked24hAt: item.blocked24hAt || null,
+    blockedPermanentAt: item.blockedPermanentAt || null,
+    badRouteCountAllTime: item.badRouteCountAllTime || 0,
+    goodRouteCountAllTime: item.goodRouteCountAllTime || 0,
+    ratioThreshold: item.ratioThreshold || TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD,
+  }));
+
+  return {
+    timeZone: TRACKER_WEEKLY_SUMMARY_TIMEZONE,
+    selectedWeek: {
+      weekKey: selectedWeekInfo.weekKey,
+      weekStartDate: selectedWeekInfo.weekStartDate,
+      weekEndDate: selectedWeekInfo.weekEndDate,
+      weekLabelDate: formatIsoDateToDisplay(selectedWeekInfo.weekEndDate),
+      weekRangeLabel: `${formatIsoDateToDisplay(selectedWeekInfo.weekStartDate)} - ${formatIsoDateToDisplay(selectedWeekInfo.weekEndDate)}`,
+    },
+    availableWeeks,
+    weeklyTotals,
+    allTimeTotals,
+    weeklyIps,
+  };
+}
 
 export async function getBlockedIps() {
   const connection = await getTrackerConnection();

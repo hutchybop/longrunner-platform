@@ -547,23 +547,21 @@ Static assets follow a similar pattern with `app.use()` routes mapping to packag
 
 ### Required Environment Variables
 
-| Variable                           | Used By      | Purpose                             |
-| ---------------------------------- | ------------ | ----------------------------------- |
-| `MONGODB`                          | All apps     | MongoDB Atlas password              |
-| `SESSION_KEY`                      | All apps     | Session secret                      |
-| `SITEKEY`                          | All apps     | reCAPTCHA site key                  |
-| `SECRETKEY`                        | All apps     | reCAPTCHA secret                    |
-| `EMAIL_USER`                       | shared-utils | SMTP username (Zoho)                |
-| `ZOHOPW`                           | shared-utils | SMTP password                       |
-| `ALIAS_EMAIL`                      | shared-utils | Default send-to address             |
-| `IP_WHITE_LIST`                    | tracker      | Comma-separated whitelist of IPs    |
-| `TRACKER_BLOCKED_IP_CACHE_TTL_MS`  | tracker      | Cache TTL for blocked IPs           |
-| `TRACKER_AUTO_BLOCK_EMAIL_ENABLED` | tracker      | Enable auto-block emails            |
-| `TRACKER_AUTO_BLOCK_NOTIFY_TO`     | tracker      | Email for auto-block notifications  |
-| `TRACKER_FLAG_THRESHOLD`           | tracker      | Bad route threshold for flagging    |
-| `TRACKER_BLOCK_30M_THRESHOLD`      | tracker      | Bad routes to trigger 30-min block  |
-| `TRACKER_BLOCK_24H_THRESHOLD`      | tracker      | Bad routes to trigger 24-hour block |
-| `TRACKER_EVENT_RETENTION_DAYS`     | tracker      | Days to retain tracker events       |
+| Variable                          | Used By      | Purpose                             |
+| --------------------------------- | ------------ | ----------------------------------- |
+| `MONGODB`                         | All apps     | MongoDB Atlas password              |
+| `SESSION_KEY`                     | All apps     | Session secret                      |
+| `SITEKEY`                         | All apps     | reCAPTCHA site key                  |
+| `SECRETKEY`                       | All apps     | reCAPTCHA secret                    |
+| `EMAIL_USER`                      | shared-utils | SMTP username (Zoho)                |
+| `ZOHOPW`                          | shared-utils | SMTP password                       |
+| `ALIAS_EMAIL`                     | shared-utils | Default send-to address             |
+| `IP_WHITE_LIST`                   | tracker      | Comma-separated whitelist of IPs    |
+| `TRACKER_BLOCKED_IP_CACHE_TTL_MS` | tracker      | Cache TTL for blocked IPs           |
+| `TRACKER_FLAG_THRESHOLD`          | tracker      | Bad route threshold for flagging    |
+| `TRACKER_BLOCK_30M_THRESHOLD`     | tracker      | Bad routes to trigger 30-min block  |
+| `TRACKER_BLOCK_24H_THRESHOLD`     | tracker      | Bad routes to trigger 24-hour block |
+| `TRACKER_EVENT_RETENTION_DAYS`    | tracker      | Days to retain tracker events       |
 
 ### Database Names per App
 

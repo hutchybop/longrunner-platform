@@ -11,6 +11,7 @@ export {
 export {
   getBlockedIps,
   getFlaggedIps,
+  getTrackerSummary,
   recordRequest,
   blockIpAddress,
   unblockIpAddress,

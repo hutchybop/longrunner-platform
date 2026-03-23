@@ -3,6 +3,7 @@ import {
   blockIpAddress,
   decodeRouteKey,
   getFlaggedIps,
+  getTrackerSummary,
   unblockIpAddress,
   getBlockedIps,
 } from "@longrunner/shared-tracker";
@@ -454,6 +455,17 @@ export const flaggedIPs = async (req, res) => {
       Number.parseInt(process.env.TRACKER_FLAG_THRESHOLD || "10", 10) || 10,
     badToGoodRatioThreshold,
     whitelistRaw: process.env.IP_WHITE_LIST || "",
+  });
+};
+
+export const summery = async (req, res) => {
+  const summaryData = await getTrackerSummary({
+    weekKey: typeof req.query.week === "string" ? req.query.week : undefined,
+  });
+
+  res.render("admin/summery", {
+    title: "Tracker Summery",
+    summaryData,
   });
 };
 

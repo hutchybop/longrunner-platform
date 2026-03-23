@@ -1,0 +1,124 @@
+<% layout('layouts/boilerplate') %>
+
+<% contentTitle = 'Tracker Summery' %>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1 class="mb-1"><i class="fas fa-calendar-week me-2"></i>Your weekly Tracker summery from tracker.longrunner.co.uk</h1>
+        <p class="text-muted mb-0">Weekly window: <strong><%= summaryData.selectedWeek.weekRangeLabel %></strong> (<%= summaryData.timeZone %>)</p>
+    </div>
+    <form method="GET" action="/admin/summery" class="d-flex gap-2">
+        <label for="week" class="visually-hidden">Select week</label>
+        <select id="week" name="week" class="form-select" onchange="this.form.submit()">
+            <% summaryData.availableWeeks.forEach(function(week) { %>
+                <option value="<%= week.weekKey %>" <%= week.weekKey === summaryData.selectedWeek.weekKey ? 'selected' : '' %>>
+                    <%= week.label %>
+                </option>
+            <% }) %>
+        </select>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Weekly Totals (<%= summaryData.selectedWeek.weekLabelDate %>)</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-8">Total Weekly 30min Only Blocks</dt>
+                    <dd class="col-sm-4 text-sm-end"><span class="badge bg-primary"><%= summaryData.weeklyTotals.total30mOnlyBlocks %></span></dd>
+
+                    <dt class="col-sm-8">Total Weekly 30min &amp; 24hr Only Blocks</dt>
+                    <dd class="col-sm-4 text-sm-end"><span class="badge bg-warning text-dark"><%= summaryData.weeklyTotals.total30mAnd24hOnlyBlocks %></span></dd>
+
+                    <dt class="col-sm-8">Total Weekly Permanent Blocks</dt>
+                    <dd class="col-sm-4 text-sm-end"><span class="badge bg-danger"><%= summaryData.weeklyTotals.totalPermanentBlocks %></span></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">All Time Totals</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-8">Total 30min Only Blocks</dt>
+                    <dd class="col-sm-4 text-sm-end"><span class="badge bg-primary"><%= summaryData.allTimeTotals.total30mOnlyBlocks %></span></dd>
+
+                    <dt class="col-sm-8">Total 30min &amp; 24hr Only Blocks</dt>
+                    <dd class="col-sm-4 text-sm-end"><span class="badge bg-warning text-dark"><%= summaryData.allTimeTotals.total30mAnd24hOnlyBlocks %></span></dd>
+
+                    <dt class="col-sm-8">Total Permanent Blocks</dt>
+                    <dd class="col-sm-4 text-sm-end"><span class="badge bg-danger"><%= summaryData.allTimeTotals.totalPermanentBlocks %></span></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-network-wired me-2"></i>IP addresses blocked this week</h5>
+        <span class="badge bg-dark"><%= summaryData.weeklyIps.length %></span>
+    </div>
+    <div class="card-body">
+        <% if (summaryData.weeklyIps.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>30 min temp blocked at</th>
+                            <th>24hr temp blocked at</th>
+                            <th>Perm blocked at</th>
+                            <th>Bad routes (all-time)</th>
+                            <th>Good routes (all-time)</th>
+                            <th>Bad/Good ratio threshold</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% summaryData.weeklyIps.forEach(function(item) { %>
+                            <tr>
+                                <td><code><%= item.ip %></code></td>
+                                <td>
+                                    <% if (item.blocked30mAt) { %>
+                                        <%= new Date(item.blocked30mAt).toLocaleString('en-GB', { hour12: false, timeZone: summaryData.timeZone }) %>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (item.blocked24hAt) { %>
+                                        <%= new Date(item.blocked24hAt).toLocaleString('en-GB', { hour12: false, timeZone: summaryData.timeZone }) %>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (item.blockedPermanentAt) { %>
+                                        <%= new Date(item.blockedPermanentAt).toLocaleString('en-GB', { hour12: false, timeZone: summaryData.timeZone }) %>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td><span class="badge bg-danger"><%= item.badRouteCountAllTime %></span></td>
+                                <td><span class="badge bg-success"><%= item.goodRouteCountAllTime %></span></td>
+                                <td><span class="badge bg-secondary"><%= item.ratioThreshold %></span></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5>No auto-blocked IPs for this week</h5>
+                <p class="text-muted mb-0">Select another week from the dropdown to browse historical summaries.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
