@@ -1,5 +1,25 @@
 # DEVELOPMENT LOG
 
+## Session 12
+
+### Monday March 23rd
+
+<br>
+
+**Summary:** This session focused on adding a tracker summary feature that provides an overview of request tracking data, updating the tracker admin page, and improving the shared-tracker package functionality.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+6ce78ae
+
+**Session git history:**
+
+- Add tracker summery - _Added tracker summary feature with overview of request tracking data, updated tracker admin page, and improved shared-tracker package functionality_
+
+---
+
+<br>
+
 ## Session 11
 
 ### Sunday March 22nd
