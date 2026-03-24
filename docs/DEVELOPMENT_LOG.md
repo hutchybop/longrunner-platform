@@ -1,5 +1,25 @@
 # DEVELOPMENT LOG
 
+## Session 14
+
+### Tuesday March 24th
+
+<br>
+
+**Summary:** This session focused on fixing a bug in the tracker summary feature. Updated the tracker app controllers, views, and the shared-tracker package to correct summary data handling issues.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+0fe1b50
+
+**Session git history:**
+
+- fix tracker summary bug - _Fixed tracker summary bug in tracker app and shared-tracker package, updated controllers, views, and store functionality_
+
+---
+
+<br>
+
 ## Session 13
 
 ### Tuesday March 24th
