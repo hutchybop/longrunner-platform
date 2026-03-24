@@ -22,7 +22,7 @@
     "express-recaptcha": "^5.1.0",
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
-    "mongoose": "^9.3.1",
+    "mongoose": "^9.3.2",
     "serve-favicon": "^2.5.1"
   },
   "scripts": {
