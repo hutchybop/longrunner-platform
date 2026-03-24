@@ -1,5 +1,26 @@
 # DEVELOPMENT LOG
 
+## Session 15
+
+### Tuesday March 24th
+
+<br>
+
+**Summary:** This session focused on updating pnpm package dependencies across all apps and shared packages, and fixing a typo in the tracker views by renaming summery.ejs to summary.ejs.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+eb0a595, 1bbe7c2
+
+**Session git history:**
+
+- update pnpm packages - _Updated pnpm package dependencies across all apps and shared packages_
+- fix summary name change - _Fixed typo in tracker views by renaming summery.ejs to summary.ejs_
+
+---
+
+<br>
+
 ## Session 14
 
 ### Tuesday March 24th
