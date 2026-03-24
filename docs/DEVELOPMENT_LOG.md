@@ -34,7 +34,7 @@
 
 **Session git history:**
 
-- Add tracker summery - _Added tracker summary feature with overview of request tracking data, updated tracker admin page, and improved shared-tracker package functionality_
+- Add tracker summary - _Added tracker summary feature with overview of request tracking data, updated tracker admin page, and improved shared-tracker package functionality_
 
 ---
 

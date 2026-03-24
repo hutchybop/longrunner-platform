@@ -458,13 +458,13 @@ export const flaggedIPs = async (req, res) => {
   });
 };
 
-export const summery = async (req, res) => {
+export const summary = async (req, res) => {
   const summaryData = await getTrackerSummary({
     weekKey: typeof req.query.week === "string" ? req.query.week : undefined,
   });
 
-  res.render("admin/summery", {
-    title: "Tracker Summery",
+  res.render("admin/summary", {
+    title: "Tracker summary",
     summaryData,
   });
 };

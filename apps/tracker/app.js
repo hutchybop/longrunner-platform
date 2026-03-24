@@ -142,10 +142,7 @@ app.get("/admin", catchAsync(admin.dashboard));
 app.get("/admin/tracker", catchAsync(admin.tracker));
 app.get("/admin/flagged-ips", catchAsync(admin.flaggedIPs));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
-app.get("/admin/summery", catchAsync(admin.summery));
-app.get("/admin/summary", (req, res) => {
-  res.redirect("/admin/summery");
-});
+app.get("/admin/summary", catchAsync(admin.summary));
 app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));
 

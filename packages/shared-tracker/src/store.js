@@ -658,7 +658,7 @@ function parseRecipients(rawValue) {
 
 function buildWeeklySummaryEmailBody(summaryData) {
   const lines = [
-    "Your weekly Tracker summery from tracker.longrunner.co.uk",
+    "Your weekly Tracker summary from tracker.longrunner.co.uk",
     "",
     `Weekly Totals (${summaryData.selectedWeek.weekLabelDate})`,
     "",
@@ -810,9 +810,14 @@ async function updateBlockProgressDocument({
     }
   }
 
+  const insertOnlyDefaults = Object.fromEntries(
+    Object.entries(insertDefaults).filter(([key]) => !(key in update)),
+  );
   const updateCommand = {
     $set: update,
-    $setOnInsert: insertDefaults,
+    ...(Object.keys(insertOnlyDefaults).length > 0
+      ? { $setOnInsert: insertOnlyDefaults }
+      : {}),
   };
 
   try {
@@ -1027,7 +1032,7 @@ async function sendWeeklySummaryEmailForWeek({ weekKey }) {
 
   try {
     const summaryData = await getTrackerSummary({ weekKey });
-    const subject = "Your weekly Tracker summery from tracker.longrunner.co.uk";
+    const subject = "Your weekly Tracker summary from tracker.longrunner.co.uk";
     const text = buildWeeklySummaryEmailBody(summaryData);
 
     await mail(subject, text, recipients.join(", "));
