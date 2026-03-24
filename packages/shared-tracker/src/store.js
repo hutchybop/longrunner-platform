@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import net from "net";
+import { mail } from "@longrunner/shared-utils";
 import { getTrackerConnection } from "./db.js";
 
 const trackerSchema = new mongoose.Schema(
@@ -110,6 +111,54 @@ const TRACKER_BAD_TO_GOOD_RATIO_THRESHOLD =
     : 1.7;
 const TRACKER_WEEKLY_SUMMARY_TIMEZONE =
   process.env.TRACKER_WEEKLY_SUMMARY_TIMEZONE || "Europe/London";
+const TRACKER_WEEKLY_SUMMARY_EMAIL_ENABLED =
+  String(process.env.TRACKER_WEEKLY_SUMMARY_EMAIL_ENABLED || "false") ===
+  "true";
+const TRACKER_WEEKLY_SUMMARY_EMAIL_TO =
+  process.env.TRACKER_WEEKLY_SUMMARY_EMAIL_TO ||
+  process.env.TRACKER_AUTO_BLOCK_NOTIFY_TO ||
+  "";
+const TRACKER_WEEKLY_SUMMARY_EMAIL_TIME =
+  process.env.TRACKER_WEEKLY_SUMMARY_EMAIL_TIME || "00:05";
+
+function parseEmailScheduleTime(rawValue) {
+  const value = String(rawValue || "").trim();
+  const match = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return {
+      hour: 0,
+      minute: 5,
+      label: "00:05",
+    };
+  }
+
+  const hour = Number.parseInt(match[1], 10);
+  const minute = Number.parseInt(match[2], 10);
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return {
+      hour: 0,
+      minute: 5,
+      label: "00:05",
+    };
+  }
+
+  return {
+    hour,
+    minute,
+    label: `${pad2(hour)}:${pad2(minute)}`,
+  };
+}
+
+const TRACKER_WEEKLY_SUMMARY_EMAIL_SCHEDULE = parseEmailScheduleTime(
+  TRACKER_WEEKLY_SUMMARY_EMAIL_TIME,
+);
 
 const trackerEventSchema = new mongoose.Schema(
   {
@@ -432,6 +481,33 @@ const trackerIpBlockLifecycleSchema = new mongoose.Schema(
 
 trackerIpBlockLifecycleSchema.index({ hasPermanent: 1, has24h: 1, has30m: 1 });
 
+const trackerWeeklySummaryEmailLogSchema = new mongoose.Schema(
+  {
+    weekKey: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: ["sending", "sent"],
+      default: "sending",
+    },
+    recipients: {
+      type: [String],
+      default: [],
+    },
+    sentAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
 function sanitizeRouteKey(route) {
   return String(route)
     .replaceAll("%", "%25")
@@ -534,6 +610,98 @@ function formatIsoDateToDisplay(isoDate) {
 
   const [year, month, day] = isoDate.split("-");
   return `${day} ${month} ${year.slice(2)}`;
+}
+
+function getDatePartsInTimeZone(date, timeZone) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    weekday: "long",
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
+function formatDateTimeForEmail(value) {
+  if (!value) {
+    return "N/A";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  const parts = getDatePartsInTimeZone(date, TRACKER_WEEKLY_SUMMARY_TIMEZONE);
+  return `${parts.hour}:${parts.minute} ${parts.day} ${parts.month} ${parts.year}`;
+}
+
+function parseRecipients(rawValue) {
+  if (typeof rawValue !== "string" || rawValue.trim() === "") {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      rawValue
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+function buildWeeklySummaryEmailBody(summaryData) {
+  const lines = [
+    "Your weekly Tracker summery from tracker.longrunner.co.uk",
+    "",
+    `Weekly Totals (${summaryData.selectedWeek.weekLabelDate})`,
+    "",
+    `Total Weekly 30min Only Blocks: ${summaryData.weeklyTotals.total30mOnlyBlocks}`,
+    `Total Weekly 30min & 24hr Only Blocks: ${summaryData.weeklyTotals.total30mAnd24hOnlyBlocks}`,
+    `Total Weekly Permanent Blocks: ${summaryData.weeklyTotals.totalPermanentBlocks}`,
+    "",
+    "All Time Totals",
+    "",
+    `Total 30min Only Blocks: ${summaryData.allTimeTotals.total30mOnlyBlocks}`,
+    `Total 30min & 24hr Only Blocks: ${summaryData.allTimeTotals.total30mAnd24hOnlyBlocks}`,
+    `Total Permanent Blocks: ${summaryData.allTimeTotals.totalPermanentBlocks}`,
+    "",
+    "IP addresses blocked this week:",
+    "",
+  ];
+
+  if (summaryData.weeklyIps.length === 0) {
+    lines.push("No auto-blocked IPs for this week.");
+    return lines.join("\n");
+  }
+
+  summaryData.weeklyIps.forEach((item, index) => {
+    lines.push(`${item.ip}:`);
+    lines.push(
+      `30 min temp blocked at: ${formatDateTimeForEmail(item.blocked30mAt)}`,
+    );
+    lines.push(
+      `24hr temp blocked at: ${formatDateTimeForEmail(item.blocked24hAt)}`,
+    );
+    lines.push(
+      `Perm blocked at: ${formatDateTimeForEmail(item.blockedPermanentAt)}`,
+    );
+    lines.push(`Bad routes (all-time): ${item.badRouteCountAllTime}`);
+    lines.push(`Good routes (all-time): ${item.goodRouteCountAllTime}`);
+    lines.push(`Bad/Good ratio threshold: ${item.ratioThreshold}`);
+
+    if (index < summaryData.weeklyIps.length - 1) {
+      lines.push("");
+    }
+  });
+
+  return lines.join("\n");
 }
 
 function buildDefaultBlockTotals() {
@@ -774,6 +942,14 @@ function getModels(connection) {
       "trackeripblocklifecycles",
     );
 
+  const TrackerWeeklySummaryEmailLog =
+    connection.models.TrackerWeeklySummaryEmailLog ||
+    connection.model(
+      "TrackerWeeklySummaryEmailLog",
+      trackerWeeklySummaryEmailLogSchema,
+      "trackerweeklysummaryemaillogs",
+    );
+
   return {
     Tracker,
     TrackerEvent,
@@ -781,7 +957,126 @@ function getModels(connection) {
     TrackerBlockEvent,
     TrackerWeeklyIpSummary,
     TrackerIpBlockLifecycle,
+    TrackerWeeklySummaryEmailLog,
   };
+}
+
+function getCompletedWeekKeyForDate(date = new Date()) {
+  const currentWeekInfo = getWeekInfoForDate(date);
+  return addDaysToIsoDate(currentWeekInfo.weekKey, -7);
+}
+
+function isWeeklySummaryEmailDue(now = new Date()) {
+  const parts = getDatePartsInTimeZone(now, TRACKER_WEEKLY_SUMMARY_TIMEZONE);
+  if (parts.weekday !== "Monday") {
+    return false;
+  }
+
+  const hour = Number.parseInt(parts.hour, 10);
+  const minute = Number.parseInt(parts.minute, 10);
+
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) {
+    return false;
+  }
+
+  if (hour > TRACKER_WEEKLY_SUMMARY_EMAIL_SCHEDULE.hour) {
+    return true;
+  }
+
+  return (
+    hour === TRACKER_WEEKLY_SUMMARY_EMAIL_SCHEDULE.hour &&
+    minute >= TRACKER_WEEKLY_SUMMARY_EMAIL_SCHEDULE.minute
+  );
+}
+
+async function sendWeeklySummaryEmailForWeek({ weekKey }) {
+  const weekInfo = getWeekInfoFromWeekKey(weekKey);
+  if (!weekInfo) {
+    return {
+      ok: false,
+      status: "invalid_week",
+    };
+  }
+
+  const recipients = parseRecipients(TRACKER_WEEKLY_SUMMARY_EMAIL_TO);
+  if (recipients.length === 0) {
+    return {
+      ok: false,
+      status: "missing_recipients",
+    };
+  }
+
+  const connection = await getTrackerConnection();
+  const { TrackerWeeklySummaryEmailLog } = getModels(connection);
+
+  try {
+    await TrackerWeeklySummaryEmailLog.create({
+      weekKey,
+      status: "sending",
+      recipients,
+    });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return {
+        ok: true,
+        status: "already_sent",
+      };
+    }
+    throw error;
+  }
+
+  try {
+    const summaryData = await getTrackerSummary({ weekKey });
+    const subject = "Your weekly Tracker summery from tracker.longrunner.co.uk";
+    const text = buildWeeklySummaryEmailBody(summaryData);
+
+    await mail(subject, text, recipients.join(", "));
+
+    await TrackerWeeklySummaryEmailLog.updateOne(
+      { weekKey },
+      {
+        $set: {
+          status: "sent",
+          sentAt: new Date(),
+          recipients,
+        },
+      },
+    );
+
+    return {
+      ok: true,
+      status: "sent",
+      weekKey,
+      recipients,
+      scheduleTime: TRACKER_WEEKLY_SUMMARY_EMAIL_SCHEDULE.label,
+      timeZone: TRACKER_WEEKLY_SUMMARY_TIMEZONE,
+    };
+  } catch (error) {
+    await TrackerWeeklySummaryEmailLog.deleteOne({
+      weekKey,
+      status: "sending",
+    });
+    throw error;
+  }
+}
+
+export async function sendWeeklySummaryEmailIfDue({ now = new Date() } = {}) {
+  if (!TRACKER_WEEKLY_SUMMARY_EMAIL_ENABLED) {
+    return {
+      ok: false,
+      status: "disabled",
+    };
+  }
+
+  if (!isWeeklySummaryEmailDue(now)) {
+    return {
+      ok: false,
+      status: "not_due",
+    };
+  }
+
+  const weekKey = getCompletedWeekKeyForDate(now);
+  return sendWeeklySummaryEmailForWeek({ weekKey });
 }
 
 function parseWhitelistEnv(rawValue) {

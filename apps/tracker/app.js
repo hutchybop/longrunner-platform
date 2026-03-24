@@ -33,6 +33,7 @@ import {
   createSessionConfig,
   loadAppEnv,
 } from "@longrunner/shared-config";
+import { sendWeeklySummaryEmailIfDue } from "@longrunner/shared-tracker";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
@@ -159,6 +160,28 @@ app.use(policy.notFound);
 
 // Error Handler
 app.use(errorHandler);
+
+const WEEKLY_SUMMARY_EMAIL_CHECK_INTERVAL_MS = 60 * 1000;
+
+async function runWeeklySummaryEmailCheck() {
+  try {
+    const result = await sendWeeklySummaryEmailIfDue();
+
+    if (result?.status === "sent") {
+      console.log(
+        `Weekly tracker summary email sent for week ${result.weekKey} (${result.timeZone} at ${result.scheduleTime})`,
+      );
+    }
+  } catch (error) {
+    console.error("Weekly tracker summary email check failed:", error);
+  }
+}
+
+runWeeklySummaryEmailCheck();
+globalThis.setInterval(
+  runWeeklySummaryEmailCheck,
+  WEEKLY_SUMMARY_EMAIL_CHECK_INTERVAL_MS,
+);
 
 // Start server on port using HTTP
 const port = 3004;
