@@ -1,5 +1,25 @@
 # DEVELOPMENT LOG
 
+## Session 13
+
+### Tuesday March 24th
+
+<br>
+
+**Summary:** This session focused on adding a weekly tracker email update feature that sends tracking data summaries via email, updating the tracker app and shared-tracker package with new functionality, and updating documentation.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+53b8e4e
+
+**Session git history:**
+
+- add weekly tracker email update - _Added weekly tracker email update feature with email summaries, updated tracker app with new routes, and extended shared-tracker package with store functionality_
+
+---
+
+<br>
+
 ## Session 12
 
 ### Monday March 23rd
