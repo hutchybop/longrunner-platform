@@ -27,6 +27,14 @@ This file is for coding agents working in `longrunner-platform`. Follow these co
 
 1. Copy `.env.shared.example` to `.env.shared` and provide required credentials
 2. Run `pnpm install` to install workspace dependencies
+3. Node.js version: `24.14.0` (specified in `engines`)
+
+### Adding Dependencies
+
+- Add to specific app/package, not root
+- Use `pnpm add <package>` from workspace root (auto-links)
+- Workspace dependencies use `workspace:*` protocol
+- Example: `pnpm add express --filter tracker`
 
 ### Running Apps
 
@@ -56,10 +64,11 @@ pnpm -r --if-present run lint
 - **No test framework configured** (no Jest/Vitest/node.test)
 - Placeholder `test` scripts exit with error
 - For verification: run `pnpm --filter <workspace> lint` + boot the app manually
-- If `node.test` is added later:
+- If `node --test` is added later:
   ```
   pnpm --filter <workspace> exec node --test path/to/file.test.js
-  pnpm --filter <workspace> exec node --test --test-name-pattern "name" path/to/file.test.js
+  pnpm --filter <workspace> exec node --test --test-name-pattern "test name" path/to/file.test.js
+  pnpm --filter <workspace> exec node --test --test-only path/to/file.test.js
   ```
 
 ## Code Style Rules
@@ -88,12 +97,37 @@ pnpm -r --if-present run lint
 - Trailing commas in multi-line objects/arrays
 - No Prettier plugins needed
 
+### ESLint Configuration
+
+- Use `createAppEslintConfig` from `@longrunner/shared-config/eslint`
+- Per-app config typically imports and extends the shared config:
+
+  ```js
+  import { createAppEslintConfig } from "@longrunner/shared-config/eslint";
+  import js from "eslint/configs/javascript";
+  import prettier from "eslint-config-prettier";
+  import pluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+
+  export default [
+    ...createAppEslintConfig({
+      js,
+      prettier,
+      pluginPrettierRecommended,
+      appRoot: "apps/tracker",
+    }),
+  ];
+  ```
+
+- Browser JS in `public/**/*.js` uses `sourceType: "script"` with browser globals
+- Server JS uses `sourceType: "module"`
+
 ### Naming
 
 - Variables/functions: `camelCase`
 - Classes/custom errors/models: `PascalCase` (e.g., `ExpressError`, `User`)
 - Constants: `UPPER_SNAKE_CASE`
 - Route handlers: verb-oriented and descriptive
+- Files: `kebab-case.js` for modules, `camelCase.js` for utilities
 
 ### Types & Data Contracts
 
@@ -150,6 +184,13 @@ views/           - EJS templates
 - Keep messages clear and descriptive
 - Never log sensitive data (passwords, tokens, secrets)
 - Use flash messaging for user feedback
+
+### Environment Variables
+
+- Never commit `.env` files or secrets
+- Use `.env.shared.example` as template for required variables
+- Access via `process.env.VAR_NAME` (loaded via `dotenv` in shared-config)
+- Validate required env vars at startup
 
 ## Cursor / Copilot Rules
 

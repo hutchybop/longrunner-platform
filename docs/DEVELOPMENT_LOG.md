@@ -1,5 +1,26 @@
 # DEVELOPMENT LOG
 
+## Session 16
+
+### Friday March 27th
+
+<br>
+
+**Summary:** This session focused on adding Docker production configuration including Dockerfile, docker-compose.server.yml, GitHub workflow updates, and related documentation. A bug in the docker workflow was also fixed.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+384b145, 1d8308f
+
+**Session git history:**
+
+- Fix docker workflow bug - _Fixed bug in docker workflow configuration_
+- Add docker production - _Added Dockerfile, docker-compose.server.yml, GitHub workflow updates, .node-version, and documentation_
+
+---
+
+<br>
+
 ## Session 15
 
 ### Tuesday March 24th

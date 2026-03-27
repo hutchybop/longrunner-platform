@@ -3,30 +3,35 @@ services:
     image: ghcr.io/hutchybop/longrunner-platform:latest
     container_name: longrunner-platform
     restart: unless-stopped
+
     env_file:
       - .env
+
     environment:
       NODE_ENV: production
+
     healthcheck:
       test:
         [
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:3000/').then((res)=>{if(!res.ok)process.exit(1)}).catch(()=>process.exit(1))",
+          "const s=require('net').connect(3000,'127.0.0.1');s.setTimeout(5000);s.on('connect',()=>{s.end();process.exit(0)});s.on('timeout',()=>process.exit(1));s.on('error',()=>process.exit(1));",
         ]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 30s
+
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "5"
+
     networks:
-      - npm_proxy
+      - npm_network
 
 networks:
-  npm_proxy:
+  npm_network:
     external: true
