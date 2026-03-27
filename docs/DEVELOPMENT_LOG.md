@@ -1,5 +1,28 @@
 # DEVELOPMENT LOG
 
+## Session 17
+
+### Friday March 27th
+
+<br>
+
+**Summary:** This session focused on creating an initial Docker release workflow, updating .dockerignore for proper image building, and improving the tracker functionality with bad route cleanup capabilities.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+28be9f4, c1452c5, afab53c, a6e088e
+
+**Session git history:**
+
+- Update tracker 20260327-1834 - _Updated tracker with new bad route cleanup utility, improved shared-tracker package functionality, and enhanced tracker admin controllers_
+- update ignore files 20260327-1445 - _Updated .dockerignore with proper patterns for Docker image building_
+- Test push 20260327-1404 - _Minor README update for testing_
+- Initial Docker release 20260327-1337 - _Added release scripts to package.json files, updated docker-compose.server.yml, and updated documentation_
+
+---
+
+<br>
+
 ## Session 16
 
 ### Friday March 27th
