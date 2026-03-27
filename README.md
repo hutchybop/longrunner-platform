@@ -101,6 +101,36 @@ Additional app-specific variables used from `.env.shared`:
 - `TRACKER_EVENT_RETENTION_DAYS`
 - `TRACKER_BLOCKED_IP_CACHE_TTL_MS`
 
+## Docker + GHCR
+
+This repo includes:
+
+- `Dockerfile` (production image)
+- `.dockerignore`
+- `.github/workflows/docker.yml` (build/push to GHCR on `main` and tags)
+- `docker-compose.server.yml` (server template for Nginx Proxy Manager)
+
+### Version Pinning
+
+Runtime versions are pinned and used automatically by Docker/GitHub Actions:
+
+- Node: `.node-version`
+- pnpm: `package.json` `packageManager`
+- npm: `package.json` `engines.npm`
+
+When you update these values in the repo, the next image build uses the new versions.
+
+### Server Compose Notes
+
+- Use `env_file: .env` on the server for secrets/config
+- No host port mappings are required when using Nginx Proxy Manager
+- Attach the service to your existing external proxy network
+- Use Docker logs for debugging:
+
+```bash
+docker compose -f docker-compose.server.yml logs -f longrunner-platform
+```
+
 ## Core Technologies
 
 - Express 5.x with ES modules
