@@ -62,28 +62,27 @@ function getMatchedRouteTemplate(req) {
 }
 
 export function normalizeIp(req) {
-  const forwardedFor = req?.headers?.["x-forwarded-for"];
-  const forwardedIp = Array.isArray(forwardedFor)
-    ? forwardedFor[0]
-    : typeof forwardedFor === "string"
-      ? forwardedFor.split(",")[0]
-      : null;
-
   const rawIp =
-    forwardedIp?.trim() ||
     req?.ip ||
-    req?.connection?.remoteAddress ||
     req?.socket?.remoteAddress ||
+    req?.connection?.remoteAddress ||
     req?.connection?.socket?.remoteAddress ||
     null;
 
-  if (!rawIp) return "UNKNOWN";
-
-  if (rawIp.includes("::ffff:")) {
-    return rawIp.replace("::ffff:", "");
+  if (typeof rawIp !== "string") {
+    return "UNKNOWN";
   }
 
-  return rawIp;
+  const normalized = rawIp.trim();
+  if (!normalized) {
+    return "UNKNOWN";
+  }
+
+  if (normalized.startsWith("::ffff:")) {
+    return normalized.slice(7);
+  }
+
+  return normalized;
 }
 
 export function classifyRoute({ statusCode, route }) {

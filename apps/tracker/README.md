@@ -62,6 +62,7 @@ Set these in the root `.env.shared` file:
 - `TRACKER_WEEKLY_SUMMARY_EMAIL_TIME` (set to `00:05` for Monday 00:05)
 - `TRACKER_WEEKLY_SUMMARY_TIMEZONE`
 - `IP_WHITE_LIST`
+- `IP_DEV_LIST` (comma-separated IPs, supports optional `[...]` wrapper)
 - `TRACKER_EVENT_RETENTION_DAYS`
 - `TRACKER_BLOCKED_IP_CACHE_TTL_MS`
 

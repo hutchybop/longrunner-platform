@@ -1084,7 +1084,7 @@ export async function sendWeeklySummaryEmailIfDue({ now = new Date() } = {}) {
   return sendWeeklySummaryEmailForWeek({ weekKey });
 }
 
-function parseWhitelistEnv(rawValue) {
+function parseIpListEnv(rawValue) {
   if (typeof rawValue !== "string" || rawValue.trim() === "") {
     return new Set();
   }
@@ -1097,30 +1097,45 @@ function parseWhitelistEnv(rawValue) {
   const ips = normalized
     .split(",")
     .map((ip) => ip.trim().replace(/^['"]|['"]$/g, ""))
+    .map((ip) => normalizeAndValidateIp(ip))
     .filter(Boolean);
 
   return new Set(ips);
 }
 
 function getIpWhitelistSet() {
-  return parseWhitelistEnv(process.env.IP_WHITE_LIST);
+  return parseIpListEnv(process.env.IP_WHITE_LIST);
 }
 
-function isWhitelistedIp(ip) {
+export function getIpDevSet() {
+  return parseIpListEnv(process.env.IP_DEV_LIST);
+}
+
+function getProtectedIpSet() {
+  return new Set([...getIpWhitelistSet(), ...getIpDevSet()]);
+}
+
+function isProtectedIp(ip) {
   if (typeof ip !== "string") return false;
-  return getIpWhitelistSet().has(ip.trim());
+  return getProtectedIpSet().has(ip.trim());
 }
 
 function normalizeAndValidateIp(input) {
   if (typeof input !== "string") return null;
   const trimmed = input.trim();
   if (!trimmed) return null;
+
+  if (trimmed.startsWith("::ffff:")) {
+    const mappedIp = trimmed.slice(7);
+    if (net.isIP(mappedIp) === 4) {
+      return mappedIp;
+    }
+  }
+
   if (net.isIP(trimmed)) {
     return trimmed;
   }
-  if (trimmed.startsWith("::ffff:") && net.isIP(trimmed.slice(7))) {
-    return trimmed.slice(7);
-  }
+
   return null;
 }
 
@@ -1262,7 +1277,7 @@ async function applyAutoBlockForIp({
   badRouteCountAllTime,
   goodRouteCountAllTime,
 }) {
-  if (!ip || ip === "UNKNOWN" || isWhitelistedIp(ip)) {
+  if (!ip || ip === "UNKNOWN" || isProtectedIp(ip)) {
     return;
   }
 
@@ -1483,6 +1498,7 @@ export async function getTrackerSummary({ weekKey } = {}) {
   const connection = await getTrackerConnection();
   const { TrackerWeeklyIpSummary, TrackerIpBlockLifecycle } =
     getModels(connection);
+  const devIps = [...getIpDevSet()];
 
   const currentWeekInfo = getWeekInfoForDate(new Date());
   const requestedWeekInfo = weekKey ? getWeekInfoFromWeekKey(weekKey) : null;
@@ -1508,14 +1524,24 @@ export async function getTrackerSummary({ weekKey } = {}) {
       label: `${formatIsoDateToDisplay(info.weekStartDate)} - ${formatIsoDateToDisplay(info.weekEndDate)}`,
     }));
 
-  const weeklyTotals = await getBlockTotals(TrackerWeeklyIpSummary, {
+  const weeklyTotalsFilter = {
     weekKey: selectedWeekInfo.weekKey,
-  });
-  const allTimeTotals = await getBlockTotals(TrackerIpBlockLifecycle);
+    ...(devIps.length > 0 ? { ip: { $nin: devIps } } : {}),
+  };
+  const allTimeTotalsFilter = devIps.length > 0 ? { ip: { $nin: devIps } } : {};
 
-  const weeklyIpSummaries = await TrackerWeeklyIpSummary.find({
-    weekKey: selectedWeekInfo.weekKey,
-  })
+  const weeklyTotals = await getBlockTotals(
+    TrackerWeeklyIpSummary,
+    weeklyTotalsFilter,
+  );
+  const allTimeTotals = await getBlockTotals(
+    TrackerIpBlockLifecycle,
+    allTimeTotalsFilter,
+  );
+
+  const weeklyIpSummaries = await TrackerWeeklyIpSummary.find(
+    weeklyTotalsFilter,
+  )
     .sort({
       hasPermanent: -1,
       has24h: -1,
@@ -1556,7 +1582,7 @@ export async function getTrackerSummary({ weekKey } = {}) {
 export async function getBlockedIps() {
   const connection = await getTrackerConnection();
   const { IpBlock } = getModels(connection);
-  const whitelist = getIpWhitelistSet();
+  const protectedIps = getProtectedIpSet();
   const now = new Date();
 
   const activeIpBlocks = await IpBlock.find(buildActiveBlockQuery(now))
@@ -1565,13 +1591,13 @@ export async function getBlockedIps() {
 
   return activeIpBlocks
     .map((doc) => (typeof doc.ip === "string" ? doc.ip.trim() : null))
-    .filter((ip) => ip && !whitelist.has(ip));
+    .filter((ip) => ip && !protectedIps.has(ip));
 }
 
 export async function blockIpAddress(ip) {
   const safeIp = normalizeAndValidateIp(ip);
   if (!safeIp) return { ok: false, status: "invalid_ip" };
-  if (isWhitelistedIp(safeIp)) return { ok: false, status: "whitelisted" };
+  if (isProtectedIp(safeIp)) return { ok: false, status: "protected" };
 
   const connection = await getTrackerConnection();
   const { IpBlock } = getModels(connection);
@@ -1618,7 +1644,7 @@ export async function unblockIpAddress(ip) {
 export async function getFlaggedIps() {
   const connection = await getTrackerConnection();
   const { Tracker, IpBlock } = getModels(connection);
-  const whitelist = getIpWhitelistSet();
+  const protectedIps = getProtectedIpSet();
   const now = new Date();
 
   const flagged = await Tracker.aggregate([
@@ -1693,7 +1719,10 @@ export async function getFlaggedIps() {
   );
 
   return flagged
-    .filter((item) => typeof item._id === "string" && !whitelist.has(item._id))
+    .filter(
+      (item) =>
+        typeof item._id === "string" && !protectedIps.has(item._id.trim()),
+    )
     .map((item) => {
       const ip = item._id.trim();
       const activeBlock = activeBlockMap.get(ip);

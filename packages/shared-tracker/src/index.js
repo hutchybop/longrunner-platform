@@ -16,5 +16,6 @@ export {
   blockIpAddress,
   unblockIpAddress,
   decodeRouteKey,
+  getIpDevSet,
   sendWeeklySummaryEmailIfDue,
 } from "./store.js";

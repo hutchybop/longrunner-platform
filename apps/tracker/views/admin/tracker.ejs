@@ -172,8 +172,8 @@ const appBadgeClasses = {
                             <tr>
                                 <td>
                                     <code><%= visitor.ip %></code>
-                                    <% if (visitor.hasLocalDev) { %>
-                                        <span class="badge bg-warning text-dark ms-1" title="Detected local development traffic for this IP">DEV</span>
+                                    <% if (visitor.isDevIp) { %>
+                                        <span class="badge bg-warning text-dark ms-1" title="IP is configured in IP_DEV_LIST">DEV</span>
                                     <% } %>
                                 </td>
                                 <td><%= visitor.country %></td>

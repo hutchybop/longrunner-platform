@@ -1,4 +1,4 @@
-# Longrunner Platform Monorepo 
+# Longrunner Platform Monorepo
 
 pnpm workspace monorepo for Longrunner applications, migrated to ES modules with shared packages for auth, policy, middleware, schemas, config, and utilities.
 
@@ -98,6 +98,7 @@ Additional app-specific variables used from `.env.shared`:
 - `TRACKER_BLOCK_30M_DURATION_MINUTES`
 - `TRACKER_BLOCK_24H_DURATION_HOURS`
 - `IP_WHITE_LIST`
+- `IP_DEV_LIST`
 - `TRACKER_EVENT_RETENTION_DAYS`
 - `TRACKER_BLOCKED_IP_CACHE_TTL_MS`
 

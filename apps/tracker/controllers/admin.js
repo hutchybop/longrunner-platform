@@ -4,19 +4,36 @@ import {
   decodeRouteKey,
   getFlaggedIps,
   getTrackerSummary,
+  getIpDevSet,
   unblockIpAddress,
   getBlockedIps,
 } from "@longrunner/shared-tracker";
 
 const validApps = ["blog", "slapp", "quiz", "landing"];
 
+function buildTrackerFilters(selectedApp) {
+  const devIpSet = getIpDevSet();
+  const devIps = [...devIpSet];
+  const baseFilter = selectedApp !== "all" ? { appName: selectedApp } : {};
+  const analyticsFilter = {
+    ...baseFilter,
+    ...(devIps.length > 0 ? { ip: { $nin: devIps } } : {}),
+  };
+
+  return {
+    devIpSet,
+    devIps,
+    baseFilter,
+    analyticsFilter,
+  };
+}
+
 export const dashboard = async (req, res) => {
   const selectedApp = req.query.app || "all";
-
-  const filter = selectedApp !== "all" ? { appName: selectedApp } : {};
+  const { devIps, analyticsFilter } = buildTrackerFilters(selectedApp);
 
   const statsArray = await Tracker.aggregate([
-    { $match: filter },
+    { $match: analyticsFilter },
     {
       $project: {
         goodRouteValues: { $objectToArray: "$goodRoutes" },
@@ -60,7 +77,7 @@ export const dashboard = async (req, res) => {
   };
 
   const countryStats = await Tracker.aggregate([
-    { $match: filter },
+    { $match: analyticsFilter },
     {
       $group: {
         _id: "$country",
@@ -78,7 +95,7 @@ export const dashboard = async (req, res) => {
   ]);
 
   const routeStats = await Tracker.aggregate([
-    { $match: filter },
+    { $match: analyticsFilter },
     {
       $project: {
         good: { $objectToArray: "$goodRoutes" },
@@ -106,7 +123,10 @@ export const dashboard = async (req, res) => {
     _id: decodeRouteKey(route._id),
   }));
 
+  const appStatsFilter = devIps.length > 0 ? { ip: { $nin: devIps } } : {};
+
   const appStats = await Tracker.aggregate([
+    { $match: appStatsFilter },
     {
       $group: {
         _id: "$appName",
@@ -135,6 +155,8 @@ export const dashboard = async (req, res) => {
 
 export const tracker = async (req, res) => {
   const selectedApp = req.query.app || "all";
+  const { devIpSet, baseFilter, analyticsFilter } =
+    buildTrackerFilters(selectedApp);
   const parsedPage = Number.parseInt(req.query.page, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const parsedLimit = Number.parseInt(req.query.limit, 10);
@@ -228,10 +250,8 @@ export const tracker = async (req, res) => {
     : "updatedAt";
   const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
-  const filter = selectedApp !== "all" ? { appName: selectedApp } : {};
-
   const statsArray = await Tracker.aggregate([
-    { $match: filter },
+    { $match: analyticsFilter },
     {
       $project: {
         goodRouteValues: { $objectToArray: "$goodRoutes" },
@@ -275,7 +295,7 @@ export const tracker = async (req, res) => {
   };
 
   const countryStats = await Tracker.aggregate([
-    { $match: filter },
+    { $match: analyticsFilter },
     {
       $group: {
         _id: "$country",
@@ -288,7 +308,7 @@ export const tracker = async (req, res) => {
   ]);
 
   const routeStats = await Tracker.aggregate([
-    { $match: filter },
+    { $match: analyticsFilter },
     {
       $project: {
         good: { $objectToArray: "$goodRoutes" },
@@ -327,7 +347,7 @@ export const tracker = async (req, res) => {
   const sortField = sortFieldMap[sortBy] || "lastSeenAt";
 
   const trackerRows = await Tracker.aggregate([
-    { $match: filter },
+    { $match: baseFilter },
     { $sort: { updatedAt: -1 } },
     {
       $project: {
@@ -335,7 +355,6 @@ export const tracker = async (req, res) => {
         appName: 1,
         country: 1,
         timesVisited: 1,
-        lastIsLocalDev: 1,
         updatedAt: 1,
         createdAt: 1,
         goodRouteValues: { $objectToArray: { $ifNull: ["$goodRoutes", {}] } },
@@ -348,7 +367,6 @@ export const tracker = async (req, res) => {
         appName: 1,
         country: 1,
         timesVisited: 1,
-        lastIsLocalDev: 1,
         updatedAt: 1,
         createdAt: 1,
         goodRouteValues: 1,
@@ -364,11 +382,6 @@ export const tracker = async (req, res) => {
         timesVisited: { $sum: "$timesVisited" },
         goodRouteCount: { $sum: "$goodRouteCountAllTime" },
         badRouteCount: { $sum: "$badRouteCountAllTime" },
-        hasLocalDev: {
-          $max: {
-            $cond: [{ $eq: ["$lastIsLocalDev", true] }, 1, 0],
-          },
-        },
         firstSeenAt: { $min: "$createdAt" },
         lastSeenAt: { $max: "$updatedAt" },
         goodRouteCollections: {
@@ -393,13 +406,13 @@ export const tracker = async (req, res) => {
   const trackerData = trackerRows.map((row) => ({
     ...row,
     ip: row._id,
-    hasLocalDev: Boolean(row.hasLocalDev),
+    isDevIp: devIpSet.has(row._id),
     goodRoutes: buildRouteBreakdown(row.goodRouteCollections),
     badRoutes: buildRouteBreakdown(row.badRouteCollections),
   }));
 
   const [trackerCount] = await Tracker.aggregate([
-    { $match: filter },
+    { $match: baseFilter },
     { $group: { _id: "$ip" } },
     { $count: "total" },
   ]);
@@ -455,6 +468,7 @@ export const flaggedIPs = async (req, res) => {
       Number.parseInt(process.env.TRACKER_FLAG_THRESHOLD || "10", 10) || 10,
     badToGoodRatioThreshold,
     whitelistRaw: process.env.IP_WHITE_LIST || "",
+    devListRaw: process.env.IP_DEV_LIST || "",
   });
 };
 
@@ -476,8 +490,11 @@ export const blockIP = async (req, res) => {
     req.flash("success", `IP ${ip} has been blocked`);
   } else if (result.status === "invalid_ip") {
     req.flash("error", `Invalid IP address format: ${ip}`);
-  } else if (result.status === "whitelisted") {
-    req.flash("error", `IP ${ip} is in the whitelist and cannot be blocked`);
+  } else if (result.status === "protected") {
+    req.flash(
+      "error",
+      `IP ${ip} is in IP_WHITE_LIST or IP_DEV_LIST and cannot be blocked`,
+    );
   } else {
     req.flash("error", `Failed to block IP ${ip}`);
   }

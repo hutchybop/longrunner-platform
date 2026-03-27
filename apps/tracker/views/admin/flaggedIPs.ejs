@@ -19,6 +19,13 @@
     </div>
 <% } %>
 
+<% if (devListRaw) { %>
+    <div class="alert alert-info">
+        <i class="fas fa-code me-2"></i>
+        Developer IPs from <code>IP_DEV_LIST</code> are excluded from auto-bans and this list.
+    </div>
+<% } %>
+
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-list me-2"></i>Flagged IPs (<%= flaggedIPs.length %>)</h5>
