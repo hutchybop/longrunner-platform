@@ -21,7 +21,7 @@
     "@longrunner/shared-tracker": "workspace:*",
     "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
-    "axios": "^1.13.6",
+    "axios": "^1.14.0",
     "compression": "^1.8.1",
     "connect-mongo": "^6.0.0",
     "ejs-mate": "^4.0.0",

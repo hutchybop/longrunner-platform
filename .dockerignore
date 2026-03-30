@@ -11,6 +11,7 @@ node_modules
 *.log
 logs
 docs/longrunner-platform.log
+ship/
 
 .DS_Store
 coverage
