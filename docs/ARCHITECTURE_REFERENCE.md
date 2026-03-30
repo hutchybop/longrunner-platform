@@ -1,4 +1,4 @@
-# Architecture Reference - Longrunner Platform
+# Architecture Reference - Longrunner Platform 
 
 ## 1. System Overview
 
