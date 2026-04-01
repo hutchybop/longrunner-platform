@@ -108,8 +108,12 @@ This repo includes:
 
 - `Dockerfile` (production image)
 - `.dockerignore`
-- `.github/workflows/docker.yml` (build/push to GHCR on `main` and tags)
+- `.github/workflows/docker-release.yml` (tiny caller)
 - `docker-compose.server.yml` (server template for Nginx Proxy Manager)
+
+Docker publishing runs on semver tag pushes (`vX.Y.Z`) and only succeeds when the
+tagged commit is contained in `main`, using shared workflow logic from
+`hutchybop/docker-workflows`.
 
 ### Version Pinning
 

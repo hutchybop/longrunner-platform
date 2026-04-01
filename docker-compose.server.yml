@@ -16,12 +16,12 @@ services:
           "CMD",
           "node",
           "-e",
-          "const s=require('net').connect(3000,'127.0.0.1');s.setTimeout(5000);s.on('connect',()=>{s.end();process.exit(0)});s.on('timeout',()=>process.exit(1));s.on('error',()=>process.exit(1));",
+          "const ports=[3000,3001,3002,3003,3004];Promise.all(ports.map((port)=>fetch('http://127.0.0.1:'+port+'/health').then((res)=>{if(!res.ok){throw new Error(String(port));}}))).then(()=>process.exit(0)).catch(()=>process.exit(1));",
         ]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 45s
 
     logging:
       driver: json-file

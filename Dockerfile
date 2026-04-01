@@ -28,6 +28,9 @@ COPY --from=deps --chown=node:node /app /app
 
 EXPOSE 3000 3001 3002 3003 3004
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=5 \
+  CMD node -e "const ports=[3000,3001,3002,3003,3004];Promise.all(ports.map((port)=>fetch('http://127.0.0.1:'+port+'/health').then((res)=>{if(!res.ok){throw new Error(String(port));}}))).then(()=>process.exit(0)).catch(()=>process.exit(1));"
+
 USER node
 
 CMD ["sh", "-lc", "pnpm -r --parallel --stream run --if-present start"]

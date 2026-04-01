@@ -333,6 +333,10 @@ app.post(
   catchAsync(categories.updateCustomise),
 );
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "longrunner-shoppinglist" });
+});
+
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));
 });

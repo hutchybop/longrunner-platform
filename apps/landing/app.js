@@ -141,6 +141,9 @@ app.post(
 
 // longrunner routes
 app.get("/", longrunner.landing);
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "longrunner-landing" });
+});
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));
 });

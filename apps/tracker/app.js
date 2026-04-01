@@ -147,6 +147,10 @@ app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));
 
 ////////////////////////////// Shared Util Routes //////////////////////////////
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "longrunner-tracker" });
+});
+
 // Site-Map route
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));

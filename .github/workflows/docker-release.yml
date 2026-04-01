@@ -1,0 +1,20 @@
+name: Docker Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  release:
+    uses: hutchybop/docker-workflows/.github/workflows/docker-release-reusable.yml@main
+    with:
+      image_name: ${{ github.repository }}
+      dockerfile: ./Dockerfile
+      context: .
+      platforms: linux/amd64
+      resolve_node_versions: true

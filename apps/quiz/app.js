@@ -223,6 +223,10 @@ app.patch("/reset-user", catchAsync(quiz.resetUserPatch));
 app.delete("/reset-quiz", catchAsync(quiz.resetQuizDelete));
 
 ////////////////////////////// Shared Util Routes //////////////////////////////
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "longrunner-quiz" });
+});
+
 // Site-Map route
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));

@@ -312,6 +312,10 @@ app.get("/", catchAsync(blogsIM.index));
 app.get("/blogim/:id", catchAsync(blogsIM.show));
 
 ////////////////////////////// Shared Util Routes //////////////////////////////
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", service: "longrunner-blog" });
+});
+
 // Site-Map route
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "manifest", "sitemap.xml"));
