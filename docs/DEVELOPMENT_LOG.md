@@ -1,5 +1,27 @@
 # DEVELOPMENT LOG
 
+## Session 18
+
+### Thursday April 2nd
+
+<br>
+
+**Summary:** This session focused on updating the tracker functionality with new features, updating the Docker flow for better container management, and improving Docker configuration for the platform.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+c4a7cca, 4abc0bb, af74a56
+
+**Session git history:**
+
+- Update tracker 20260402-1820 - _Updated tracker with new features and improvements_
+- Update docker flow 20260401-1959 - _Updated Docker flow for better container management_
+- update docker config 20260401-1734 - _Improved Docker configuration for the platform_
+
+---
+
+<br>
+
 ## Session 17
 
 ### Friday March 27th
