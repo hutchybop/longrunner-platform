@@ -3,6 +3,7 @@ import {
   blockIpAddress,
   decodeRouteKey,
   getFlaggedIps,
+  getActiveIpBlocks,
   getTrackerSummary,
   getIpDevSet,
   unblockIpAddress,
@@ -403,13 +404,29 @@ export const tracker = async (req, res) => {
     { $limit: limit },
   ]);
 
-  const trackerData = trackerRows.map((row) => ({
-    ...row,
-    ip: row._id,
-    isDevIp: devIpSet.has(row._id),
-    goodRoutes: buildRouteBreakdown(row.goodRouteCollections),
-    badRoutes: buildRouteBreakdown(row.badRouteCollections),
-  }));
+  const activeIpBlocks = await getActiveIpBlocks({
+    ips: trackerRows.map((row) => row._id),
+  });
+  const activeBlockMap = new Map(
+    activeIpBlocks.map((block) => [block.ip, block]),
+  );
+
+  const trackerData = trackerRows.map((row) => {
+    const activeBlock = activeBlockMap.get(row._id);
+
+    return {
+      ...row,
+      ip: row._id,
+      isDevIp: devIpSet.has(row._id),
+      isBlocked: Boolean(activeBlock),
+      blockLevel: activeBlock?.blockLevel || "none",
+      blockedUntil: activeBlock?.blockedUntil || null,
+      isPermanent: Boolean(activeBlock?.isPermanent),
+      source: activeBlock?.source || null,
+      goodRoutes: buildRouteBreakdown(row.goodRouteCollections),
+      badRoutes: buildRouteBreakdown(row.badRouteCollections),
+    };
+  });
 
   const [trackerCount] = await Tracker.aggregate([
     { $match: baseFilter },

@@ -10,6 +10,7 @@ export {
 
 export {
   getBlockedIps,
+  getActiveIpBlocks,
   getFlaggedIps,
   getTrackerSummary,
   recordRequest,

@@ -1594,6 +1594,57 @@ export async function getBlockedIps() {
     .filter((ip) => ip && !protectedIps.has(ip));
 }
 
+export async function getActiveIpBlocks({ ips } = {}) {
+  const connection = await getTrackerConnection();
+  const { IpBlock } = getModels(connection);
+  const protectedIps = getProtectedIpSet();
+  const now = new Date();
+
+  const query = buildActiveBlockQuery(now);
+  if (Array.isArray(ips) && ips.length > 0) {
+    const sanitizedIps = [...new Set(ips)]
+      .filter((ip) => typeof ip === "string")
+      .map((ip) => ip.trim())
+      .filter((ip) => ip.length > 0);
+
+    if (sanitizedIps.length > 0) {
+      query.ip = { $in: sanitizedIps };
+    }
+  }
+
+  const activeIpBlocks = await IpBlock.find(query)
+    .select({
+      ip: 1,
+      blockLevel: 1,
+      blockedUntil: 1,
+      isPermanent: 1,
+      source: 1,
+    })
+    .lean();
+
+  return activeIpBlocks
+    .map((doc) => {
+      const ip = typeof doc.ip === "string" ? doc.ip.trim() : "";
+      if (!ip || protectedIps.has(ip)) return null;
+
+      const blockLevel =
+        typeof doc.blockLevel === "string" ? doc.blockLevel : "none";
+
+      return {
+        ip,
+        blockLevel,
+        blockedUntil: doc.blockedUntil || null,
+        isPermanent: Boolean(
+          doc.isPermanent ||
+          blockLevel === "manual" ||
+          blockLevel === "permanent",
+        ),
+        source: doc.source || null,
+      };
+    })
+    .filter(Boolean);
+}
+
 export async function blockIpAddress(ip) {
   const safeIp = normalizeAndValidateIp(ip);
   if (!safeIp) return { ok: false, status: "invalid_ip" };

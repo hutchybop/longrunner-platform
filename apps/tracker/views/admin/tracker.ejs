@@ -164,6 +164,7 @@ const appBadgeClasses = {
                                 </div>
                             </th>
                             <th>Bad/Good Ratio</th>
+                            <th>Block Status</th>
                             <th>Routes</th>
                         </tr>
                     </thead>
@@ -203,6 +204,18 @@ const appBadgeClasses = {
                                     <% } %>
                                 </td>
                                 <td>
+                                    <% if (visitor.isBlocked) { %>
+                                        <span class="badge bg-danger text-uppercase"><%= visitor.blockLevel %></span>
+                                        <% if (visitor.isPermanent) { %>
+                                            <div><small class="text-muted">Permanent</small></div>
+                                        <% } else if (visitor.blockedUntil) { %>
+                                            <div><small class="text-muted">Until <%= new Date(visitor.blockedUntil).toLocaleString('en-GB', { hour12: false }) %></small></div>
+                                        <% } %>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary">Not Blocked</span>
+                                    <% } %>
+                                </td>
+                                <td>
                                     <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
                                             data-bs-target="#routes-<%= index %>">
                                         View Routes
@@ -210,7 +223,7 @@ const appBadgeClasses = {
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="7" class="p-0">
+                                <td colspan="8" class="p-0">
                                     <div class="collapse" id="routes-<%= index %>">
                                         <div class="card card-body">
                                             <h6>Route Access History</h6>
