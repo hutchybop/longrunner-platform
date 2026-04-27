@@ -1,618 +1,426 @@
-# Architecture Reference - Longrunner Platform 
+# Architecture Reference - Longrunner Platform
+
+This document is generated from the current monorepo structure (`apps/*`, `packages/shared-*`) and code-level imports/exports.
 
 ## 1. System Overview
 
-Longrunner Platform is a **multi-app web platform** built as a monorepo using pnpm workspaces. It consists of five Express/EJS web applications and eight shared npm packages that provide reusable functionality.
+Longrunner Platform is a pnpm workspace monorepo containing five Express 5 applications and eight shared workspace packages.
 
-### Core Characteristics
+### What the platform does
 
-- **Architecture**: Multi-app Express monorepo (ES modules throughout)
-- **Template Engine**: EJS with ejs-mate for layout inheritance (except tracker uses EJS v4)
-- **Database**: MongoDB (Atlas) via Mongoose ODM
-- **Session Management**: express-session with MongoStore
-- **Authentication**: Custom session-based auth with password hashing (bcrypt)
-- **Security**: helmet CSP, express-mongo-sanitize, rate limiting, reCAPTCHA
-- **Real-time**: Socket.io for quiz multiplayer functionality
+- Runs multiple user-facing web apps under one repository: landing, shopping list planner, multiplayer quiz, blog, and tracker dashboard.
+- Shares cross-cutting behavior (env/config, auth factories, policy pages, Joi schemas, tracking middleware, UI boilerplate, utilities) through reusable packages.
+- Uses a single MongoDB database (`longrunner-platform` by default) with app-prefixed collections for data isolation.
 
-### Main Applications
+### Runtime model
 
-| App       | Port | Purpose                                | Auth Required |
-| --------- | ---- | -------------------------------------- | ------------- |
-| `landing` | 3000 | Main landing page with policy pages    | No            |
-| `blog`    | 3003 | Ironman blog with reviews              | Optional      |
-| `slapp`   | 3001 | Shopping list & meal planner           | Yes           |
-| `quiz`    | 3002 | Real-time multiplayer quiz (Socket.io) | No            |
-| `tracker` | 3004 | Request/IP tracking dashboard          | Yes (admin)   |
+- **Server stack**: Express + EJS/ejs-mate, ES modules throughout.
+- **Persistence**: MongoDB Atlas with Mongoose models.
+- **Session/auth**: `express-session` + `connect-mongo`, custom session auth in `@longrunner/shared-auth`.
+- **Security controls**: helmet CSP, mongo-sanitize, Joi validation, rate limiting, reCAPTCHA.
+- **Real-time layer**: Socket.io in `apps/quiz` only.
+- **Cross-app request analytics**: `@longrunner/shared-tracker` middleware stack in landing/slapp/quiz/blog.
 
-### Shared Packages
+### Applications
 
-| Package                         | Purpose                                                           |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `@longrunner/shared-config`     | Environment config, MongoDB URL builder, session/helmet configs   |
-| `@longrunner/shared-utils`      | Error handling, rate limiting, flash messages, catchAsync, mail   |
-| `@longrunner/shared-auth`       | User model factory, auth utilities, password handling, auth views |
-| `@longrunner/shared-schemas`    | Joi validation schemas (auth, policy)                             |
-| `@longrunner/shared-policy`     | Cookie/T&Cs controller factory, policy views                      |
-| `@longrunner/shared-ui`         | Boilerplate helper, shared EJS layouts (boilerplate, partials)    |
-| `@longrunner/shared-middleware` | Auth/policy middleware factory                                    |
-| `@longrunner/shared-tracker`    | Request tracking, IP blocking, geo-IP resolution                  |
+| App | Port | Primary responsibility | Auth model |
+| --- | --- | --- | --- |
+| `apps/landing` | 3000 | Navigation hub and policy/contact pages | Public |
+| `apps/slapp` | 3001 | Meal, ingredient, category, shopping-list workflows | Session auth required for core flows |
+| `apps/quiz` | 3002 | Trivia lobby + multiplayer quiz orchestration | Session-based quiz state (not account auth) |
+| `apps/blog` | 3003 | Blog posts, reviews, admin moderation | Session auth + role checks for admin routes |
+| `apps/tracker` | 3004 | Tracker analytics and IP block management UI | No shared-auth middleware; access controls are operational/deployment-level |
+
+### Shared packages
+
+| Package | Responsibility |
+| --- | --- |
+| `@longrunner/shared-config` | `.env.shared` loading, Mongo URL builder, session config, Helmet config, ESLint config factory |
+| `@longrunner/shared-utils` | `catchAsync`, flash middleware, global error handler, mail wrapper, rate limiters |
+| `@longrunner/shared-auth` | User schema factory, users controller factory, auth/session helper utilities, password utilities |
+| `@longrunner/shared-schemas` | Shared Joi extension (`escapeHTML`) + auth/policy schemas |
+| `@longrunner/shared-policy` | Policy controller factory (`cookiePolicy`, `tandc`, `tandcPost`) |
+| `@longrunner/shared-middleware` | Auth/policy middleware factories using shared schemas |
+| `@longrunner/shared-ui` | `boilerplateHelper` for common locals/meta/includes and shared partial/layout assets |
+| `@longrunner/shared-tracker` | IP normalization, blocked-IP middleware, request tracking, auto-block logic, summary reporting |
 
 ---
 
 ## 2. Architecture Flow
 
-### Request-Response Cycle
+### End-to-end request flow
 
 ```mermaid
-flowchart TD
-    subgraph Client
-        Browser[Browser]
-    end
+flowchart LR
+  C[Browser] --> A1[App Entry: apps/*/app.js]
+  A1 --> M1[Tracking + Security + Session Middleware]
+  M1 --> R[Route Handlers]
+  R --> CT[Controllers]
+  CT --> MD[Mongoose Models]
+  MD --> DB[(MongoDB Atlas)]
+  CT --> V[EJS Render or JSON]
+  V --> C
 
-    subgraph Express_App
-        Request[HTTP Request]
-        Middleware[Middleware Stack]
-        Router[Route Handler]
-        Controller[Controller]
-        Model[Mongoose Model]
-        Response[HTTP Response]
-    end
-
-    subgraph External
-        MongoDB[(MongoDB Atlas)]
-        SocketIO[Socket.io]
-        Email[Email Service]
-    end
-
-    Browser -->|HTTP| Request
-    Request --> Middleware
-    Middleware -->|Session/Auth| MongoDB
-    Middleware --> Router
-    Router --> Controller
-    Controller --> Model
-    Model -->|CRUD| MongoDB
-    Controller -->|Render EJS| Response
-    Response --> Browser
-
-    style MongoDB fill:#4a9
-    style SocketIO fill:#f9a
+  CT --> U[@longrunner/shared-utils]
+  M1 --> CFG[@longrunner/shared-config]
+  M1 --> MW[@longrunner/shared-middleware]
+  CT --> POL[@longrunner/shared-policy]
 ```
 
-### App Bootstrap Sequence
+### Bootstrap sequence per app
 
 ```mermaid
 sequenceDiagram
-    participant App as app.js
-    participant Config as @longrunner/shared-config
-    participant Middleware as Middleware Stack
-    participant Routes as Route Definitions
-    participant Tracker as @longrunner/shared-tracker
+  participant app as app.js
+  participant cfg as shared-config
+  participant db as MongoDB
+  participant tr as shared-tracker
 
-    App->>Config: loadAppEnv({ appRoot })
-    Config->>App: process.env populated
+  app->>cfg: loadAppEnv({ appRoot })
+  app->>app: create express app
+  app->>tr: createTrackingMiddlewareStack({ appName })
+  app->>cfg: createMongoDbUrl + createSessionConfig
+  app->>db: mongoose.connect(...)
+  app->>app: mount middleware + routes
+  app->>app: app.use(errorHandler)
+  app->>app: listen on app port
+```
 
-    App->>App: express() create app
+### Quiz real-time control flow
 
-    App->>Tracker: createTrackingMiddlewareStack({ appName })
-    Tracker->>App: middleware functions
-
-    App->>Config: createMongoDbUrl({ dbName })
-    Config->>App: MongoDB connection string
-
-    App->>App: mongoose.connect(dbUrl)
-    App->>MongoDB: Database connection
-
-    App->>Config: createHelmetConfig()
-    App->>Config: createSessionConfig()
-    App->>App: Configure middleware
-
-    App->>Routes: Define all routes
-    Routes->>App: Route handlers registered
-
-    App->>App: errorHandler as final middleware
-    App->>App: app.listen(port)
+```mermaid
+flowchart TD
+  Host[Host creates lobby] --> L1[POST /lobby-new]
+  L1 --> Q1[Persist Quiz + Questions]
+  Q1 --> Lobby[/lobby rendered]
+  Joiner[Player joins] --> L2[POST /lobby-join]
+  L2 --> Lobby
+  Lobby --> S1[Socket event: start]
+  S1 --> QuizPage[/quiz]
+  QuizPage --> A1[POST /api/submit-quiz]
+  A1 --> S2[Socket event: submit]
+  S2 --> A2[GET /api/show-quiz]
+  A2 --> A3[GET /api/next-quiz or /api/finished-quiz]
+  A3 --> Finish[/finish]
 ```
 
 ---
 
 ## 3. File/Module Inventory
 
-### Apps
+### Repository-level
 
-#### `apps/landing/`
+| Path | Purpose | Key exports/entrypoints |
+| --- | --- | --- |
+| `package.json` | Workspace root, scripts, engine/pnpm pinning | `dev`, `start` scripts |
+| `pnpm-workspace.yaml` | Workspace membership | n/a |
+| `Dockerfile` | Containerized runtime build | n/a |
+| `docs/` | Internal docs including this file | n/a |
 
-| File                        | Purpose                                               | Key Exports                                      |
-| --------------------------- | ----------------------------------------------------- | ------------------------------------------------ |
-| `app.js`                    | Entry point, middleware setup, route registration     | Express app instance                             |
-| `controllers/policy.js`     | Cookie/T&Cs handlers + 404 (notFound defined locally) | `cookiePolicy`, `tandc`, `tandcPost`, `notFound` |
-| `controllers/longrunner.js` | Landing page handler                                  | `landing`                                        |
-| `utils/middleware.js`       | T&Cs validation middleware                            | `validateTandC`                                  |
+### Applications (`apps/*`)
 
-#### `apps/blog/`
+#### `apps/landing`
 
-| File                     | Purpose                                        | Key Exports                          |
-| ------------------------ | ---------------------------------------------- | ------------------------------------ |
-| `app.js`                 | Entry point, full middleware stack, all routes | Express app                          |
-| `controllers/users.js`   | Auth handlers (register, login, reset)         | User auth functions                  |
-| `controllers/blogsIM.js` | Blog post CRUD                                 | `index`, `show`                      |
-| `controllers/reviews.js` | Review creation/deletion                       | `create`, `deleteReview`             |
-| `controllers/admin.js`   | Admin dashboard & moderation                   | `dashboard`, `flaggedReviews`        |
-| `controllers/policy.js`  | Policy routes + 404 handler                    | `cookiePolicy`, `tandc`, `notFound`  |
-| `models/user.js`         | User model (extends shared-auth)               | Mongoose model                       |
-| `models/blogIM.js`       | Blog post schema                               | Mongoose model                       |
-| `models/review.js`       | Review schema                                  | Mongoose model                       |
-| `models/schemas.js`      | Mongoose schema options/helper                 | -                                    |
-| `utils/middleware.js`    | Auth/validation middleware                     | `isLoggedIn`, `isAdmin`, `validate*` |
+| File | Purpose | Main exports/functions |
+| --- | --- | --- |
+| `apps/landing/app.js` | Entry point, shared middleware mounting, policy + landing routes | process entrypoint |
+| `apps/landing/controllers/longrunner.js` | Landing page renderer | `landing` |
+| `apps/landing/controllers/policy.js` | App-specific policy controller instance + 404 handler | `cookiePolicy`, `tandc`, `tandcPost`, `notFound` |
+| `apps/landing/utils/middleware.js` | Policy form validation middleware factory wiring | `validateTandC` |
 
-#### `apps/slapp/` (Shopping List App)
+#### `apps/slapp`
 
-| File                           | Purpose                            |
-| ------------------------------ | ---------------------------------- |
-| `app.js`                       | Entry point with full auth stack   |
-| `controllers/meals.js`         | Meal CRUD operations               |
-| `controllers/ingredients.js`   | Ingredient management              |
-| `controllers/shoppingLists.js` | Shopping list generation           |
-| `controllers/categories.js`    | Category customization             |
-| `controllers/users.js`         | User account management            |
-| `controllers/policy.js`        | Policy routes (uses shared-policy) |
-| `models/user.js`               | User model (extends shared-auth)   |
-| `models/meal.js`               | Meal schema                        |
-| `models/ingredient.js`         | Ingredient schema                  |
-| `models/shoppingList.js`       | Shopping list schema               |
-| `models/category.js`           | Category schema                    |
-| `models/schemas.js`            | Mongoose schema options/helper     |
-| `utils/middleware.js`          | Auth middleware + ownership checks |
+| File | Purpose | Main exports/functions |
+| --- | --- | --- |
+| `apps/slapp/app.js` | Main routing, auth wiring, meals/ingredients/shopping/category flows | process entrypoint |
+| `apps/slapp/controllers/users.js` | Shared-auth controller instance + slapp register/delete hooks | `register*`, `login*`, `forgot*`, `reset*`, `details*`, `delete*` |
+| `apps/slapp/controllers/meals.js` | Meal CRUD + recipe ingredient composition | `index`, `newMeal`, `create`, `show`, `edit`, `update`, `deleteMeal` |
+| `apps/slapp/controllers/ingredients.js` | Ingredient list/edit/delete with meal reference cleanup | `index`, `edit`, `update`, `deleteIngredient` |
+| `apps/slapp/controllers/shoppingLists.js` | Shopping list generation/edit/show/default meal assignment | `landing`, `index`, `newMeals`, `createMeals`, `edit`, `createIngredients`, `show`, `deleteShoppingList`, `defaultGet`, `defaultPatch` |
+| `apps/slapp/controllers/categories.js` | User category customization + ingredient category remap | `indexCustomise`, `updateCustomise` |
+| `apps/slapp/controllers/policy.js` | Policy controller instance + 404 | `cookiePolicy`, `tandc`, `tandcPost`, `notFound` |
+| `apps/slapp/utils/middleware.js` | Auth middleware wiring, Joi validators, ownership checks | `validate*`, `isLoggedIn`, `populateUser`, `isAuthor*` |
+| `apps/slapp/models/user.js` | User model from shared-auth factory | default `User` |
+| `apps/slapp/models/meal.js` | Meal schema (weekly/replace lists, defaults) | `Meal`, `mealType`, `defaults` |
+| `apps/slapp/models/ingredient.js` | Ingredient schema | `Ingredient` |
+| `apps/slapp/models/shoppingList.js` | Weekly meal plan + computed items schema | `ShoppingList` |
+| `apps/slapp/models/category.js` | User category list schema | `Category` |
+| `apps/slapp/models/schemas.js` | Slapp Joi payload schemas | `mealSchema`, `ingredientSchema`, `defaultSchema`, `shoppingListMealsSchema`, `categorySchema`, `shoppingListIngredientsSchema` |
+| `apps/slapp/utils/newUserSeed.js` | Seeds new user with default categories/ingredients/meals | `newUserSeed` |
+| `apps/slapp/utils/copyToClip.js` | Formats shopping list text for clipboard | `copyListFunc` |
+| `apps/slapp/utils/toUpperCase.js` | Capitalization helper | `toUpperCase` |
 
-#### `apps/quiz/`
+#### `apps/quiz`
 
-| File                              | Purpose                                                                |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| `app.js`                          | Entry point with Socket.io (uses `server.listen()` not `app.listen()`) |
-| `controllers/quiz.js`             | Quiz lobby/game handlers (lobby creation, joining, kicking)            |
-| `controllers/api.js`              | AJAX endpoints for quiz state management                               |
-| `controllers/policy.js`           | Policy routes + 404 handler                                            |
-| `utils/quizChecks.js`             | Quiz state validation middleware                                       |
-| `utils/middleware.js`             | Validation middleware (Joi schemas), T&Cs validation                   |
-| `utils/comments.js`               | Quiz comments/note helper                                              |
-| `models/quiz.js`                  | Quiz session schema                                                    |
-| `models/question.js`              | Question schema                                                        |
-| `models/user-session-template.js` | User session state template                                            |
-| `models/schemas.js`               | Mongoose schema options/helper                                         |
-| `public/javascripts/`             | Client-side quiz logic (Socket.io client, AJAX polling)                |
+| File | Purpose | Main exports/functions |
+| --- | --- | --- |
+| `apps/quiz/app.js` | Express + Socket.io setup, quiz/api routes, quiz-state middleware | process entrypoint |
+| `apps/quiz/controllers/quiz.js` | Lobby lifecycle, quiz progression, kick/reset controls | `index`, `lobbyNewPost`, `lobbyJoinPost`, `lobby`, `quiz`, `finish`, `quizKickUserPatch`, `resetUserPatch`, `resetQuizDelete` |
+| `apps/quiz/controllers/api.js` | AJAX endpoints to transition quiz state | `quizCode`, `startQuiz`, `submitQuiz`, `showQuiz`, `nextQuiz`, `finishedQuiz` |
+| `apps/quiz/controllers/policy.js` | Policy controller instance + 404 | `cookiePolicy`, `tandc`, `tandcPost`, `notFound` |
+| `apps/quiz/utils/middleware.js` | Joi validation for lobby/user session data + policy validation | `validateTandC`, `validateLobbyNew`, `validateLobbyJoin`, `validateUserData` |
+| `apps/quiz/utils/quizChecks.js` | Route gating and session/db quiz-state reconciliation | `quizChecks` |
+| `apps/quiz/utils/comments.js` | Score-to-comment mapper | default `getComment` |
+| `apps/quiz/models/quiz.js` | Quiz session aggregate model | default `Quiz` |
+| `apps/quiz/models/question.js` | Question model fetched from Trivia API responses | default `Question` |
+| `apps/quiz/models/schemas.js` | Joi schemas for lobby and `userData` session structure | `lobbyNewSchema`, `lobbyJoinSchema`, `userDataSchema` |
+| `apps/quiz/public/javascripts/socket.js` | Client socket listeners (`resetQuiz`, reconnect) | browser script |
+| `apps/quiz/public/javascripts/lobby.js` | Lobby page start/join realtime behavior | browser script |
+| `apps/quiz/public/javascripts/quiz.js` | Answer submission + timers + socket-driven transitions | browser script |
 
-#### `apps/tracker/`
+#### `apps/blog`
 
-| File                    | Purpose                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------- |
-| `app.js`                | Minimal entry, uses shared-tracker for global tracking                                             |
-| `controllers/admin.js`  | IP tracking dashboard (`dashboard`, `tracker`, `flaggedIPs`, `blockedIPs`, `blockIP`, `unblockIP`) |
-| `controllers/policy.js` | Policy routes + 404 handler                                                                        |
-| `models/tracker.js`     | Tracker data schema                                                                                |
-| `utils/cleaner.js`      | Utility for cleaning/resetting tracker data                                                        |
-| `views/`                | EJS templates for tracker dashboard                                                                |
+| File | Purpose | Main exports/functions |
+| --- | --- | --- |
+| `apps/blog/app.js` | Entrypoint for auth, public posts, reviews, admin routes | process entrypoint |
+| `apps/blog/controllers/users.js` | Shared-auth controller instance + review cleanup hook on delete | `register*`, `login*`, `forgot*`, `reset*`, `details*`, `delete*` |
+| `apps/blog/controllers/blogsIM.js` | Blog list/detail pages | `index`, `show` |
+| `apps/blog/controllers/reviews.js` | Review create/delete and spam-flag workflow | `create`, `deleteReview`, `reviewLogin` |
+| `apps/blog/controllers/admin.js` | Admin dashboard/posts/review moderation workflows | `dashboard`, `posts`, `newPost`, `createPost`, `editPost`, `updatePost`, `deletePost`, `flaggedReviews`, `updateFlaggedReview`, `allReviews`, `deleteReviewWithReason` |
+| `apps/blog/controllers/policy.js` | Policy controller instance + 404 | `cookiePolicy`, `tandc`, `tandcPost`, `notFound` |
+| `apps/blog/utils/middleware.js` | Auth/policy middleware wiring, review validation, role checks | `validate*`, `isLoggedIn`, `populateUser`, `validateReview`, `isAdmin`, `isReviewAuthor` |
+| `apps/blog/utils/contentFilter.js` | Heuristic spam scoring and sanitization logic | default `ContentFilter` |
+| `apps/blog/models/user.js` | User model with role support | default `User` |
+| `apps/blog/models/blogIM.js` | Blog post model | default `BlogIM` |
+| `apps/blog/models/review.js` | Review model including moderation metadata | default `Review` |
+| `apps/blog/models/schemas.js` | Joi schema for review payload | `reviewSchema` |
 
-**Note**: Tracker does not use helmet, rate limiting, or shared-auth. Admin access is handled separately.
+#### `apps/tracker`
 
-### Shared Packages
+| File | Purpose | Main exports/functions |
+| --- | --- | --- |
+| `apps/tracker/app.js` | Tracker dashboard app, summary email scheduler, admin routes | process entrypoint |
+| `apps/tracker/controllers/admin.js` | Aggregations for dashboard/tracker/summary + block/unblock handlers | `dashboard`, `tracker`, `blockedIPs`, `flaggedIPs`, `summary`, `blockIP`, `unblockIP` |
+| `apps/tracker/controllers/policy.js` | 404 handler | `notFound` |
+| `apps/tracker/models/tracker.js` | Local model mirror for tracker aggregates collection | default `Tracker` |
+| `apps/tracker/utils/cleaner.js` | Standalone cleanup utility for old tracker records | `cleanupOldRecords` |
+| `apps/tracker/utils/cleanIpBadRoutes.js` | CLI utility to preview/apply bad-route cleanup for an IP | `cleanIpBadRoutes` |
+| `apps/tracker/utils/migrateUnifiedDatabase.js` | Legacy-db to unified-db migration utility | `migrateUnifiedDatabase` |
 
-#### `@longrunner/shared-config/src/index.js`
+### Shared packages (`packages/shared-*`)
 
-| Function                                              | Purpose                           |
-| ----------------------------------------------------- | --------------------------------- |
-| `loadAppEnv({ appRoot })`                             | Load root `.env.shared` variables |
-| `createMongoDbUrl({ dbName })`                        | Build Atlas connection string     |
-| `createSessionConfig({ name, mongoUrl, MongoStore })` | Session middleware config         |
-| `createHelmetConfig()`                                | CSP and security headers          |
-| `createCspSources()`                                  | Allowed CDN sources               |
-
-#### `@longrunner/shared-utils/src/`
-
-| File              | Exports                                                                          |
-| ----------------- | -------------------------------------------------------------------------------- |
-| `catchAsync.js`   | `default: (func) => (req,res,next) => func(req,res,next).catch(next)`            |
-| `ExpressError.js` | `class ExpressError extends Error { statusCode }`                                |
-| `errorHandler.js` | `errorHandler(err, req, res, next)` - Global error middleware                    |
-| `rateLimiter.js`  | `generalLimiter`, `authLimiter`, `passwordResetLimiter`, `formSubmissionLimiter` |
-| `flash.js`        | Flash message middleware with sanitization                                       |
-| `mail.js`         | Nodemailer wrapper for Zoho SMTP                                                 |
-
-#### `@longrunner/shared-auth/src/`
-
-| File                     | Exports                                                                                 |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| `models/user.js`         | `createUserSchema(config)` - User Mongoose schema factory with bcrypt migration support |
-| `controllers/users.js`   | `createUsersController(config)` - Auth route handlers factory                           |
-| `utils/auth.js`          | `authenticateUser`, `loginUser`, `logoutUser`                                           |
-| `utils/passwordUtils.js` | `PasswordUtils` - bcrypt hashing, reset token generation                                |
-| `src/views/users/`       | `register.ejs`, `login.ejs`, `forgot.ejs`, `reset.ejs`, `details.ejs`, `deletepre.ejs`  |
-| `public/`                | `users.css`, `register.js` (shared auth views assets)                                   |
-
-#### `@longrunner/shared-schemas/src/index.js`
-
-| Export                                                                                          | Purpose                             |
-| ----------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `Joi`                                                                                           | Extended Joi with `escapeHTML` rule |
-| `loginSchema`, `registerSchema`, `forgotSchema`, `resetSchema`, `detailsSchema`, `deleteSchema` | Auth validation schemas             |
-| `tandcSchema`                                                                                   | Policy form validation              |
-| `createAuthSchemas()`, `createPolicySchemas()`                                                  | Schema factories                    |
-
-#### `@longrunner/shared-tracker/src/`
-
-| File        | Exports                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------- |
-| `client.js` | `createTrackingMiddlewareStack`, IP normalization, route classification, geo-IP lookup  |
-| `store.js`  | `recordRequest`, `blockIpAddress`, `unblockIpAddress`, `getBlockedIps`, `getFlaggedIps` |
-| `db.js`     | `getTrackerConnection` - Internal MongoDB connection singleton for tracking data        |
-
-#### `@longrunner/shared-ui/src/`
-
-| File                   | Exports                                                             |
-| ---------------------- | ------------------------------------------------------------------- |
-| `boilerplateHelper.js` | `boilerplateHelper({ appRoot, meta })` - Res.locals setup for views |
-| `index.js`             | Package entry (empty export, just documentation)                    |
-| `src/views/layouts/`   | `boilerplate.ejs` - Main layout template                            |
-| `src/views/partials/`  | `cookieAlert.ejs`, `flash.ejs` - Reusable partials                  |
-| `public/`              | CSS/JS assets for shared UI components                              |
-
-#### `@longrunner/shared-policy/src/index.js`
-
-| Export                           | Purpose                                      |
-| -------------------------------- | -------------------------------------------- |
-| `createPolicyController(config)` | Factory for cookie policy & T&Cs handlers    |
-| `src/views/policy/`              | `cookiePolicy.ejs`, `tandc.ejs`, `error.ejs` |
-| `public/`                        | CSS/JS assets for policy pages               |
-
-**Note**: The `notFound` 404 handler is defined locally in each app's `controllers/policy.js`, not exported from shared-policy.
-
-#### `@longrunner/shared-middleware/src/index.js`
-
-| Export                           | Purpose                              |
-| -------------------------------- | ------------------------------------ |
-| `createPolicyMiddleware(config)` | T&Cs validation middleware factory   |
-| `createAuthMiddleware(config)`   | Auth validation + session middleware |
+| File | Purpose | Main exports/functions |
+| --- | --- | --- |
+| `packages/shared-config/src/index.js` | Env/session/helmet/db helpers | `loadAppEnv`, `createMongoDbUrl`, `createSessionConfig`, `createCspSources`, `createHelmetConfig`, `createAppEslintConfig` |
+| `packages/shared-config/src/eslint.js` | Reusable ESLint config factory | `createAppEslintConfig` |
+| `packages/shared-utils/src/catchAsync.js` | Async wrapper for express handlers | default function |
+| `packages/shared-utils/src/flash.js` | Session-backed flash with sanitize-html | default middleware factory |
+| `packages/shared-utils/src/errorHandler.js` | Global render-based error handling | `errorHandler` |
+| `packages/shared-utils/src/rateLimiter.js` | General/auth/reset/form rate limiter instances | `generalLimiter`, `authLimiter`, `passwordResetLimiter`, `formSubmissionLimiter` |
+| `packages/shared-utils/src/mail.js` | Zoho SMTP mail sender | default `mail` |
+| `packages/shared-auth/src/models/user.js` | Factory for user schema with legacy passport-hash migration path | `createUserSchema` |
+| `packages/shared-auth/src/controllers/users.js` | Factory for register/login/reset/details/delete route handlers | `createUsersController` |
+| `packages/shared-auth/src/utils/auth.js` | Session login/logout/auth middleware | `authenticateUser`, `loginUser`, `logoutUser` |
+| `packages/shared-auth/src/utils/passwordUtils.js` | bcrypt + reset token utilities | `PasswordUtils` |
+| `packages/shared-policy/src/index.js` | Policy controller factory and contact-form mail logic | `createPolicyController` |
+| `packages/shared-schemas/src/index.js` | Shared Joi extension + auth/policy schema factories | `Joi`, `createPolicySchemas`, `createAuthSchemas` |
+| `packages/shared-middleware/src/index.js` | Policy/auth middleware factories and validators | `createPolicyMiddleware`, `createAuthMiddleware` |
+| `packages/shared-ui/src/boilerplateHelper.js` | Injects layout includes/meta defaults into `res.render` | `boilerplateHelper` |
+| `packages/shared-tracker/src/client.js` | Tracking middleware factories (IP context, blocked IP guard, request recording) | `createTrackingMiddlewareStack` and related helpers |
+| `packages/shared-tracker/src/store.js` | Tracker event persistence, auto-block engine, summaries, block APIs | `recordRequest`, `getBlockedIps`, `getFlaggedIps`, `blockIpAddress`, `unblockIpAddress`, `getTrackerSummary`, `sendWeeklySummaryEmailIfDue`, etc. |
+| `packages/shared-tracker/src/db.js` | Tracker connection singleton helper | `getTrackerConnection` |
 
 ---
 
 ## 4. Dependency Map
 
-### Core Dependencies (All Apps)
+### High-level package dependency graph
 
+```mermaid
+graph TD
+  SC[@longrunner/shared-config]
+  SU[@longrunner/shared-utils]
+  SA[@longrunner/shared-auth]
+  SM[@longrunner/shared-middleware]
+  SP[@longrunner/shared-policy]
+  SS[@longrunner/shared-schemas]
+  ST[@longrunner/shared-tracker]
+  SUI[@longrunner/shared-ui]
+
+  SA --> SU
+  SM --> SU
+  SP --> SU
+  ST --> SC
+  ST --> SU
+
+  L[apps/landing/app.js] --> SC
+  L --> SU
+  L --> SM
+  L --> SP
+  L --> SS
+  L --> ST
+  L --> SUI
+
+  B[apps/blog/app.js] --> SC
+  B --> SU
+  B --> SA
+  B --> SM
+  B --> SP
+  B --> SS
+  B --> ST
+  B --> SUI
+
+  S[apps/slapp/app.js] --> SC
+  S --> SU
+  S --> SA
+  S --> SM
+  S --> SP
+  S --> SS
+  S --> ST
+  S --> SUI
+
+  Q[apps/quiz/app.js] --> SC
+  Q --> SU
+  Q --> SM
+  Q --> SP
+  Q --> SS
+  Q --> ST
+  Q --> SUI
+
+  T[apps/tracker/app.js] --> SC
+  T --> SU
+  T --> SP
+  T --> ST
+  T --> SUI
 ```
-                    ┌─────────────────────────────┐
-                    │   @longrunner/shared-config │
-                    └──────────────┬──────────────┘
-                                   │
-           ┌───────────────────────┼───────────────────────┐
-           │                       │                       │
-           ▼                       ▼                       ▼
-┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
-│ shared-utils     │   │ shared-policy   │   │ shared-ui        │
-│ - catchAsync    │   │ - PolicyCtlr    │   │ - boilerplate    │
-│ - ExpressError  │   └──────────────────┘   └──────────────────┘
-│ - errorHandler  │
-│ - rateLimiter   │   ┌──────────────────┐   ┌──────────────────┐
-│ - flash         │   │ shared-auth     │   │ shared-tracker  │
-│ - mail          │   │ - User schema   │   │ - Tracking      │
-└────────┬────────┘   │ - Auth utils    │   └──────────────────┘
-         │            └────────┬────────┘
-         │                     │
-         │            ┌────────┴────────┐
-         │            │ shared-schemas  │
-         │            │ - Joi validation │
-         │            └──────────────────┘
-         │
-         ▼
-┌────────────────────────────────────────────┐
-│              Express App                   │
-│  (landing, blog, slapp, quiz, tracker)     │
-└────────────────────────────────────────────┘
-```
 
-### App Entry Points
+### Entry points
 
-| App       | Entry    | Shared Packages Imported                                          | Notes                                 |
-| --------- | -------- | ----------------------------------------------------------------- | ------------------------------------- |
-| `landing` | `app.js` | config, utils, policy, ui, tracker, schemas                       | Basic app, no auth                    |
-| `blog`    | `app.js` | + auth, schemas                                                   | Full auth, admin, reviews             |
-| `slapp`   | `app.js` | + auth, schemas                                                   | Full auth, meals, shopping lists      |
-| `quiz`    | `app.js` | config, utils, policy, ui, tracker, schemas                       | No auth, Socket.io for real-time quiz |
-| `tracker` | `app.js` | config, policy, ui, tracker (uses shared-tracker for IP blocking) | Admin dashboard, no shared-auth       |
+- Application entry points: `apps/landing/app.js`, `apps/slapp/app.js`, `apps/quiz/app.js`, `apps/blog/app.js`, `apps/tracker/app.js`.
+- Shared package entry points: `packages/shared-*/src/index.js` via package `exports` fields.
 
-### External Dependencies (Production)
+### Core internal import chains
 
-| Package                  | Purpose                          |
-| ------------------------ | -------------------------------- |
-| `express`                | Web framework                    |
-| `mongoose`               | MongoDB ODM                      |
-| `ejs` / `ejs-mate`       | Templating (v5; tracker uses v4) |
-| `express-session`        | Session management               |
-| `connect-mongo`          | Session store                    |
-| `helmet`                 | Security headers                 |
-| `express-rate-limit`     | Rate limiting                    |
-| `joi`                    | Validation                       |
-| `sanitize-html`          | HTML sanitization                |
-| `nodemailer`             | Email sending (Zoho SMTP)        |
-| `socket.io`              | Real-time (quiz only)            |
-| `express-recaptcha`      | reCAPTCHA                        |
-| `geoip-lite`             | Geo-IP lookup (tracker)          |
-| `axios`                  | HTTP client (quiz only)          |
-| `express-mongo-sanitize` | MongoDB injection prevention     |
+- **Auth chain**: app auth routes -> `apps/*/controllers/users.js` -> `@longrunner/shared-auth/controllers.js` -> `@longrunner/shared-auth/utils/auth.js` and app `models/user.js` (`createUserSchema`).
+- **Validation chain**: app middleware -> `@longrunner/shared-middleware` + `@longrunner/shared-schemas` + app-local schema modules (`apps/slapp/models/schemas.js`, `apps/quiz/models/schemas.js`, `apps/blog/models/schemas.js`).
+- **Tracking chain**: app bootstrap -> `createTrackingMiddlewareStack` -> `client.js` middleware -> `recordRequest` in `store.js` -> tracker collections.
 
-### No Circular Dependencies
+### Circular dependency status
 
-The architecture is strictly layered - shared packages have no imports from apps, and apps only import from shared packages.
+- Local JS import graph scan across `apps/` and `packages/` reports **0 circular dependencies**.
 
 ---
 
 ## 5. Data Flow
 
-### Authentication Flow
+### A. Session-authenticated request (blog/slapp)
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Browser
-    participant Express
-    participant MongoDB
-    participant Email
+  participant U as User
+  participant A as App Route
+  participant M as Auth Middleware
+  participant DB as MongoDB
 
-    User->>Browser: Fill login form
-    Browser->>Express: POST /auth/login
-    Express->>Express: validateLogin (Joi)
-    Express->>MongoDB: User.findOne({ email })
-    MongoDB->>Express: User document
-    Express->>Express: user.authenticate(password)
-    Express->>MongoDB: +password (bcrypt compare)
-    MongoDB->>Express: Auth result
-    Express->>Express: loginUser(req, user)
-    Express->>Express: req.session.userId = user._id
-    Express->>Browser: 302 Redirect
-    Browser->>Express: GET /
-    Express->>Express: populateUser middleware
-    Express->>MongoDB: User.findById(session.userId)
-    MongoDB->>Express: User document
-    Express->>Express: req.user = user
-    Express->>Browser: Render page with user
+  U->>A: POST /auth/login (username/password)
+  A->>M: validateLogin + authenticateUser
+  M->>DB: find User + compare password
+  M->>A: req.user set
+  A->>A: loginUser(req,user) -> req.session.userId
+  A-->>U: redirect
+  U->>A: GET protected route
+  A->>M: populateUser + isLoggedIn
+  M->>DB: findById(session.userId)
+  A-->>U: render EJS with req.user
 ```
 
-### Blog Post Creation Flow
+### B. Tracker data lifecycle
 
-```mermaid
-flowchart TD
-    A[User POST /admin/posts] --> B[Validate auth & admin]
-    B --> C[Validate post data (Joi)]
-    C --> D[Create blogIM document]
-    D --> E[Save to MongoDB]
-    E --> F[Render success flash]
-    F --> G[Redirect to post list]
-```
+1. App-level middleware stack creates `req.ipInfo` (`normalizeIp`, geo lookup).
+2. Blocked-IP middleware checks cached blocked IPs (`getBlockedIps`) and can short-circuit with `403`.
+3. On `res.finish`, tracking middleware calls `recordRequest(trackerData)`.
+4. `recordRequest` writes event row (`tracker_events`) and updates aggregate row (`tracker_trackers`).
+5. For bad routes, ratio/threshold logic can auto-promote block levels (`30m` -> `24h` -> `permanent`) into `tracker_ipblocks` + block history collections.
+6. Tracker admin pages read summaries (`getFlaggedIps`, `getTrackerSummary`, `getActiveIpBlocks`) for dashboard rendering.
 
-### Quiz Real-time Flow
+### C. Quiz state lifecycle (session + DB + sockets)
 
-```mermaid
-flowchart TD
-    A[User creates lobby] --> B[POST /lobby-new]
-    B --> C[Create Quiz session in MongoDB]
-    C --> D[Return quiz code]
-    D --> E[Socket.io join room]
-    E --> F[Other users join via code]
-    F --> G[Host starts quiz]
-    G --> H[Socket broadcast: question]
-    H --> I[Users submit answers]
-    I --> J[Server scores & broadcasts]
-    J --> K[Repeat for all questions]
-    K --> L[Final scores displayed]
-```
+1. Lobby create stores `req.session.userData` and writes `quiz_quizzes` + `quiz_questions`.
+2. Joiners append to `quiz.users`; server emits socket event `userJoined`.
+3. Quiz start/submit/show/next endpoints update both session (`quizProgress`, `questionNumber`, `answers`) and DB (`usersSubmitted`, `score`, `progress`).
+4. Socket events coordinate all clients (`start`, `submit`, `show`, `next`, `resetUser`, `resetQuiz`).
+5. Finish route computes score percentages and render comments.
+
+### D. Slapp shopping list generation
+
+1. User submits selected meals (`POST /shoppinglist`).
+2. Controller loads meals + ingredients and merges quantities by ingredient/category.
+3. Computed structures stored on `ShoppingList` (`items`, `editVer`).
+4. User edits grouped ingredient sets (`list`, `extra`, `nonFood`, `removed`).
+5. Final list rendered and optional copy text generated by `copyListFunc`.
 
 ---
 
 ## 6. Key Interactions
 
-### Common User Flow: Registration
+### User registration (blog/slapp)
 
-1. User visits `/auth/register`
-2. Renders `users/register.ejs` (from shared-auth views)
-3. User submits form → `POST /auth/register`
-4. Middleware validates with `validateRegister` (Joi)
-5. Rate limited by `authLimiter`
-6. Controller creates user via `User.register(user, password)`
-7. Password hashed with bcrypt via `PasswordUtils`
-8. Session created via `loginUser(req, user)`
-9. Confirmation email sent via `mail()`
-10. Flash success message, redirect to home
+- `apps/blog/app.js`/`apps/slapp/app.js` route to `controllers/users.js`.
+- App `controllers/users.js` instantiates `createUsersController(...)` from `@longrunner/shared-auth/controllers.js`.
+- `registerPost` creates user through `req.app.locals.User` (app model from `createUserSchema`) and logs in via `loginUser`.
+- Optional app-specific side effects execute through hooks (`onRegister`, `onDelete`) before redirect.
 
-### Common User Flow: Protected Route Access
+### Blog review moderation path
 
-1. Request to `/meals` (slapp)
-2. Middleware chain runs
-3. `populateUser` loads user from session
-4. `isLoggedIn` checks `req.user`
-5. If not logged in → redirect to `/auth/login` with `returnTo`
-6. If logged in → controller runs
-7. Query MongoDB for user's meals
-8. Render EJS with data
+- Public submit endpoint calls `apps/blog/controllers/reviews.js#create`.
+- `ContentFilter.validateReview` scores/sanitizes body and sets moderation flags.
+- Flagged reviews are persisted but not attached to post; admin flow in `apps/blog/controllers/admin.js` approves/deletes.
+- Approval updates both `blog_reviews` and parent `blog_posts.reviews` relationship.
 
-### Shopping List Generation Flow (Slapp)
+### Tracker blocking operations
 
-1. User selects meals for the week
-2. POST to `/shoppinglist` with meal IDs
-3. Server fetches all selected meals with ingredients
-4. Ingredients aggregated and matched against user's custom categories
-5. Shopping list document created with aggregated ingredients
-6. User can edit/customize the list
-7. Final list rendered with category grouping
+- Admin form post hits `apps/tracker/controllers/admin.js#blockIP` or `#unblockIP`.
+- Controller delegates to `@longrunner/shared-tracker` block APIs.
+- `store.js` enforces protected IP semantics (`IP_WHITE_LIST`, `IP_DEV_LIST`) and active-block query logic.
 
-### Quiz Real-time Multiplayer Flow
+### Shared policy pages across apps
 
-1. Host creates lobby → POST `/lobby-new`
-2. Quiz session created in MongoDB with unique code
-3. Other players join via code → POST `/lobby-join`
-4. Socket.io room created with quiz code
-5. Host starts quiz → `io.to(room).emit('quiz-start')`
-6. Questions delivered via Socket events
-7. Players submit answers via AJAX
-8. Server scores answers, broadcasts results
-9. Repeat until all questions answered
-10. Final scores broadcast via Socket
+- Each app builds an app-specific policy controller in `controllers/policy.js` via `createPolicyController`.
+- Shared routes call `cookiePolicy`, `tandc`, `tandcPost`; app keeps its own `notFound` handler.
+- Contact form submission emits two emails via shared `mail` utility.
 
-### Admin Moderation Flow (Blog)
+### Rendering boilerplate composition
 
-1. Admin logs in with `role: "admin"`
-2. Visits `/admin/flagged-reviews`
-3. Sees all flagged reviews
-4. POSTs to `/admin/flagged-reviews/:reviewId/:action`
-5. Action can be: `keep`, `unflag`, `delete`
-6. MongoDB updates review document
-7. Flash message confirms action
-
-### IP Blocking/Tracking Flow (Tracker)
-
-1. Each app uses `createTrackingMiddlewareStack({ appName })`
-2. Middleware extracts IP, performs geo-IP lookup
-3. Checks if IP is blocked (cached, refreshed periodically)
-4. On blocked IP → returns 403 response
-5. On request completion → `recordRequest()` called
-6. Request logged to `TrackerEvent` collection
-7. Tracker aggregate updated in `Tracker` collection
-8. If bad/good route ratio exceeds threshold → auto-block triggered
-9. Email notification sent on auto-block
-10. Blocked IPs available in tracker admin dashboard
+- `boilerplateHelper` wraps `res.render` with merged defaults (`meta`, `includes`, optional misc partial).
+- App-local partials override shared partials by `views` search order in each `app.js`.
 
 ---
 
 ## 7. Extension Points
 
-### Adding a New App
+### Add a new app workspace
 
-1. **Create directory**: `apps/newapp/`
-2. **Create `package.json`**: With name `@longrunner/newapp`
-3. **Create entry point**: `app.js` (follow existing pattern)
-4. **Set up middleware**: Import from shared packages
-5. **Configure views**: Add to `app.set("views", [...])`
-6. **Add static assets**: Configure shared package routes
-7. **Define routes**: Add controllers in `controllers/`
-8. **Create models**: In `models/` directory
+1. Create `apps/<new-app>/package.json` + `app.js` entrypoint.
+2. Reuse `loadAppEnv`, `createMongoDbUrl`, `createSessionConfig`, and `boilerplateHelper` to match platform conventions.
+3. Mount shared views/assets (`shared-policy`, `shared-ui`, optional `shared-auth`).
+4. Add to root workspace list in `package.json` and optionally root scripts.
 
-### Adding a New Feature to Existing App
+### Add a new authenticated feature to blog/slapp
 
-| Feature Type   | Files to Modify                                    |
-| -------------- | -------------------------------------------------- |
-| New route      | `app.js` (register route), new controller file     |
-| New model      | `models/*.js`, possibly `app.locals.User`          |
-| New validation | Add Joi schema to shared-schemas or app middleware |
-| New middleware | `utils/middleware.js`                              |
-| New EJS view   | Add to `views/`, update CSS/JS references          |
+- Add Joi schema in app `models/schemas.js` or shared schema package if reused.
+- Add middleware in app `utils/middleware.js` (or shared middleware factory config if cross-app).
+- Add controller module in `controllers/` and route bindings in `app.js`.
+- Add/extend model in app `models/`.
 
-### Adding Shared Functionality
+### Add new cross-app middleware capability
 
-| Scenario              | Action                                              |
-| --------------------- | --------------------------------------------------- |
-| New utility           | Add to `shared-utils/src/` and export in `index.js` |
-| New validation schema | Add to `shared-schemas/src/index.js`                |
-| New UI component      | Add to `shared-ui/src/views/`                       |
-| New auth feature      | Modify `shared-auth/` - consider factory pattern    |
+- Put generic implementation in `packages/shared-middleware/src/index.js` and/or `packages/shared-utils/src/*.js`.
+- Export it via package `src/index.js` and package `exports` map when needed.
+- Consume in app middleware modules, not directly in controllers, to preserve layering.
 
-### Adding Shared Views
+### Extend tracker behavior
 
-Views from shared packages are mounted by adding the package's views directory to `app.set("views", [...])`. The order matters - earlier directories take precedence:
+- **Request classification/routing**: `packages/shared-tracker/src/client.js` (`classifyRoute`, skip paths).
+- **Auto-block policy/thresholding**: `packages/shared-tracker/src/store.js` (`buildAutoBlockPolicy`, threshold env vars).
+- **Admin dashboard views/aggregations**: `apps/tracker/controllers/admin.js` + `apps/tracker/views/admin/*.ejs`.
+- **Scheduled reporting**: `sendWeeklySummaryEmailIfDue` in `store.js` and interval in `apps/tracker/app.js`.
 
-```javascript
-app.set("views", [
-  path.join(__dirname, "views"), // App's own views (highest priority)
-  path.join(sharedAuthRoot, "src", "views"), // shared-auth views
-  path.join(sharedPolicyRoot, "src", "views"), // shared-policy views
-  path.join(sharedUiRoot, "src", "views"), // shared-ui views
-]);
-```
+### Extend shared auth lifecycle
 
-Static assets follow a similar pattern with `app.use()` routes mapping to package `public/` directories.
+- Schema-level behavior: `packages/shared-auth/src/models/user.js`.
+- Route behavior and hooks: `packages/shared-auth/src/controllers/users.js` (`onRegister`, `onDelete`, `protectedUsername`).
+- App-specific user model options: each app `models/user.js` calling `createUserSchema({ ... })`.
 
-### Database Schema Changes
+### Notable maintenance caveat
 
-1. Modify schema in `models/` (app) or `shared-auth/src/models/user.js`
-2. Run migration if needed (manual in Atlas)
-3. Test locally with `pnpm --filter <app> exec node app.js`
-4. Verify all CRUD operations still work
-
-### Adding New Rate Limiter
-
-1. Edit `shared-utils/src/rateLimiter.js`
-2. Export new limiter function
-3. Import in app `app.js`
-4. Apply to route: `app.get("/path", newLimiter, handler)`
-
----
-
-## 8. Environment Configuration
-
-### Required Environment Variables
-
-| Variable                          | Used By      | Purpose                             |
-| --------------------------------- | ------------ | ----------------------------------- |
-| `MONGODB`                         | All apps     | MongoDB Atlas password              |
-| `SESSION_KEY`                     | All apps     | Session secret                      |
-| `SITEKEY`                         | All apps     | reCAPTCHA site key                  |
-| `SECRETKEY`                       | All apps     | reCAPTCHA secret                    |
-| `EMAIL_USER`                      | shared-utils | SMTP username (Zoho)                |
-| `ZOHOPW`                          | shared-utils | SMTP password                       |
-| `ALIAS_EMAIL`                     | shared-utils | Default send-to address             |
-| `IP_WHITE_LIST`                   | tracker      | Comma-separated whitelist of IPs    |
-| `TRACKER_BLOCKED_IP_CACHE_TTL_MS` | tracker      | Cache TTL for blocked IPs           |
-| `TRACKER_FLAG_THRESHOLD`          | tracker      | Bad route threshold for flagging    |
-| `TRACKER_BLOCK_30M_THRESHOLD`     | tracker      | Bad routes to trigger 30-min block  |
-| `TRACKER_BLOCK_24H_THRESHOLD`     | tracker      | Bad routes to trigger 24-hour block |
-| `TRACKER_EVENT_RETENTION_DAYS`    | tracker      | Days to retain tracker events       |
-
-### Database Names per App
-
-| App       | Database Name       |
-| --------- | ------------------- |
-| `landing` | `blog`              |
-| `blog`    | `blog`              |
-| `slapp`   | `slapp`             |
-| `quiz`    | `quiz`              |
-| `tracker` | `longrunnerTracker` |
-
-### Configuration Files
-
-- `.env.shared` - Shared across all apps (root)
-- `.env.shared.example` - Template for new developers
-
----
-
-## 9. Running the Platform
-
-### Development Commands
-
-```bash
-# Install dependencies
-pnpm install
-
-# Run individual app
-pnpm --filter landing exec node app.js
-pnpm --filter slapp exec node app.js
-pnpm --filter quiz exec node app.js
-pnpm --filter blog exec node app.js
-pnpm --filter tracker exec node app.js
-
-# Lint all workspaces
-pnpm -r --if-present run lint
-```
-
-### Ports
-
-| App     | Port |
-| ------- | ---- |
-| landing | 3000 |
-| slapp   | 3001 |
-| quiz    | 3002 |
-| blog    | 3003 |
-| tracker | 3004 |
-
-### Production Considerations
-
-- All apps listen on `0.0.0.0` to bind to all interfaces (for reverse proxy)
-- `trust proxy` enabled in production for correct IP detection behind nginx
-- HTTPS termination should be handled by reverse proxy (nginx)
-- Session cookies set `secure: true` in production
-- reCAPTCHA verification happens server-side via `SECRETKEY`
+- `apps/blog/utils/deleteUser.js` currently references slapp model paths (`../models/meal.js`, etc.) that are not part of `apps/blog/models/`; treat as legacy utility requiring review before use.
