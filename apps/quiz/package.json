@@ -21,7 +21,7 @@
     "@longrunner/shared-tracker": "workspace:*",
     "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
-    "axios": "^1.14.0",
+    "axios": "^1.15.2",
     "compression": "^1.8.1",
     "connect-mongo": "^6.0.0",
     "ejs-mate": "^4.0.0",
@@ -31,7 +31,7 @@
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
     "method-override": "^3.0.0",
-    "mongoose": "^9.3.3",
+    "mongoose": "^9.5.0",
     "serve-favicon": "^2.5.1",
     "socket.io": "^4.8.3"
   }
