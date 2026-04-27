@@ -1014,6 +1014,19 @@ async function sendWeeklySummaryEmailForWeek({ weekKey }) {
   const connection = await getTrackerConnection();
   const { TrackerWeeklySummaryEmailLog } = getModels(connection);
 
+  const existingLog = await TrackerWeeklySummaryEmailLog.findOne({
+    weekKey,
+  })
+    .select({ status: 1 })
+    .lean();
+
+  if (existingLog) {
+    return {
+      ok: true,
+      status: "already_sent",
+    };
+  }
+
   try {
     await TrackerWeeklySummaryEmailLog.create({
       weekKey,
