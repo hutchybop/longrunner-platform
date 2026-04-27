@@ -93,9 +93,9 @@ app.use(
 app.use(helmet(createHelmetConfig()));
 
 // Setting Mongodb Atlas
-const dbName = "blog";
+const dbName = "longrunner-platform";
 const dbUrl = createMongoDbUrl({ dbName });
-mongoose.connect(dbUrl);
+const dbConnectPromise = mongoose.connect(dbUrl);
 
 // Error Handling for the db connection
 const db = mongoose.connection;
@@ -107,7 +107,10 @@ db.once("open", () => {
 // Setting up the session
 const sessionConfig = createSessionConfig({
   name: "landing_longrunner",
-  mongoUrl: dbUrl,
+  mongoClientPromise: dbConnectPromise.then(() =>
+    mongoose.connection.getClient(),
+  ),
+  sessionCollectionName: "landing_sessions",
   MongoStore,
 });
 app.use(session(sessionConfig));

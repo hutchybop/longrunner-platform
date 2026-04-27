@@ -81,6 +81,7 @@ All apps load variables from the root `.env.shared` file.
 Core variables:
 
 - `MONGODB`
+- `MONGODB_DB_NAME` (defaults to `longrunner-platform`)
 - `SESSION_KEY`
 - `SITEKEY`
 - `SECRETKEY`
@@ -136,10 +137,25 @@ When you update these values in the repo, the next image build uses the new vers
 docker compose -f docker-compose.server.yml logs -f longrunner-platform
 ```
 
+## Database Migration (Legacy DBs -> Unified DB)
+
+Run a dry-run summary first:
+
+```bash
+pnpm --filter tracker exec node utils/migrateUnifiedDatabase.js
+```
+
+Apply migration into `MONGODB_DB_NAME` (default `longrunner-platform`):
+
+```bash
+pnpm --filter tracker exec node utils/migrateUnifiedDatabase.js --apply
+```
+
 ## Core Technologies
 
 - Express 5.x with ES modules
 - MongoDB/Mongoose ODM (per-app databases)
+- MongoDB/Mongoose ODM (single shared database with app-prefixed collections)
 - Socket.io for real-time quiz multiplayer
 - EJS templating with ejs-mate
 - Session auth with MongoStore

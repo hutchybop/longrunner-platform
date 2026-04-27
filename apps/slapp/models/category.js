@@ -10,5 +10,5 @@ const CategorySchema = new Schema({
   },
 });
 
-const Category = mongoose.model("Category", CategorySchema);
+const Category = mongoose.model("Category", CategorySchema, "slapp_categories");
 export { Category };

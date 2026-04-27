@@ -24,5 +24,5 @@ const QuestionSchema = new Schema({
   },
 });
 
-const Question = mongoose.model("Question", QuestionSchema);
+const Question = mongoose.model("Question", QuestionSchema, "quiz_questions");
 export default Question;

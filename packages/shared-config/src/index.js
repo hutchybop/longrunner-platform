@@ -33,13 +33,9 @@ export function createMongoDbUrl(config = {}) {
     username = "hutch",
     password = process.env.MONGODB,
     cluster = "hutchybop.kpiymrr.mongodb.net",
-    dbName,
+    dbName = process.env.MONGODB_DB_NAME || "longrunner-platform",
     appName = "hutchyBop",
   } = config;
-
-  if (!dbName) {
-    throw new Error("createMongoDbUrl requires dbName");
-  }
 
   if (!password) {
     throw new Error(
@@ -61,6 +57,8 @@ export function createSessionConfig(config = {}) {
     name,
     secret = process.env.SESSION_KEY,
     mongoUrl,
+    mongoClientPromise,
+    sessionCollectionName,
     isProduction = process.env.NODE_ENV === "production",
     maxAge = 1000 * 60 * 60 * 24 * 7 * 2,
     sameSite = "strict",
@@ -71,14 +69,30 @@ export function createSessionConfig(config = {}) {
     throw new Error("createSessionConfig requires cookie name");
   }
 
-  if (!mongoUrl) {
-    throw new Error("createSessionConfig requires mongoUrl");
+  if (!mongoClientPromise && !mongoUrl) {
+    throw new Error(
+      "createSessionConfig requires mongoClientPromise or mongoUrl",
+    );
   }
 
   if (!MongoStore || typeof MongoStore.create !== "function") {
     throw new Error(
       "createSessionConfig requires MongoStore with create() method",
     );
+  }
+
+  const storeOptions = {
+    autoRemove: "native",
+  };
+
+  if (sessionCollectionName) {
+    storeOptions.collectionName = sessionCollectionName;
+  }
+
+  if (mongoClientPromise) {
+    storeOptions.clientPromise = mongoClientPromise;
+  } else {
+    storeOptions.mongoUrl = mongoUrl;
   }
 
   return {
@@ -92,10 +106,7 @@ export function createSessionConfig(config = {}) {
       sameSite,
       secure: isProduction,
     },
-    store: MongoStore.create({
-      mongoUrl,
-      autoRemove: "native",
-    }),
+    store: MongoStore.create(storeOptions),
   };
 }
 

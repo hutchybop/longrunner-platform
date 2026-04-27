@@ -5,6 +5,7 @@ const User = createUserSchema({
   hasResetPasswordUsed: true,
   roleEnum: ["user", "admin"],
   roleDefault: "user",
+  collectionName: "blog_users",
 });
 
 export default User;

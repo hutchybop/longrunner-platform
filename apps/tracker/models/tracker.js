@@ -83,6 +83,6 @@ trackerSchema.index(
 );
 trackerSchema.index({ appName: 1, updatedAt: -1 });
 
-const Tracker = mongoose.model("Tracker", trackerSchema);
+const Tracker = mongoose.model("Tracker", trackerSchema, "tracker_trackers");
 
 export default Tracker;

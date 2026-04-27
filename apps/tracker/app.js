@@ -50,9 +50,9 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Setting Mongodb Atlas
-const dbName = "longrunnerTracker";
+const dbName = "longrunner-platform";
 const dbUrl = createMongoDbUrl({ dbName });
-mongoose.connect(dbUrl);
+const dbConnectPromise = mongoose.connect(dbUrl);
 
 // Error Handling for the db connection
 const db = mongoose.connection;
@@ -111,7 +111,10 @@ app.use((req, res, next) => {
 // Setting up session
 const sessionConfig = createSessionConfig({
   name: "tracker_longrunner",
-  mongoUrl: dbUrl,
+  mongoClientPromise: dbConnectPromise.then(() =>
+    mongoose.connection.getClient(),
+  ),
+  sessionCollectionName: "tracker_sessions",
   MongoStore,
 });
 app.use(session(sessionConfig));

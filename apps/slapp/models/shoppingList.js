@@ -57,6 +57,10 @@ const ShoppingListSchema = new Schema(
   { timestamps: true },
 );
 
-const ShoppingList = mongoose.model("ShoppingList", ShoppingListSchema);
+const ShoppingList = mongoose.model(
+  "ShoppingList",
+  ShoppingListSchema,
+  "slapp_shoppinglists",
+);
 
 export { ShoppingList };

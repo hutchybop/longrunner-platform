@@ -9,7 +9,7 @@ import "../models/tracker.js";
 
 const cleanupOldRecords = async () => {
   try {
-    const dbName = "longrunnerTracker";
+    const dbName = "longrunner-platform";
     const dbUrl = createMongoDbUrl({ dbName });
 
     if (mongoose.connection.readyState === 0) {

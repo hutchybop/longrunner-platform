@@ -12,6 +12,7 @@ export function createUserSchema(config = {}) {
     hasResetPasswordUsed = false,
     roleEnum = ["user"],
     roleDefault = "user",
+    collectionName,
   } = config;
 
   const schemaDefinition = {
@@ -186,7 +187,13 @@ export function createUserSchema(config = {}) {
     return this.save();
   };
 
-  return mongoose.models.User || mongoose.model("User", UserSchema);
+  if (mongoose.models.User) {
+    return mongoose.models.User;
+  }
+
+  return collectionName
+    ? mongoose.model("User", UserSchema, collectionName)
+    : mongoose.model("User", UserSchema);
 }
 
 export default createUserSchema;

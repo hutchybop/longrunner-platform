@@ -95,9 +95,9 @@ app.use(
   }),
 );
 
-const dbName = "slapp";
+const dbName = "longrunner-platform";
 const dbUrl = createMongoDbUrl({ dbName });
-mongoose.connect(dbUrl);
+const dbConnectPromise = mongoose.connect(dbUrl);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
@@ -155,7 +155,10 @@ app.use(helmet(createHelmetConfig()));
 
 const sessionConfig = createSessionConfig({
   name: "slapp",
-  mongoUrl: dbUrl,
+  mongoClientPromise: dbConnectPromise.then(() =>
+    mongoose.connection.getClient(),
+  ),
+  sessionCollectionName: "slapp_sessions",
   MongoStore,
 });
 app.use(session(sessionConfig));

@@ -28,6 +28,6 @@ const BlogIMSchema = new Schema(
   { timestamps: true },
 );
 
-const BlogIM = mongoose.model("BlogIM", BlogIMSchema);
+const BlogIM = mongoose.model("BlogIM", BlogIMSchema, "blog_posts");
 
 export default BlogIM;

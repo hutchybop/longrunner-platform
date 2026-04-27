@@ -913,22 +913,22 @@ async function recordBlockTransition({
 function getModels(connection) {
   const Tracker =
     connection.models.Tracker ||
-    connection.model("Tracker", trackerSchema, "trackers");
+    connection.model("Tracker", trackerSchema, "tracker_trackers");
 
   const TrackerEvent =
     connection.models.TrackerEvent ||
-    connection.model("TrackerEvent", trackerEventSchema, "trackerevents");
+    connection.model("TrackerEvent", trackerEventSchema, "tracker_events");
 
   const IpBlock =
     connection.models.IpBlock ||
-    connection.model("IpBlock", ipBlockSchema, "ipblocks");
+    connection.model("IpBlock", ipBlockSchema, "tracker_ipblocks");
 
   const TrackerBlockEvent =
     connection.models.TrackerBlockEvent ||
     connection.model(
       "TrackerBlockEvent",
       trackerBlockEventSchema,
-      "trackerblockevents",
+      "tracker_blockevents",
     );
 
   const TrackerWeeklyIpSummary =
@@ -936,7 +936,7 @@ function getModels(connection) {
     connection.model(
       "TrackerWeeklyIpSummary",
       trackerWeeklyIpSummarySchema,
-      "trackerweeklyipsummaries",
+      "tracker_weeklyipsummaries",
     );
 
   const TrackerIpBlockLifecycle =
@@ -944,7 +944,7 @@ function getModels(connection) {
     connection.model(
       "TrackerIpBlockLifecycle",
       trackerIpBlockLifecycleSchema,
-      "trackeripblocklifecycles",
+      "tracker_ipblocklifecycles",
     );
 
   const TrackerWeeklySummaryEmailLog =
@@ -952,7 +952,7 @@ function getModels(connection) {
     connection.model(
       "TrackerWeeklySummaryEmailLog",
       trackerWeeklySummaryEmailLogSchema,
-      "trackerweeklysummaryemaillogs",
+      "tracker_weeklysummaryemaillogs",
     );
 
   return {

@@ -81,9 +81,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Setting Mongodb Atlas
-const dbName = "quiz";
+const dbName = "longrunner-platform";
 const dbUrl = createMongoDbUrl({ dbName });
-mongoose.connect(dbUrl);
+const dbConnectPromise = mongoose.connect(dbUrl);
 
 // Error Handling for the db connection
 const db = mongoose.connection;
@@ -140,7 +140,10 @@ app.use(helmet(createHelmetConfig()));
 // Setting up session
 const sessionConfig = createSessionConfig({
   name: "quiz_longrunner", // Name for the session cookie
-  mongoUrl: dbUrl,
+  mongoClientPromise: dbConnectPromise.then(() =>
+    mongoose.connection.getClient(),
+  ),
+  sessionCollectionName: "quiz_sessions",
   MongoStore,
 });
 app.use(session(sessionConfig));

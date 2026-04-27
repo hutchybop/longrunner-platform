@@ -17,6 +17,10 @@ const IngredientSchema = new Schema({
   },
 });
 
-const Ingredient = mongoose.model("Ingredient", IngredientSchema);
+const Ingredient = mongoose.model(
+  "Ingredient",
+  IngredientSchema,
+  "slapp_ingredients",
+);
 
 export { Ingredient };

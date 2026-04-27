@@ -62,7 +62,7 @@ async function cleanIpBadRoutes({ ip, apply = false }) {
     throw new Error("Missing required argument --ip <ip>");
   }
 
-  const dbUrl = createMongoDbUrl({ dbName: "longrunnerTracker" });
+  const dbUrl = createMongoDbUrl({ dbName: "longrunner-platform" });
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(dbUrl);
   }
@@ -95,7 +95,7 @@ async function cleanIpBadRoutes({ ip, apply = false }) {
     (sum, row) => sum + row.totalBadHits,
     0,
   );
-  const trackerevents = mongoose.connection.collection("trackerevents");
+  const trackerevents = mongoose.connection.collection("tracker_events");
   const badEventsCount = await trackerevents.countDocuments({
     ip,
     isGoodRoute: false,

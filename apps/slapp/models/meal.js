@@ -70,6 +70,6 @@ const MealSchema = new Schema({
   },
 });
 
-const Meal = mongoose.model("Meal", MealSchema);
+const Meal = mongoose.model("Meal", MealSchema, "slapp_meals");
 
 export { Meal, mealType, defaults };
