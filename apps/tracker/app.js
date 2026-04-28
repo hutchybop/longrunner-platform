@@ -34,12 +34,13 @@ import {
   loadAppEnv,
 } from "@longrunner/shared-config";
 import { sendWeeklySummaryEmailIfDue } from "@longrunner/shared-tracker";
+import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
 import flash from "@longrunner/shared-utils/flash.js";
 import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
 import * as admin from "./controllers/admin.js";
-import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
+import { reconcileIndexes } from "./utils/indexMaintenance.js";
 
 // Setting up the app
 const app = express();
@@ -50,8 +51,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Setting Mongodb Atlas
-const dbName = "longrunner-platform";
-const dbUrl = createMongoDbUrl({ dbName });
+const dbUrl = createMongoDbUrl({ appName: "tracker" });
 const dbConnectPromise = mongoose.connect(dbUrl);
 
 // Error Handling for the db connection
@@ -60,6 +60,46 @@ db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
   console.log("Database connected");
 });
+
+async function runIndexMaintenance() {
+  try {
+    const client = await dbConnectPromise.then(() =>
+      mongoose.connection.getClient(),
+    );
+    const dbHandle = client.db(
+      process.env.MONGODB_DB_NAME || "longrunner-platform",
+    );
+    const shouldAutoRepair =
+      String(process.env.TRACKER_AUTO_RECONCILE_INDEXES || "false") === "true";
+
+    const result = await reconcileIndexes({
+      db: dbHandle,
+      apply: shouldAutoRepair,
+      dropConflicting: shouldAutoRepair,
+    });
+
+    if (
+      result.counts.missing > 0 ||
+      result.counts.conflict > 0 ||
+      result.counts.error > 0
+    ) {
+      console.warn(
+        `Index health warning: missing=${result.counts.missing}, conflicts=${result.counts.conflict}, errors=${result.counts.error}`,
+      );
+      if (!shouldAutoRepair) {
+        console.warn(
+          "Set TRACKER_AUTO_RECONCILE_INDEXES=true to auto-repair indexes on startup.",
+        );
+      }
+    } else {
+      console.log("Index health check passed");
+    }
+  } catch (error) {
+    console.error("Index health check failed:", error.message);
+  }
+}
+
+runIndexMaintenance();
 
 // Serve favicon from public/favicon directory
 app.use(favicon(path.join(__dirname, "public", "favicon", "favicon.ico")));
@@ -146,6 +186,7 @@ app.get("/admin/tracker", catchAsync(admin.tracker));
 app.get("/admin/flagged-ips", catchAsync(admin.flaggedIPs));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
 app.get("/admin/summary", catchAsync(admin.summary));
+app.get("/admin/index-health", catchAsync(admin.indexHealth));
 app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));
 

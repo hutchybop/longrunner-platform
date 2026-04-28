@@ -81,8 +81,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Setting Mongodb Atlas
-const dbName = "longrunner-platform";
-const dbUrl = createMongoDbUrl({ dbName });
+const dbUrl = createMongoDbUrl({ appName: "quiz" });
 const dbConnectPromise = mongoose.connect(dbUrl);
 
 // Error Handling for the db connection

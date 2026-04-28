@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { createMongoDbUrl } from "@longrunner/shared-config";
 
-const TRACKER_DB_NAME = process.env.MONGODB_DB_NAME || "longrunner-platform";
 let fallbackConnectPromise = null;
 
 export async function getTrackerConnection() {
@@ -15,8 +14,7 @@ export async function getTrackerConnection() {
 
   if (!fallbackConnectPromise) {
     const dbUrl = createMongoDbUrl({
-      dbName: TRACKER_DB_NAME,
-      appName: TRACKER_DB_NAME,
+      appName: "longrunnerTracker",
       password: process.env.MONGODB,
     });
 

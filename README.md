@@ -102,6 +102,7 @@ Additional app-specific variables used from `.env.shared`:
 - `IP_DEV_LIST`
 - `TRACKER_EVENT_RETENTION_DAYS`
 - `TRACKER_BLOCKED_IP_CACHE_TTL_MS`
+- `TRACKER_AUTO_RECONCILE_INDEXES`
 
 ## Docker + GHCR
 
@@ -151,10 +152,26 @@ Apply migration into `MONGODB_DB_NAME` (default `longrunner-platform`):
 pnpm --filter tracker exec node utils/migrateUnifiedDatabase.js --apply
 ```
 
+Apply migration and repair/create required indexes (recommended):
+
+```bash
+pnpm --filter tracker exec node utils/migrateUnifiedDatabase.js --apply --drop-conflicting-indexes
+```
+
+Reconcile indexes only (no data migration):
+
+```bash
+pnpm --filter tracker exec node utils/reconcileIndexes.js
+pnpm --filter tracker exec node utils/reconcileIndexes.js --apply --drop-conflicting-indexes
+```
+
+If unique index creation fails because of duplicate legacy data, apply mode will
+deduplicate by key (keeping the most recently updated document) and then create
+the required unique index.
+
 ## Core Technologies
 
 - Express 5.x with ES modules
-- MongoDB/Mongoose ODM (per-app databases)
 - MongoDB/Mongoose ODM (single shared database with app-prefixed collections)
 - Socket.io for real-time quiz multiplayer
 - EJS templating with ejs-mate

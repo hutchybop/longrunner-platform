@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import mongoose from "mongoose";
 import { createMongoDbUrl, loadAppEnv } from "@longrunner/shared-config";
+import { reconcileIndexes } from "./indexMaintenance.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,6 +68,7 @@ const LEGACY_MAPPINGS = [
 function parseArgs(argv = process.argv.slice(2)) {
   return {
     apply: argv.includes("--apply"),
+    dropConflictingIndexes: argv.includes("--drop-conflicting-indexes"),
   };
 }
 
@@ -126,7 +128,10 @@ async function copyCollection({ sourceCollection, targetCollection, apply }) {
   };
 }
 
-async function migrateUnifiedDatabase({ apply = false } = {}) {
+async function migrateUnifiedDatabase({
+  apply = false,
+  dropConflictingIndexes = false,
+} = {}) {
   const dbUrl = createMongoDbUrl({ dbName: TARGET_DB_NAME });
   await mongoose.connect(dbUrl);
 
@@ -171,10 +176,19 @@ async function migrateUnifiedDatabase({ apply = false } = {}) {
     }
   }
 
+  const indexReport = await reconcileIndexes({
+    db: targetDb,
+    dbName: TARGET_DB_NAME,
+    apply,
+    dropConflicting: apply && dropConflictingIndexes,
+  });
+
   return {
     apply,
+    dropConflictingIndexes,
     targetDbName: TARGET_DB_NAME,
     summary,
+    indexReport,
   };
 }
 
@@ -192,6 +206,7 @@ if (isDirectRun) {
             mode: result.apply ? "apply" : "dry-run",
             targetDbName: result.targetDbName,
             summary: result.summary,
+            indexReport: result.indexReport,
           },
           null,
           2,

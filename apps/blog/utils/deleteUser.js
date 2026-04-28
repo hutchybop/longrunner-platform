@@ -4,17 +4,15 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import User from "../models/user.js";
-import { Meal } from "../models/meal.js";
-import { Ingredient } from "../models/ingredient.js";
-import { ShoppingList } from "../models/shoppingList.js";
-import { Category } from "../models/category.js";
+import BlogIM from "../models/blogIM.js";
+import Review from "../models/review.js";
 import { createMongoDbUrl, loadAppEnv } from "@longrunner/shared-config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 loadAppEnv({ appRoot: path.resolve(__dirname, "..") });
 
-const dbUrl = createMongoDbUrl({ dbName: "longrunner-platform" });
+const dbUrl = createMongoDbUrl({ appName: "blog-delete-user" });
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -26,90 +24,64 @@ const question = (prompt) =>
 
 async function deleteUserAccount() {
   try {
-    console.log("🗑️  User Account Deletion Utility\n");
+    console.log("User Account Deletion Utility\n");
 
     await mongoose.connect(dbUrl);
-    console.log("✅ Connected to database\n");
+    console.log("Connected to database\n");
 
     const email = await question("Enter email address of user to delete: ");
 
     if (!email || !email.includes("@")) {
-      console.log("❌ Invalid email address");
-      rl.close();
+      console.log("Invalid email address");
       return;
     }
 
     const user = await User.findOne({ email: email.trim() });
 
     if (!user) {
-      console.log(`❌ No user found with email: ${email}`);
-      rl.close();
+      console.log(`No user found with email: ${email}`);
       return;
     }
 
-    console.log("\n👤 User found:");
-    console.log(`   Username: ${user.username}`);
-    console.log(`   Email: ${user.email}`);
-    console.log(`   ID: ${user._id}`);
-
-    if (user.username === "defaultMeals") {
-      console.log(`\n❌ Cannot delete protected account: ${user.username}`);
-      rl.close();
-      return;
-    }
-
-    console.log("\n⚠️  WARNING: This will permanently delete:");
-    console.log("   • User account");
-    console.log("   • All meals");
-    console.log("   • All ingredients");
-    console.log("   • All shopping lists");
-    console.log("   • All categories");
-    console.log("   • All associated data");
+    console.log("\nUser found:");
+    console.log(`  Username: ${user.username}`);
+    console.log(`  Email: ${user.email}`);
+    console.log(`  ID: ${user._id}`);
 
     const confirm1 = await question('\nType "DELETE" to confirm: ');
     if (confirm1 !== "DELETE") {
-      console.log("❌ Deletion cancelled");
-      rl.close();
+      console.log("Deletion cancelled");
       return;
     }
 
     const confirm2 = await question("Are you absolutely sure? (yes/no): ");
     if (confirm2.toLowerCase() !== "yes") {
-      console.log("❌ Deletion cancelled");
-      rl.close();
+      console.log("Deletion cancelled");
       return;
     }
 
-    console.log("🗑️  Deleting user data...");
+    const reviewIds = (
+      await Review.find({ author: user._id }).select({ _id: 1 }).lean()
+    ).map((review) => review._id);
 
-    const userEmail = user.email;
-
-    await Ingredient.deleteMany({ author: user._id });
-    console.log("   ✅ Ingredients deleted");
-
-    await Category.deleteMany({ author: user._id });
-    console.log("   ✅ Categories deleted");
-
-    await Meal.deleteMany({ author: user._id });
-    console.log("   ✅ Meals deleted");
-
-    await ShoppingList.deleteMany({ author: user._id });
-    console.log("   ✅ Shopping lists deleted");
+    if (reviewIds.length > 0) {
+      await BlogIM.updateMany(
+        { reviews: { $in: reviewIds } },
+        { $pull: { reviews: { $in: reviewIds } } },
+      );
+      await Review.deleteMany({ _id: { $in: reviewIds } });
+      console.log(`Deleted ${reviewIds.length} review(s)`);
+    }
 
     await User.findByIdAndDelete(user._id);
-    console.log("   ✅ User account deleted");
-
-    console.log(`\n🎉 Successfully deleted account for '${userEmail}'`);
+    console.log(`Deleted user account for '${user.email}'`);
   } catch (error) {
-    console.error("❌ Error during deletion:", error.message);
+    console.error("Error during deletion:", error.message);
   } finally {
     if (mongoose.connection.readyState === 1) {
       await mongoose.connection.close();
     }
-    if (rl) {
-      rl.close();
-    }
-    console.log("\n👋 Utility finished");
+    rl.close();
   }
 }
 

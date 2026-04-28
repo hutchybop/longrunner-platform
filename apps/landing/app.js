@@ -93,8 +93,7 @@ app.use(
 app.use(helmet(createHelmetConfig()));
 
 // Setting Mongodb Atlas
-const dbName = "longrunner-platform";
-const dbUrl = createMongoDbUrl({ dbName });
+const dbUrl = createMongoDbUrl({ appName: "landing" });
 const dbConnectPromise = mongoose.connect(dbUrl);
 
 // Error Handling for the db connection

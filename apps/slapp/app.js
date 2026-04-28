@@ -95,8 +95,7 @@ app.use(
   }),
 );
 
-const dbName = "longrunner-platform";
-const dbUrl = createMongoDbUrl({ dbName });
+const dbUrl = createMongoDbUrl({ appName: "slapp" });
 const dbConnectPromise = mongoose.connect(dbUrl);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));

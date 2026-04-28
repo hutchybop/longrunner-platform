@@ -4,6 +4,8 @@ const quizChecks = async (req, res, next) => {
   // Is a user with no userData going to an allowedPath path
   const allowedPathsNewUser = [
     "/",
+    "/health",
+    "/sitemap.xml",
     "/lobby-new",
     "/lobby-join",
     "/policy/cookie-policy",
@@ -17,6 +19,8 @@ const quizChecks = async (req, res, next) => {
 
   // Is a user with userData going to an allowedPath path
   const allowedPathsCurrentUser = [
+    "/health",
+    "/sitemap.xml",
     "/reset-quiz",
     "/reset-user",
     "/quiz-kick-user",

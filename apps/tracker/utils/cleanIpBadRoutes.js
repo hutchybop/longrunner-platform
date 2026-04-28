@@ -62,7 +62,7 @@ async function cleanIpBadRoutes({ ip, apply = false }) {
     throw new Error("Missing required argument --ip <ip>");
   }
 
-  const dbUrl = createMongoDbUrl({ dbName: "longrunner-platform" });
+  const dbUrl = createMongoDbUrl({ appName: "tracker-clean-ip-bad-routes" });
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(dbUrl);
   }

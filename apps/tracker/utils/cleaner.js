@@ -9,8 +9,7 @@ import "../models/tracker.js";
 
 const cleanupOldRecords = async () => {
   try {
-    const dbName = "longrunner-platform";
-    const dbUrl = createMongoDbUrl({ dbName });
+    const dbUrl = createMongoDbUrl({ appName: "tracker-cleaner" });
 
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(dbUrl);

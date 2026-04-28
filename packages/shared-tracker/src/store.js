@@ -1014,33 +1014,23 @@ async function sendWeeklySummaryEmailForWeek({ weekKey }) {
   const connection = await getTrackerConnection();
   const { TrackerWeeklySummaryEmailLog } = getModels(connection);
 
-  const existingLog = await TrackerWeeklySummaryEmailLog.findOne({
-    weekKey,
-  })
-    .select({ status: 1 })
-    .lean();
+  const upsertResult = await TrackerWeeklySummaryEmailLog.updateOne(
+    { weekKey },
+    {
+      $setOnInsert: {
+        weekKey,
+        status: "sending",
+        recipients,
+      },
+    },
+    { upsert: true },
+  );
 
-  if (existingLog) {
+  if ((upsertResult?.upsertedCount || 0) === 0) {
     return {
       ok: true,
       status: "already_sent",
     };
-  }
-
-  try {
-    await TrackerWeeklySummaryEmailLog.create({
-      weekKey,
-      status: "sending",
-      recipients,
-    });
-  } catch (error) {
-    if (error?.code === 11000) {
-      return {
-        ok: true,
-        status: "already_sent",
-      };
-    }
-    throw error;
   }
 
   try {

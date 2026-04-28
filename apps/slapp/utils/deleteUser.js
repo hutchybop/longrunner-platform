@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 loadAppEnv({ appRoot: path.resolve(__dirname, "..") });
 
-const dbUrl = createMongoDbUrl({ dbName: "longrunner-platform" });
+const dbUrl = createMongoDbUrl({ appName: "slapp-delete-user" });
 
 const rl = readline.createInterface({
   input: process.stdin,

@@ -1,4 +1,5 @@
 import Tracker from "../models/tracker.js";
+import { reconcileIndexes } from "../utils/indexMaintenance.js";
 import {
   blockIpAddress,
   decodeRouteKey,
@@ -497,6 +498,29 @@ export const summary = async (req, res) => {
   res.render("admin/summary", {
     title: "Tracker summary",
     summaryData,
+  });
+};
+
+export const indexHealth = async (req, res) => {
+  const client = Tracker.db.getClient();
+  const dbName = process.env.MONGODB_DB_NAME || "longrunner-platform";
+  const dbHandle = client.db(dbName);
+
+  const report = await reconcileIndexes({
+    db: dbHandle,
+    dbName,
+    apply: false,
+  });
+
+  const flaggedStatuses = new Set(["missing", "conflict", "error"]);
+  const issues = report.summary.filter((row) =>
+    flaggedStatuses.has(row.status),
+  );
+
+  res.render("admin/indexHealth", {
+    title: "Index health",
+    report,
+    issues,
   });
 };
 
