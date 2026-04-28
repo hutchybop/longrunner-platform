@@ -1,5 +1,25 @@
 # DEVELOPMENT LOG
 
+## Session 20
+
+### Tuesday April 28th
+<br>
+
+**Summary:** This session focused on fixing bugs and cleanup work, addressing a tracker email bug, and updating project documentation to reflect recent changes.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+7fa6f31, 324ba7b, 8dd9d96
+
+**Session git history:**
+
+- Fix bugs and clean up 20260428-0645 - _Fixed bugs and cleanup work across the platform_
+- fix tracker email bug 20260427-1732 - _Fixed tracker email bug in the shared-tracker package_
+- update docs 20260427-1726 - _Updated project documentation_
+
+---
+<br>
+
 ## Session 19
 
 ### Monday April 27th
