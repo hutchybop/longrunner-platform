@@ -21,7 +21,7 @@
     "@longrunner/shared-tracker": "workspace:*",
     "@longrunner/shared-ui": "workspace:*",
     "@longrunner/shared-utils": "workspace:*",
-    "axios": "^1.15.2",
+    "axios": "^1.18.1",
     "compression": "^1.8.1",
     "connect-mongo": "^6.0.0",
     "ejs-mate": "^4.0.0",
@@ -29,9 +29,9 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-recaptcha": "^5.1.0",
     "express-session": "^1.19.0",
-    "helmet": "^8.1.0",
+    "helmet": "^8.3.0",
     "method-override": "^3.0.0",
-    "mongoose": "^9.5.0",
+    "mongoose": "^9.7.4",
     "serve-favicon": "^2.5.1",
     "socket.io": "^4.8.3"
   }
