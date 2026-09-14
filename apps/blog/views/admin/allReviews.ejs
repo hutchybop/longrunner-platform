@@ -65,6 +65,14 @@
                             <td>
                                 <% if (review.isFlagged) { %>
                                     <span class="badge bg-danger">Flagged</span>
+                                    <% if (review.flagLabels && review.flagLabels.length > 0) { %>
+                                        <div class="mt-1 d-flex flex-wrap gap-1">
+                                            <% review.flagLabels.forEach(label => { %>
+                                                <% const badgeClass = label === 'sqlProbe' || label === 'noSqlProbe' ? 'bg-danger' : label === 'behavioralProbe' ? 'bg-warning text-dark' : 'bg-secondary'; %>
+                                                <span class="badge <%= badgeClass %>"><%= label %></span>
+                                            <% }); %>
+                                        </div>
+                                    <% } %>
                                     <% if (review.flagReason) { %>
                                         <br><small class="text-muted"><%= review.flagReason %></small>
                                     <% } %>
@@ -122,6 +130,14 @@
                                 <div class="text-end">
                                     <% if (review.isFlagged) { %>
                                         <span class="badge bg-danger">Flagged</span>
+                                        <% if (review.flagLabels && review.flagLabels.length > 0) { %>
+                                            <div class="mt-1 d-flex flex-wrap justify-content-end gap-1">
+                                                <% review.flagLabels.forEach(label => { %>
+                                                    <% const badgeClass = label === 'sqlProbe' || label === 'noSqlProbe' ? 'bg-danger' : label === 'behavioralProbe' ? 'bg-warning text-dark' : 'bg-secondary'; %>
+                                                    <span class="badge <%= badgeClass %>"><%= label %></span>
+                                                <% }); %>
+                                            </div>
+                                        <% } %>
                                         <% if (review.flagReason) { %>
                                             <br><small class="text-muted"><%= review.flagReason %></small>
                                         <% } %>

@@ -95,6 +95,8 @@ app.use(
 );
 
 // Setting Mongodb Atlas
+mongoose.set("sanitizeFilter", true);
+mongoose.set("strictQuery", true);
 const dbUrl = createMongoDbUrl({ appName: "blog" });
 const dbConnectPromise = mongoose.connect(dbUrl);
 
@@ -153,6 +155,8 @@ app.use((req, res, next) => {
     req.body = mongoSanitize.sanitize(req.body, { replaceWith: "_" });
   if (req.params)
     req.params = mongoSanitize.sanitize(req.params, { replaceWith: "_" });
+  if (req.query)
+    req.query = mongoSanitize.sanitize(req.query, { replaceWith: "_" });
   next();
 });
 

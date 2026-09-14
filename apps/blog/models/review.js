@@ -17,6 +17,10 @@ const ReviewSchema = new Schema({
     default: false,
   },
   flagReason: String,
+  flagLabels: {
+    type: [String],
+    default: [],
+  },
   spamScore: {
     type: Number,
     default: 0,

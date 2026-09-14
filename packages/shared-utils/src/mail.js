@@ -21,9 +21,9 @@ export default async function mail(subject, text, to) {
     text: text,
   };
 
-  await smtpTransport.sendMail(mailOptions, (err) => {
-    if (err) {
-      console.log(err);
-    }
-  });
+  try {
+    await smtpTransport.sendMail(mailOptions);
+  } catch (err) {
+    console.log(err);
+  }
 }

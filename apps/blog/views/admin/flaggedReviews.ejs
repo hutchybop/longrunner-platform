@@ -43,6 +43,16 @@
                             <h6>Flag Reason:</h6>
                             <p class="text-warning"><%= review.flagReason %></p>
                         <% } %>
+
+                        <% if (review.flagLabels && review.flagLabels.length > 0) { %>
+                            <h6>Classification:</h6>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                <% review.flagLabels.forEach(label => { %>
+                                    <% const badgeClass = label === 'sqlProbe' || label === 'noSqlProbe' ? 'bg-danger' : label === 'behavioralProbe' ? 'bg-warning text-dark' : 'bg-secondary'; %>
+                                    <span class="badge <%= badgeClass %>"><%= label %></span>
+                                <% }); %>
+                            </div>
+                        <% } %>
                     </div>
                     <div class="col-md-4">
                         <h6>Metadata:</h6>

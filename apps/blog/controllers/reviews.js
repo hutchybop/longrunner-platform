@@ -21,6 +21,7 @@ export const create = async (req, res) => {
     }
 
     review.isFlagged = true;
+    review.flagLabels = contentValidation.labels;
     review.flagReason =
       contentValidation.score >= 10
         ? "High spam score: " + contentValidation.reasons.join(", ")
@@ -37,6 +38,9 @@ export const create = async (req, res) => {
         "\n\n" +
         "Spam Score: " +
         contentValidation.score +
+        "\n" +
+        "Labels: " +
+        contentValidation.labels.join(", ") +
         "\n" +
         "Reasons: " +
         contentValidation.reasons.join(", ") +
@@ -55,6 +59,7 @@ export const create = async (req, res) => {
   review.body = contentValidation.sanitizedContent;
 
   review.spamScore = contentValidation.score;
+  review.flagLabels = contentValidation.labels;
 
   if (contentValidation.score >= 3 && contentValidation.score < 5) {
     review.isFlagged = true;

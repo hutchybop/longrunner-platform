@@ -129,6 +129,7 @@ export const updateFlaggedReview = async (req, res) => {
   if (action === "approve") {
     review.isFlagged = false;
     review.flagReason = undefined;
+    review.flagLabels = [];
     await review.save();
 
     await BlogIM.findByIdAndUpdate(review.blogIM, {
