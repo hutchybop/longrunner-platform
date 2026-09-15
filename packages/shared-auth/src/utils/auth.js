@@ -1,10 +1,17 @@
 const authenticateUser = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const username = req.body?.username?.toString().trim();
+    const password = req.body?.password?.toString();
     const User = req.app.locals.User;
-    const user = await User.findOne({ username });
 
     const genericError = "Invalid username or password";
+
+    if (!username || !password) {
+      req.flash("error", genericError);
+      return res.redirect("/auth/login");
+    }
+
+    const user = await User.findOne({ username });
 
     if (!user) {
       req.flash("error", genericError);
