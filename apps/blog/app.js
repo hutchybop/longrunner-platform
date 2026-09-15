@@ -151,12 +151,20 @@ app.use(
 
 // Helps to stop mongo injection by not allowing certain characters in the query string
 app.use((req, res, next) => {
-  if (req.body)
-    req.body = mongoSanitize.sanitize(req.body, { replaceWith: "_" });
-  if (req.params)
-    req.params = mongoSanitize.sanitize(req.params, { replaceWith: "_" });
-  if (req.query)
-    req.query = mongoSanitize.sanitize(req.query, { replaceWith: "_" });
+  const sanitizeInPlace = (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    const sanitized = mongoSanitize.sanitize(obj, { replaceWith: "_" });
+    if (!sanitized || typeof sanitized !== "object") return;
+
+    for (const key of Object.keys(obj)) {
+      delete obj[key];
+    }
+    Object.assign(obj, sanitized);
+  };
+
+  sanitizeInPlace(req.body);
+  sanitizeInPlace(req.params);
+  sanitizeInPlace(req.query);
   next();
 });
 
