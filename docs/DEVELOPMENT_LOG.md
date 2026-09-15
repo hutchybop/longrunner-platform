@@ -1,5 +1,24 @@
 # DEVELOPMENT LOG
 
+## Session 21
+
+### Monday September 14th
+<br>
+
+**Summary:** This session focused on improving blog review moderation behavior and refreshing workspace dependencies. It also aligned runtime/tooling versions for Node.js, pnpm, and npm to keep local, CI, and Docker environments consistent.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+0449f98, a226fd8
+
+**Session git history:**
+
+- update npm, pnpm, node 20260914-2139 - _Updated Node.js, pnpm, and npm version pins across project configuration and Docker setup_
+- Update blog review flagging and pnpm packages 20260914-2102 - _Improved blog review flagging/moderation flow and refreshed package dependencies across apps and shared packages_
+
+---
+<br>
+
 ## Session 20
 
 ### Tuesday April 28th
