@@ -1,5 +1,26 @@
 # DEVELOPMENT LOG
 
+## Session 22
+
+### Tuesday September 15th
+<br>
+
+**Summary:** This session focused on resolving authentication and request sanitization regressions in the blog/auth flow. It hardened input handling in shared auth utilities and refined in-place sanitize behavior to avoid object mutation edge cases. Documentation was also refreshed with a new dev-log update and package manager guidance.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+73350cc, 6974be5, 3601536, 9b16ac0
+
+**Session git history:**
+
+- Fix auth bug 20260915-1846 - _Added a guard in blog request sanitization to skip in-place rewrites when sanitize returns the same object reference_
+- fix auth bug 20260915-1835 - _Hardened shared auth login input handling for missing/invalid credentials and updated nodemailer/dependency lock versions_
+- fix getter bug 20260915-0716 - _Refactored blog request sanitization to sanitize body/params/query safely in place and avoid getter-related mutation issues_
+- update dev-log 20260915-0709 - _Updated the development log with Session 21 and added node/package manager update guidance document_
+
+---
+<br>
+
 ## Session 21
 
 ### Monday September 14th
