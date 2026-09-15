@@ -156,6 +156,10 @@ app.use((req, res, next) => {
     const sanitized = mongoSanitize.sanitize(obj, { replaceWith: "_" });
     if (!sanitized || typeof sanitized !== "object") return;
 
+    if (sanitized === obj) {
+      return;
+    }
+
     for (const key of Object.keys(obj)) {
       delete obj[key];
     }
