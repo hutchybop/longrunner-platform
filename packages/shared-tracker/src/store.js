@@ -1260,13 +1260,21 @@ function isActiveBlock(blockDoc, now = new Date()) {
   return Boolean(blockDoc.blockedUntil && blockDoc.blockedUntil > now);
 }
 
+function trustedFilter(value) {
+  if (typeof mongoose.trusted === "function") {
+    return mongoose.trusted(value);
+  }
+
+  return value;
+}
+
 function buildActiveBlockQuery(now = new Date()) {
   return {
     $or: [
       { blockLevel: "manual" },
       { blockLevel: "permanent" },
       { isPermanent: true },
-      { blockedUntil: { $gt: now } },
+      { blockedUntil: trustedFilter({ $gt: now }) },
     ],
   };
 }
@@ -1611,7 +1619,7 @@ export async function getActiveIpBlocks({ ips } = {}) {
       .filter((ip) => ip.length > 0);
 
     if (sanitizedIps.length > 0) {
-      query.ip = { $in: sanitizedIps };
+      query.ip = trustedFilter({ $in: sanitizedIps });
     }
   }
 

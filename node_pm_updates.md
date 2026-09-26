@@ -26,7 +26,7 @@ Goal: keep local Mac, Docker image builds, and GitHub Docker releases on the sam
 ## Step-by-step update process (Mac)
 
 ### 1) Update Node on Mac
-Install Node (official installer or your preferred method), then verify:
+Install Node [Node JS](https://nodejs.org/en/download), then verify:
 
 ```bash
 node -v
@@ -65,7 +65,7 @@ pnpm -v
 ```
 
 Expected:
-- `which pnpm` points to Corepack-managed path (not stale shim path)
+- `which pnpm` points to Corepack-managed path `/usr/local/bin/pnpm` (not stale shim path)
 - `pnpm -v` matches target version
 
 ---
