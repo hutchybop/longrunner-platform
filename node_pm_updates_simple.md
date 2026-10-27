@@ -96,6 +96,10 @@ Latest versions across workspace:
 pnpm -r up --latest
 pnpm install
 ```
+Then test all apps:
+```bash
+pnpm -r --parallel run dev
+```
 
 ---
 
@@ -119,6 +123,11 @@ Example:
 pnpm --filter @longrunner/shared-config up eslint@latest
 ```
 
+Then test all apps:
+```bash
+pnpm -r --parallel run dev
+```
+
 ---
 
 ## 10) Final quick check before commit
@@ -129,4 +138,9 @@ npm -v
 pnpm -v
 pnpm install
 git status
+```
+
+Then test all apps:
+```bash
+pnpm -r --parallel run dev
 ```

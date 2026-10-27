@@ -1,5 +1,25 @@
 # DEVELOPMENT LOG
 
+## Session 23
+
+### Tuesday October 27th
+<br>
+
+**Summary:** This session fixed MongoDB query sanitization compatibility in tracker IP-block queries and refreshed dependencies across the workspace. It also aligned Node.js, npm, and pnpm version pins across local, Docker, and package-manager configuration, and removed obsolete package-management guidance documents.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+2f803a2, e6ad1bb, 843fee3
+
+**Session git history:**
+
+- update node, npm and pnpm 20261027-1735 - *Pinned Node.js, npm, and pnpm versions across project and Docker configuration and refreshed workspace dependencies*
+- fix mongodb bugs 20260926-1130 - *Fixed MongoDB query sanitization compatibility for tracker IP-block queries and updated dependencies*
+- Remove void .md files 20260915-1852 - *Removed obsolete package-management guides and updated the development log with Session 22*
+
+---
+<br>
+
 ## Session 22
 
 ### Tuesday September 15th
