@@ -1,5 +1,24 @@
 # DEVELOPMENT LOG
 
+## Session 24
+
+### Saturday November 7th
+<br>
+
+**Summary:** This session added authenticated tracker administration for user accounts across the blog and shopping list apps, including account search, updates, deletion, and optional user notifications. It also added tracker account login and password management utilities, refreshed workspace dependencies, and updated related documentation.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+53a459f, 75164e1
+
+**Session git history:**
+
+- add user account admin to tracker 20261107-1511 - *Added tracker authentication and account management for blog and shopping list users, with search, update/delete actions, and optional notifications*
+- update docs 20261027-1750 - *Updated the development log and package manager guidance*
+
+---
+<br>
+
 ## Session 23
 
 ### Tuesday October 27th
