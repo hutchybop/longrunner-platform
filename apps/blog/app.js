@@ -33,12 +33,6 @@ const sharedUiRoot = path.resolve(
   "..",
 );
 
-// Required for recaptcha
-const { RecaptchaV2: Recaptcha } = await import("express-recaptcha");
-const recaptcha = new Recaptcha(process.env.SITEKEY, process.env.SECRETKEY, {
-  callback: "cb",
-});
-
 // Local imports
 import {
   generalLimiter,
@@ -215,10 +209,9 @@ app.use(async (req, res, next) => {
 ////////////////////////////// Shared Routes //////////////////////////////
 // Policy routes
 app.get("/policy/cookie-policy", policy.cookiePolicy);
-app.get("/policy/tandc", recaptcha.middleware.render, policy.tandc);
+app.get("/policy/tandc", policy.tandc);
 app.post(
   "/policy/tandc",
-  recaptcha.middleware.verify,
   formSubmissionLimiter,
   validateTandC,
   policy.tandcPost,

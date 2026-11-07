@@ -32,7 +32,8 @@ const tandcSchema = Joi.object({
   name: Joi.string().required().escapeHTML(),
   message: Joi.string().required().escapeHTML(),
   email: Joi.string().email().required(),
-  "g-recaptcha-response": Joi.string().allow(null, ""),
+  "cf-turnstile-response": Joi.string().required(),
+  website: Joi.string().allow(""),
 }).required();
 
 const loginSchema = Joi.object({

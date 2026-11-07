@@ -67,7 +67,7 @@
                             <div class="cardBodies">
                                 We do not collect any personal data from users directly, except as necessary to operate the site. However, 
                                 our website uses cookies for essential functionality, including third-party cookies from Google to implement 
-                                reCAPTCHA for security purposes. These cookies help protect our website from spam and abuse by verifying that 
+                                Cloudflare Turnstile for security purposes. These cookies help protect our website from spam and abuse by verifying that 
                                 users are human and not automated bots.
                             </div>
                             <div class="cardBodies">
@@ -76,9 +76,9 @@
                                 to the use of these cookies, including the third-party cookies from Google as described.
                             </div>
                             <div class="cardBodies">
-                                Please note that Google may collect information via these cookies as part of the reCAPTCHA service. For more 
-                                details on how Google collects and processes data, please refer to Google's 
-                                <a href="https://policies.google.com/privacy?hl=en-US" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+                                Please note that Cloudflare may collect information via these cookies as part of the Turnstile service. For more 
+                                details on how Cloudflare collects and processes data, please refer to Cloudflare's 
+                                <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                             </div>
                         </li>
 
@@ -140,6 +140,15 @@
                     </div>
                     
                     <form action="/policy/tandc" method="POST" class="validated-form" novalidate>
+                        <input
+                            type="text"
+                            name="<%= contactHoneypotField %>"
+                            tabindex="-1"
+                            autocomplete="off"
+                            style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;"
+                            aria-hidden="true"
+                        >
+
                         <div class="mb-3">
                             <label class="form-label" for="name">Name</label>
                             <input class="form-control" type="text" id="name" name="name" aautocomplete="name" required>
@@ -163,9 +172,23 @@
                                 Please enter your text
                             </div>
                         </div>
-                        <div class="mb-2 mt-2">
-                            <%- captcha %>
-                        </div>
+                        <% if (turnstileSiteKey) { %>
+                            <div class="mb-2 mt-2">
+                                <div
+                                    class="cf-turnstile"
+                                    data-sitekey="<%= turnstileSiteKey %>"
+                                    data-callback="onTurnstileSuccess"
+                                    data-expired-callback="onTurnstileExpired"
+                                    data-error-callback="onTurnstileError"
+                                ></div>
+                            </div>
+                            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                        <% } else { %>
+                            <div class="alert alert-warning mb-2 mt-2">
+                                Contact form protection is not configured.
+                            </div>
+                        <% } %>
+
                         <button class="btn btn-success btn-block" id="submitBtn" disabled>Send</button>
                     </form>
                     <a

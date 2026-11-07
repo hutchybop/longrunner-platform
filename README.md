@@ -83,8 +83,13 @@ Core variables:
 - `MONGODB`
 - `MONGODB_DB_NAME` (defaults to `longrunner-platform`)
 - `SESSION_KEY`
-- `SITEKEY`
-- `SECRETKEY`
+- `TURNSTILE_SITE_KEY`
+- `TURNSTILE_SECRET_KEY`
+- `TURNSTILE_ALLOWED_HOSTNAMES`
+- `CONTACT_MIN_SUBMIT_MS`
+- `CONTACT_MAX_SUBMIT_MS`
+- `CONTACT_DEDUPE_WINDOW_MINUTES`
+- `CONTACT_DEDUPE_RETENTION_HOURS`
 - `EMAIL_USER`
 - `ALIAS_EMAIL`
 - `ZOHOPW`
@@ -176,7 +181,7 @@ the required unique index.
 - Socket.io for real-time quiz multiplayer
 - EJS templating with ejs-mate
 - Session auth with MongoStore
-- Security: helmet, express-mongo-sanitize, express-rate-limit, recaptcha
+- Security: helmet, express-mongo-sanitize, express-rate-limit, Cloudflare Turnstile
 
 ## License
 

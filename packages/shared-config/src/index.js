@@ -117,8 +117,7 @@ export function createCspSources() {
       "https://cdnjs.cloudflare.com/",
       "https://cdn.jsdelivr.net/",
       "https://code.jquery.com/",
-      "https://www.google.com/recaptcha/api.js",
-      "https://www.gstatic.com/recaptcha/releases/",
+      "https://challenges.cloudflare.com",
       "https://use.fontawesome.com/",
     ],
     styleSrcUrls: [
@@ -129,23 +128,17 @@ export function createCspSources() {
       "https://cdn.jsdelivr.net/",
       "https://cdnjs.cloudflare.com/",
       "https://fonts.gstatic.com",
-      "https://www.gstatic.com/recaptcha/releases/",
+      "https://challenges.cloudflare.com",
     ],
-    imgSrcUrls: [
-      "https://www.gstatic.com/recaptcha/",
-      "https://www.google.com/recaptcha/",
-    ],
-    connectSrcUrls: [
-      "https://www.google.com/",
-      "https://www.gstatic.com/recaptcha/",
-    ],
+    imgSrcUrls: ["https://challenges.cloudflare.com"],
+    connectSrcUrls: ["https://challenges.cloudflare.com"],
     fontSrcUrls: [
       "https://cdnjs.cloudflare.com/",
       "https://fonts.gstatic.com",
       "https://fonts.googleapis.com/",
       "https://use.fontawesome.com/",
     ],
-    frameSrcUrls: ["https://www.google.com", "https://www.recaptcha.net"],
+    frameSrcUrls: ["https://challenges.cloudflare.com"],
   };
 }
 

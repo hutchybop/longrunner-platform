@@ -17,7 +17,7 @@ Longrunner Platform is a pnpm workspace monorepo containing five Express 5 appli
 - **Server stack**: Express + EJS/ejs-mate, ES modules throughout.
 - **Persistence**: MongoDB Atlas with Mongoose models.
 - **Session/auth**: `express-session` + `connect-mongo`, custom session auth in `@longrunner/shared-auth`.
-- **Security controls**: helmet CSP, mongo-sanitize, Joi validation, rate limiting, reCAPTCHA.
+- **Security controls**: helmet CSP, mongo-sanitize, Joi validation, rate limiting, Cloudflare Turnstile.
 - **Real-time layer**: Socket.io in `apps/quiz` only.
 - **Cross-app request analytics**: `@longrunner/shared-tracker` middleware stack in landing/slapp/quiz/blog.
 

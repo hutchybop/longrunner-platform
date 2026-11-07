@@ -1,4 +1,169 @@
 import mail from "@longrunner/shared-utils/mail.js";
+import crypto from "node:crypto";
+import { URLSearchParams } from "node:url";
+import { mongoose } from "mongoose";
+
+const CONTACT_FORM_SESSION_KEY = "policyContactFormIssuedAt";
+const CONTACT_HONEYPOT_FIELD = "website";
+const DEFAULT_MIN_SUBMIT_MS = 4000;
+const DEFAULT_MAX_SUBMIT_MS = 1000 * 60 * 60 * 2;
+const DEFAULT_DEDUPE_WINDOW_MINUTES = 60 * 24;
+const DEFAULT_DEDUPE_RETENTION_HOURS = 24 * 7;
+
+let contactIndexesInitialized = false;
+
+function toPositiveNumber(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+}
+
+function normalizeValue(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function hashValue(value) {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function getAllowedTurnstileHostnames() {
+  return String(process.env.TURNSTILE_ALLOWED_HOSTNAMES || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function shouldSkipHostMatch(hostname) {
+  const normalized = String(hostname || "").toLowerCase();
+  return (
+    !normalized ||
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "0.0.0.0"
+  );
+}
+
+function isHostnameValid(verifiedHostname, requestHostname) {
+  const verified = String(verifiedHostname || "").toLowerCase();
+  if (!verified) {
+    return false;
+  }
+
+  const allowList = getAllowedTurnstileHostnames();
+  if (allowList.length > 0) {
+    return allowList.includes(verified);
+  }
+
+  if (shouldSkipHostMatch(requestHostname)) {
+    return true;
+  }
+
+  return verified === String(requestHostname || "").toLowerCase();
+}
+
+async function verifyTurnstileToken(token, remoteip) {
+  if (!process.env.TURNSTILE_SECRET_KEY || !token) {
+    return { success: false };
+  }
+
+  const body = new URLSearchParams({
+    secret: process.env.TURNSTILE_SECRET_KEY,
+    response: token,
+  });
+
+  if (remoteip) {
+    body.append("remoteip", remoteip);
+  }
+
+  try {
+    const response = await globalThis.fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
+      },
+    );
+
+    if (!response.ok) {
+      return { success: false };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch {
+    return { success: false };
+  }
+}
+
+async function getContactSubmissionCollection() {
+  if (!mongoose.connection?.db) {
+    return null;
+  }
+
+  const collection = mongoose.connection.collection(
+    "policy_contact_submissions",
+  );
+
+  if (!contactIndexesInitialized) {
+    await collection.createIndex({ dedupeKey: 1, createdAt: -1 });
+    await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    contactIndexesInitialized = true;
+  }
+
+  return collection;
+}
+
+async function isDuplicateSubmission({ domain, email, message }) {
+  const collection = await getContactSubmissionCollection();
+  if (!collection) {
+    return false;
+  }
+
+  const normalizedEmail = normalizeValue(email);
+  const normalizedMessage = normalizeValue(message);
+  const dedupeKey = hashValue(
+    `${domain}|${normalizedEmail}|${normalizedMessage}`,
+  );
+
+  const dedupeWindowMinutes = toPositiveNumber(
+    process.env.CONTACT_DEDUPE_WINDOW_MINUTES,
+    DEFAULT_DEDUPE_WINDOW_MINUTES,
+  );
+  const dedupeRetentionHours = toPositiveNumber(
+    process.env.CONTACT_DEDUPE_RETENTION_HOURS,
+    DEFAULT_DEDUPE_RETENTION_HOURS,
+  );
+
+  const now = Date.now();
+  const windowStart = new Date(now - dedupeWindowMinutes * 60 * 1000);
+  const expiresAt = new Date(now + dedupeRetentionHours * 60 * 60 * 1000);
+
+  const existing = await collection.findOne({
+    dedupeKey,
+    createdAt: { $gte: windowStart },
+  });
+
+  if (existing) {
+    return true;
+  }
+
+  await collection.insertOne({
+    dedupeKey,
+    domain,
+    createdAt: new Date(now),
+    expiresAt,
+  });
+
+  return false;
+}
 
 export function createPolicyController(config = {}) {
   const {
@@ -41,49 +206,107 @@ export function createPolicyController(config = {}) {
     },
 
     tandc: (req, res) => {
+      req.session[CONTACT_FORM_SESSION_KEY] = Date.now();
       res.render("policy/tandc", {
-        captcha: res.recaptcha,
         title: tandcTitle,
         js_page: `${assetsPrefix}/tandc`,
         css_page: `${assetsPrefix}/tandc`,
         domain,
         policyContent: resolvedPolicyContent,
+        turnstileSiteKey: process.env.TURNSTILE_SITE_KEY,
+        contactHoneypotField: CONTACT_HONEYPOT_FIELD,
       });
     },
 
     tandcPost: async (req, res) => {
-      if (!req.recaptcha.error) {
-        await mail(
-          `Contact Form Submitted - ${domain}`,
-          "Hello,\n\n" +
-            `Your message to ${domain} has been submittted. The details are below` +
-            "\n\n" +
-            `Name: ${req.body.name}` +
-            "\n\n" +
-            `Email: ${req.body.email}` +
-            "\n\n" +
-            `Message: ${req.body.message}`,
-          req.body.email,
-        );
-
-        await mail(
-          `Contact Form Submitted - ${domain}`,
-          "Hello,\n\n" +
-            "A new message has been submitted" +
-            "\n\n" +
-            `Name: ${req.body.name}` +
-            "\n\n" +
-            `Email: ${req.body.email}` +
-            "\n\n" +
-            `Body: ${req.body.message}`,
-        );
-
-        req.flash("success", "Message sent.");
-        res.redirect("/policy/tandc");
-      } else {
-        req.flash("error", "recaptcha failed, please try again");
-        res.redirect("/policy/tandc");
+      const honeypotValue = String(
+        req.body?.[CONTACT_HONEYPOT_FIELD] || "",
+      ).trim();
+      if (honeypotValue) {
+        req.flash("error", "Unable to send message, please try again.");
+        return res.redirect("/policy/tandc");
       }
+
+      const minSubmitMs = toPositiveNumber(
+        process.env.CONTACT_MIN_SUBMIT_MS,
+        DEFAULT_MIN_SUBMIT_MS,
+      );
+      const maxSubmitMs = toPositiveNumber(
+        process.env.CONTACT_MAX_SUBMIT_MS,
+        DEFAULT_MAX_SUBMIT_MS,
+      );
+      const renderedAt = Number(req.session?.[CONTACT_FORM_SESSION_KEY]);
+      if (req.session) {
+        delete req.session[CONTACT_FORM_SESSION_KEY];
+      }
+
+      const submitAge = Date.now() - renderedAt;
+      const invalidSubmitWindow =
+        !Number.isFinite(renderedAt) ||
+        submitAge < minSubmitMs ||
+        submitAge > maxSubmitMs;
+
+      if (invalidSubmitWindow) {
+        req.flash("error", "Unable to send message, please try again.");
+        return res.redirect("/policy/tandc");
+      }
+
+      const turnstileToken = req.body?.["cf-turnstile-response"];
+      const turnstileResult = await verifyTurnstileToken(
+        turnstileToken,
+        req.ip,
+      );
+      if (!turnstileResult.success) {
+        req.flash("error", "Captcha validation failed, please try again.");
+        return res.redirect("/policy/tandc");
+      }
+
+      if (!isHostnameValid(turnstileResult.hostname, req.hostname)) {
+        req.flash("error", "Captcha validation failed, please try again.");
+        return res.redirect("/policy/tandc");
+      }
+
+      const duplicate = await isDuplicateSubmission({
+        domain,
+        email: req.body.email,
+        message: req.body.message,
+      });
+
+      if (duplicate) {
+        req.flash(
+          "error",
+          "Duplicate message detected. Please try again later.",
+        );
+        return res.redirect("/policy/tandc");
+      }
+
+      await mail(
+        `Contact Form Submitted - ${domain}`,
+        "Hello,\n\n" +
+          `Your message to ${domain} has been submittted. The details are below` +
+          "\n\n" +
+          `Name: ${req.body.name}` +
+          "\n\n" +
+          `Email: ${req.body.email}` +
+          "\n\n" +
+          `Message: ${req.body.message}`,
+        req.body.email,
+      );
+
+      await mail(
+        `Contact Form Submitted - ${domain}`,
+        "Hello,\n\n" +
+          "A new message has been submitted" +
+          "\n\n" +
+          `Name: ${req.body.name}` +
+          "\n\n" +
+          `Email: ${req.body.email}` +
+          "\n\n" +
+          `Body: ${req.body.message}`,
+      );
+
+      req.flash("success", "Message sent.");
+      return res.redirect("/policy/tandc");
     },
   };
 }

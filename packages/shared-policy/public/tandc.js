@@ -1,18 +1,25 @@
-// Terms and Conditions page specific JavaScript
-
-// reCAPTCHA callback function - enables submit button when reCAPTCHA is verified
-// eslint-disable-next-line no-unused-vars
-function cb(token) {
+function setSubmitButtonEnabled(enabled) {
   const submitBtn = document.getElementById("submitBtn");
   if (submitBtn) {
-    submitBtn.disabled = false;
+    submitBtn.disabled = !enabled;
   }
 }
 
+// eslint-disable-next-line no-unused-vars
+function onTurnstileSuccess() {
+  setSubmitButtonEnabled(true);
+}
+
+// eslint-disable-next-line no-unused-vars
+function onTurnstileExpired() {
+  setSubmitButtonEnabled(false);
+}
+
+// eslint-disable-next-line no-unused-vars
+function onTurnstileError() {
+  setSubmitButtonEnabled(false);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-  // Initially disable submit button until reCAPTCHA is verified
-  const submitBtn = document.getElementById("submitBtn");
-  if (submitBtn) {
-    submitBtn.disabled = true;
-  }
+  setSubmitButtonEnabled(false);
 });

@@ -45,8 +45,8 @@ Runs on port `3000`.
 Set these in the root `.env.shared` file:
 
 - `SESSION_KEY`
-- `SITEKEY`
-- `SECRETKEY`
+- `TURNSTILE_SITE_KEY`
+- `TURNSTILE_SECRET_KEY`
 
 ## Structure
 

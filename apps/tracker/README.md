@@ -61,8 +61,8 @@ Set these in the root `.env.shared` file:
 
 - `MONGODB`
 - `SESSION_KEY`
-- `SITEKEY`
-- `SECRETKEY`
+- `TURNSTILE_SITE_KEY`
+- `TURNSTILE_SECRET_KEY`
 - `EMAIL_USER`
 - `ALIAS_EMAIL`
 - `ZOHOPW`
