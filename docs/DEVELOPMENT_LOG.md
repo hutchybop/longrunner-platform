@@ -1,5 +1,23 @@
 # DEVELOPMENT LOG
 
+## Session 25
+
+### Saturday November 7th
+<br>
+
+**Summary:** This session replaced Google reCAPTCHA with Cloudflare Turnstile across the platform and removed the old reCAPTCHA dependencies. It also strengthened contact-form spam protection with a honeypot, submission timing checks, hostname validation, and duplicate detection, while updating configuration and documentation.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+520a305
+
+**Session git history:**
+
+- add new cloudfare turnstyle and anti-spam 20261107-1609 - *Replaced reCAPTCHA with Cloudflare Turnstile and added layered contact-form spam protections, configuration, and documentation updates*
+
+---
+<br>
+
 ## Session 24
 
 ### Saturday November 7th
