@@ -13,7 +13,7 @@
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 
             <div class="navbar-nav ms-auto">
-                <% if(typeof currentUser === 'undefined') {%>
+                <% if(!currentUser) {%>
                 <a class="nav-link" href="/auth/login">Login</a>
                 <a class="nav-link" href="/auth/register">Register</a>
                 <% } else {%>

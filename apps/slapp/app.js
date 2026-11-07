@@ -182,7 +182,7 @@ app.use(
 );
 
 app.use(async (req, res, next) => {
-  res.locals.currentUser = req.user;
+  res.locals.currentUser = req.user || undefined;
   next();
 });
 

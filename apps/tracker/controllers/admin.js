@@ -1,6 +1,12 @@
 import Tracker from "../models/tracker.js";
 import { reconcileIndexes } from "../utils/indexMaintenance.js";
 import {
+  MANAGED_ACCOUNT_APPS,
+  searchManagedAccounts,
+  updateManagedAccount,
+  deleteManagedAccount,
+} from "../utils/accountAdmin.js";
+import {
   blockIpAddress,
   decodeRouteKey,
   getFlaggedIps,
@@ -12,6 +18,19 @@ import {
 } from "@longrunner/shared-tracker";
 
 const validApps = ["blog", "slapp", "quiz", "landing"];
+const validManagedAccountApps = ["all", ...MANAGED_ACCOUNT_APPS];
+
+function getSafeAccountsReturnTo(returnTo) {
+  if (typeof returnTo !== "string") {
+    return "/admin/accounts";
+  }
+
+  if (!returnTo.startsWith("/admin/accounts")) {
+    return "/admin/accounts";
+  }
+
+  return returnTo;
+}
 
 function buildTrackerFilters(selectedApp) {
   const devIpSet = getIpDevSet();
@@ -522,6 +541,74 @@ export const indexHealth = async (req, res) => {
     report,
     issues,
   });
+};
+
+export const accounts = async (req, res) => {
+  const appQuery = typeof req.query.app === "string" ? req.query.app : "all";
+  const selectedAccountApp = validManagedAccountApps.includes(appQuery)
+    ? appQuery
+    : "all";
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+
+  const accounts = await searchManagedAccounts({
+    app: selectedAccountApp,
+    query: q,
+  });
+
+  res.render("admin/accounts", {
+    title: "Manage Accounts",
+    accounts,
+    selectedAccountApp,
+    validManagedAccountApps,
+    q,
+  });
+};
+
+export const updateAccount = async (req, res) => {
+  const returnTo = getSafeAccountsReturnTo(req.body.returnTo);
+  const notify = req.body.notify === "on";
+
+  try {
+    const result = await updateManagedAccount({
+      app: req.params.app,
+      userId: req.params.userId,
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+      notify,
+    });
+
+    req.flash(
+      "success",
+      `Updated ${result.app} account for '${result.username}' successfully`,
+    );
+  } catch (error) {
+    req.flash("error", error.message || "Failed to update account");
+  }
+
+  res.redirect(returnTo);
+};
+
+export const deleteAccount = async (req, res) => {
+  const returnTo = getSafeAccountsReturnTo(req.body.returnTo);
+  const notify = req.body.notify === "on";
+
+  try {
+    const result = await deleteManagedAccount({
+      app: req.params.app,
+      userId: req.params.userId,
+      notify,
+    });
+
+    req.flash(
+      "success",
+      `Deleted ${result.app} account for '${result.username}' successfully`,
+    );
+  } catch (error) {
+    req.flash("error", error.message || "Failed to delete account");
+  }
+
+  res.redirect(returnTo);
 };
 
 export const blockIP = async (req, res) => {

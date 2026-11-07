@@ -1,0 +1,219 @@
+<% layout('layouts/boilerplate') %>
+
+<% contentTitle = 'Manage Accounts' %>
+
+<%
+  const safeQuery = typeof q === 'string' ? q : '';
+  const returnTo = `/admin/accounts?app=${selectedAccountApp}&q=${encodeURIComponent(safeQuery)}`;
+%>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <h1 class="mb-0"><i class="fas fa-user-gear me-2"></i>Manage User Accounts</h1>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" action="/admin/accounts" class="row g-3 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label" for="app">App</label>
+        <select class="form-select" id="app" name="app">
+          <% validManagedAccountApps.forEach(function(appValue) { %>
+            <option value="<%= appValue %>" <%= selectedAccountApp === appValue ? 'selected' : '' %>>
+              <%= appValue === 'all' ? 'All Apps' : appValue %>
+            </option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12 col-md-7">
+        <label class="form-label" for="q">Search by username or email</label>
+        <input
+          class="form-control"
+          id="q"
+          name="q"
+          type="text"
+          value="<%= safeQuery %>"
+          placeholder="e.g. chris or user@example.com"
+        >
+      </div>
+      <div class="col-12 col-md-2 d-grid">
+        <button class="btn btn-primary" type="submit">
+          <i class="fas fa-search me-1"></i>Search
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Results</h5>
+    <span class="badge bg-secondary"><%= accounts.length %> account(s)</span>
+  </div>
+  <div class="card-body">
+    <% if (accounts.length === 0) { %>
+      <div class="text-center py-4">
+        <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
+        <p class="text-muted mb-0">No accounts found for this search.</p>
+      </div>
+    <% } else { %>
+      <div class="d-md-none">
+        <div class="d-flex flex-column gap-3">
+          <% accounts.forEach(function(account) { %>
+            <div class="border rounded p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge <%= account.app === 'blog' ? 'bg-primary' : 'bg-info text-dark' %>">
+                  <%= account.app %>
+                </span>
+                <strong class="text-break ms-2"><%= account.username %></strong>
+              </div>
+              <div class="mb-3"><code class="text-break"><%= account.email %></code></div>
+
+              <form method="POST" action="/admin/accounts/<%= account.app %>/<%= account.id %>/update" class="d-flex flex-column gap-2">
+                <input type="hidden" name="returnTo" value="<%= returnTo %>">
+
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  name="username"
+                  value="<%= account.username %>"
+                  required
+                >
+
+                <input
+                  type="email"
+                  class="form-control form-control-sm"
+                  name="email"
+                  value="<%= account.email %>"
+                  required
+                >
+
+                <input
+                  type="password"
+                  class="form-control form-control-sm"
+                  name="password"
+                  placeholder="New password (leave blank to keep current)"
+                >
+
+                <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                  <div class="form-check me-2 mb-0">
+                    <input class="form-check-input" type="checkbox" name="notify" id="notify-mobile-<%= account.app %>-<%= account.id %>" checked>
+                    <label class="form-check-label" for="notify-mobile-<%= account.app %>-<%= account.id %>">
+                      Notify user
+                    </label>
+                  </div>
+
+                  <button class="btn btn-sm btn-success" type="submit">
+                    <i class="fas fa-save me-1"></i>Update
+                  </button>
+
+                  <button
+                    class="btn btn-sm btn-danger"
+                    type="submit"
+                    formaction="/admin/accounts/<%= account.app %>/<%= account.id %>/delete"
+                    formmethod="POST"
+                    onclick="return confirm('Delete this account and all associated app data? This cannot be undone.');"
+                  >
+                    <i class="fas fa-trash me-1"></i>Delete
+                  </button>
+                </div>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>App</th>
+              <th>Username / Email</th>
+              <th>Edit Account</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% accounts.forEach(function(account) { %>
+              <% const desktopFormId = `account-form-${account.app}-${account.id}`; %>
+              <tr>
+                <td>
+                  <span class="badge <%= account.app === 'blog' ? 'bg-primary' : 'bg-info text-dark' %>">
+                    <%= account.app %>
+                  </span>
+                </td>
+                <td>
+                  <div><strong class="text-break"><%= account.username %></strong></div>
+                  <div><code class="text-break"><%= account.email %></code></div>
+                </td>
+                <td>
+                  <div class="row g-2">
+                    <div class="col-12 col-xl-6">
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        form="<%= desktopFormId %>"
+                        name="username"
+                        value="<%= account.username %>"
+                        required
+                      >
+                    </div>
+                    <div class="col-12 col-xl-6">
+                      <input
+                        type="email"
+                        class="form-control form-control-sm"
+                        form="<%= desktopFormId %>"
+                        name="email"
+                        value="<%= account.email %>"
+                        required
+                      >
+                    </div>
+                    <div class="col-12">
+                      <input
+                        type="password"
+                        class="form-control form-control-sm"
+                        form="<%= desktopFormId %>"
+                        name="password"
+                        placeholder="New password (leave blank to keep current)"
+                      >
+                    </div>
+                  </div>
+                </td>
+                <td>
+                    <form
+                      id="<%= desktopFormId %>"
+                      method="POST"
+                      action="/admin/accounts/<%= account.app %>/<%= account.id %>/update"
+                    >
+                      <input type="hidden" name="returnTo" value="<%= returnTo %>">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                      <div class="form-check mb-0 me-2">
+                        <input class="form-check-input" type="checkbox" name="notify" id="notify-desktop-<%= account.app %>-<%= account.id %>" checked>
+                        <label class="form-check-label" for="notify-desktop-<%= account.app %>-<%= account.id %>">
+                          Notify user
+                        </label>
+                      </div>
+
+                      <button class="btn btn-sm btn-success" type="submit">
+                        <i class="fas fa-save me-1"></i>Update
+                      </button>
+
+                      <button
+                        class="btn btn-sm btn-danger"
+                        type="submit"
+                        formaction="/admin/accounts/<%= account.app %>/<%= account.id %>/delete"
+                        formmethod="POST"
+                        onclick="return confirm('Delete this account and all associated app data? This cannot be undone.');"
+                      >
+                        <i class="fas fa-trash me-1"></i>Delete
+                      </button>
+                    </div>
+                    </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

@@ -208,7 +208,7 @@ app.use(
 
 // Middleware to set local variables and handle user session data
 app.use(async (req, res, next) => {
-  res.locals.currentUser = req.user;
+  res.locals.currentUser = req.user || undefined;
   next();
 });
 
@@ -319,8 +319,8 @@ app.post(
 );
 app.delete(
   "/blogim/:id/reviews/:reviewId",
-  isReviewAuthor,
   isLoggedIn,
+  isReviewAuthor,
   catchAsync(reviews.deleteReview),
 );
 app.get("/blogim/:id/reviews", reviews.reviewLogin);

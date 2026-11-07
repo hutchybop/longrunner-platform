@@ -33,6 +33,7 @@ import {
   createSessionConfig,
   loadAppEnv,
 } from "@longrunner/shared-config";
+import { authLimiter } from "@longrunner/shared-utils/rateLimiter.js";
 import { sendWeeklySummaryEmailIfDue } from "@longrunner/shared-tracker";
 import { boilerplateHelper } from "@longrunner/shared-ui/boilerplateHelper.js";
 import flash from "@longrunner/shared-utils/flash.js";
@@ -40,7 +41,9 @@ import catchAsync from "@longrunner/shared-utils/catchAsync.js";
 import { errorHandler } from "@longrunner/shared-utils/errorHandler.js";
 import * as policy from "./controllers/policy.js";
 import * as admin from "./controllers/admin.js";
+import * as auth from "./controllers/auth.js";
 import { reconcileIndexes } from "./utils/indexMaintenance.js";
+import { populateTrackerUser, requireTrackerAuth } from "./utils/auth.js";
 
 // Setting up the app
 const app = express();
@@ -163,6 +166,7 @@ app.use(session(sessionConfig));
 app.use(flash());
 app.use(back()); // Allows back-to-last-page links
 app.use(compression()); // Compression to make website run quicker
+app.use(populateTrackerUser);
 app.use(
   boilerplateHelper({
     appRoot: __dirname,
@@ -177,16 +181,31 @@ app.use(
 ); // Helper for app specific meta-data and navbar/footer
 
 ////////////////////////////// App Specific Routes //////////////////////////////
+// Auth routes
+app.get("/auth/login", auth.login);
+app.post("/auth/login", authLimiter, catchAsync(auth.loginPost));
+app.post("/auth/logout", catchAsync(auth.logoutPost));
+
 // Admin routes
 app.get("/", (req, res) => {
   res.redirect("/admin");
 });
+app.use("/admin", requireTrackerAuth);
 app.get("/admin", catchAsync(admin.dashboard));
 app.get("/admin/tracker", catchAsync(admin.tracker));
 app.get("/admin/flagged-ips", catchAsync(admin.flaggedIPs));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
 app.get("/admin/summary", catchAsync(admin.summary));
 app.get("/admin/index-health", catchAsync(admin.indexHealth));
+app.get("/admin/accounts", catchAsync(admin.accounts));
+app.post(
+  "/admin/accounts/:app/:userId/update",
+  catchAsync(admin.updateAccount),
+);
+app.post(
+  "/admin/accounts/:app/:userId/delete",
+  catchAsync(admin.deleteAccount),
+);
 app.post("/admin/block-ip", catchAsync(admin.blockIP));
 app.post("/admin/unblock-ip", catchAsync(admin.unblockIP));
 

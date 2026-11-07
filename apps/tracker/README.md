@@ -11,6 +11,8 @@ Express app for global IP tracking and analytics across all Longrunner apps at `
 - Manual and automatic IP blocking with configurable thresholds
 - Geo-location tracking (country, city)
 - Session and environment tracking
+- Tracker admin auth (login/logout) via `tracker_users`
+- Admin account management for `blog` and `slapp` users
 
 ## Tech Stack
 
@@ -36,6 +38,22 @@ pnpm --filter tracker exec node app.js
 ```
 
 Runs on port `3004`.
+
+### Tracker admin user setup
+
+Tracker login uses users in the `tracker_users` collection with:
+
+- `username`
+- `password` (bcrypt hash)
+
+Generate a hash with:
+
+```bash
+pnpm --filter tracker run hash-password
+```
+
+The script can also optionally insert the user into `tracker_users` directly
+after a duplicate username check.
 
 ### Environment Variables
 
