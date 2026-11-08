@@ -1,5 +1,24 @@
 # DEVELOPMENT LOG
 
+## Session 26
+
+### Sunday November 8th
+<br>
+
+**Summary:** This session added contact-form outcome logging and a tracker admin dashboard for filtering and reviewing sent and blocked submissions. It also expanded tracker index maintenance to cover tracker users and policy contact event/submission collections, including indexes for event queries and retention.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+bcbc14b, 260e37c
+
+**Session git history:**
+
+- update tracker db indexes 20261108-0858 - *Added required indexes for tracker users and policy contact events/submissions, and updated the index health message*
+- add contact form logging 20261108-0845 - *Recorded contact-form outcomes and added a tracker admin dashboard for filtering, summary statistics, trends, and event history*
+
+---
+<br>
+
 ## Session 25
 
 ### Saturday November 7th
