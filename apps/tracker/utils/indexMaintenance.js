@@ -116,6 +116,46 @@ function getRequiredIndexes() {
         options: { name: "weekKey_1", unique: true },
       },
     ],
+    tracker_users: [
+      {
+        key: { username: 1 },
+        options: { name: "username_1", unique: true },
+      },
+    ],
+    policy_contact_events: [
+      {
+        key: { createdAt: -1 },
+        options: { name: "createdAt_-1" },
+      },
+      {
+        key: { appName: 1, createdAt: -1 },
+        options: { name: "appName_1_createdAt_-1" },
+      },
+      {
+        key: { outcome: 1, reason: 1, createdAt: -1 },
+        options: { name: "outcome_1_reason_1_createdAt_-1" },
+      },
+      {
+        key: { expiresAt: 1 },
+        options: {
+          name: "expiresAt_1",
+          expireAfterSeconds: 0,
+        },
+      },
+    ],
+    policy_contact_submissions: [
+      {
+        key: { dedupeKey: 1, createdAt: -1 },
+        options: { name: "dedupeKey_1_createdAt_-1" },
+      },
+      {
+        key: { expiresAt: 1 },
+        options: {
+          name: "expiresAt_1",
+          expireAfterSeconds: 0,
+        },
+      },
+    ],
     landing_sessions: [
       {
         key: { expires: 1 },
