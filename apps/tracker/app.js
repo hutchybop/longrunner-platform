@@ -196,6 +196,7 @@ app.get("/admin/tracker", catchAsync(admin.tracker));
 app.get("/admin/flagged-ips", catchAsync(admin.flaggedIPs));
 app.get("/admin/blocked-ips", catchAsync(admin.blockedIPs));
 app.get("/admin/summary", catchAsync(admin.summary));
+app.get("/admin/contact-outcomes", catchAsync(admin.contactOutcomes));
 app.get("/admin/index-health", catchAsync(admin.indexHealth));
 app.get("/admin/accounts", catchAsync(admin.accounts));
 app.post(

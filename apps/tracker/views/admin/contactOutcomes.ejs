@@ -1,0 +1,247 @@
+<% layout('layouts/boilerplate') %>
+
+<% contentTitle = 'Contact Outcomes' %>
+
+<%
+function safeQuery(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).length > 0) {
+      query.set(key, String(value));
+    }
+  });
+  return query.toString();
+}
+
+const totalsByOutcome = outcomeBuckets.reduce((acc, item) => {
+  acc[item._id || 'unknown'] = item.count || 0;
+  return acc;
+}, {});
+const sentCount = totalsByOutcome.sent || 0;
+const blockedCount = totalsByOutcome.blocked || 0;
+const totalCount = pagination.totalRecords || 0;
+%>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><i class="fas fa-envelope me-2"></i>Contact Outcomes</h1>
+</div>
+
+<form method="GET" class="card card-body mb-4">
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label" for="app">App</label>
+      <select class="form-select" id="app" name="app">
+        <% appOptions.forEach(function(appName) { %>
+          <option value="<%= appName %>" <%= selectedApp === appName ? 'selected' : '' %>><%= appName %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="outcome">Outcome</label>
+      <select class="form-select" id="outcome" name="outcome">
+        <% outcomeOptions.forEach(function(outcome) { %>
+          <option value="<%= outcome %>" <%= selectedOutcome === outcome ? 'selected' : '' %>><%= outcome %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="reason">Reason</label>
+      <select class="form-select" id="reason" name="reason">
+        <% reasonOptions.forEach(function(reason) { %>
+          <option value="<%= reason %>" <%= selectedReason === reason ? 'selected' : '' %>><%= reason %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="limit">Rows per page</label>
+      <select class="form-select" id="limit" name="limit">
+        <% [25, 50, 100, 200].forEach(function(size) { %>
+          <option value="<%= size %>" <%= pagination.limit === size ? 'selected' : '' %>><%= size %></option>
+        <% }) %>
+      </select>
+    </div>
+  </div>
+  <div class="mt-3 d-flex gap-2">
+    <button class="btn btn-primary" type="submit">Apply Filters</button>
+    <a class="btn btn-outline-secondary" href="/admin/contact-outcomes">Reset</a>
+  </div>
+</form>
+
+<div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
+  <div class="col">
+    <div class="card bg-dark text-white h-100">
+      <div class="card-body">
+        <h5 class="card-title">Total Events</h5>
+        <h2 class="card-text"><%= totalCount %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card bg-success text-white h-100">
+      <div class="card-body">
+        <h5 class="card-title">Sent</h5>
+        <h2 class="card-text"><%= sentCount %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card bg-danger text-white h-100">
+      <div class="card-body">
+        <h5 class="card-title">Blocked</h5>
+        <h2 class="card-text"><%= blockedCount %></h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><strong>By App</strong></div>
+      <div class="card-body">
+        <% if (appBuckets.length === 0) { %>
+          <p class="text-muted mb-0">No data yet.</p>
+        <% } else { %>
+          <ul class="list-group list-group-flush">
+            <% appBuckets.forEach(function(item) { %>
+              <li class="list-group-item d-flex justify-content-between">
+                <code><%= item._id || 'unknown' %></code>
+                <span class="badge bg-primary"><%= item.count %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><strong>By Outcome</strong></div>
+      <div class="card-body">
+        <% if (outcomeBuckets.length === 0) { %>
+          <p class="text-muted mb-0">No data yet.</p>
+        <% } else { %>
+          <ul class="list-group list-group-flush">
+            <% outcomeBuckets.forEach(function(item) { %>
+              <li class="list-group-item d-flex justify-content-between">
+                <code><%= item._id || 'unknown' %></code>
+                <span class="badge <%= item._id === 'sent' ? 'bg-success' : 'bg-danger' %>"><%= item.count %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><strong>By Reason</strong></div>
+      <div class="card-body" style="max-height: 260px; overflow: auto;">
+        <% if (reasonBuckets.length === 0) { %>
+          <p class="text-muted mb-0">No data yet.</p>
+        <% } else { %>
+          <ul class="list-group list-group-flush">
+            <% reasonBuckets.forEach(function(item) { %>
+              <li class="list-group-item d-flex justify-content-between">
+                <code><%= item._id || 'unknown' %></code>
+                <span class="badge bg-secondary"><%= item.count %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><strong>Daily Trend (latest 60 buckets)</strong></div>
+  <div class="card-body">
+    <% if (dailyTrend.length === 0) { %>
+      <p class="text-muted mb-0">No trend data yet.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0">
+          <thead>
+            <tr>
+              <th>Date (UTC)</th>
+              <th>Outcome</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% dailyTrend.forEach(function(item) { %>
+              <tr>
+                <td><%= new Date(item.date).toISOString().slice(0, 10) %></td>
+                <td><code><%= item.outcome || 'unknown' %></code></td>
+                <td><%= item.count %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="card" id="event-log">
+  <div class="card-header"><strong>Recent Events</strong></div>
+  <div class="card-body p-0">
+    <% if (records.length === 0) { %>
+      <div class="p-4 text-muted">No events for current filters.</div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-striped mb-0">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>App</th>
+              <th>Domain</th>
+              <th>Outcome</th>
+              <th>Reason</th>
+              <th>IP</th>
+              <th>Host</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% records.forEach(function(record) { %>
+              <tr>
+                <td><small><%= new Date(record.createdAt).toLocaleString('en-GB', { hour12: false }) %></small></td>
+                <td><code><%= record.appName || 'unknown' %></code></td>
+                <td><small><%= record.domain || 'unknown' %></small></td>
+                <td>
+                  <span class="badge <%= record.outcome === 'sent' ? 'bg-success' : 'bg-danger' %>">
+                    <%= record.outcome || 'unknown' %>
+                  </span>
+                </td>
+                <td><code><%= record.reason || 'unknown' %></code></td>
+                <td><small><%= record.ip || 'UNKNOWN' %></small></td>
+                <td><small><%= record.host || 'UNKNOWN' %></small></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (pagination.totalPages > 1) { %>
+  <nav aria-label="Contact outcomes pagination" class="mt-3">
+    <ul class="pagination justify-content-center flex-wrap">
+      <% if (pagination.hasPrevPage) { %>
+        <li class="page-item">
+          <a class="page-link" href="/admin/contact-outcomes?<%= safeQuery({ app: selectedApp, outcome: selectedOutcome, reason: selectedReason, limit: pagination.limit, page: pagination.currentPage - 1 }) %>#event-log">Previous</a>
+        </li>
+      <% } %>
+      <li class="page-item disabled">
+        <span class="page-link">Page <%= pagination.currentPage %> of <%= pagination.totalPages %></span>
+      </li>
+      <% if (pagination.hasNextPage) { %>
+        <li class="page-item">
+          <a class="page-link" href="/admin/contact-outcomes?<%= safeQuery({ app: selectedApp, outcome: selectedOutcome, reason: selectedReason, limit: pagination.limit, page: pagination.currentPage + 1 }) %>#event-log">Next</a>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
+<% } %>

@@ -520,6 +520,140 @@ export const summary = async (req, res) => {
   });
 };
 
+export const contactOutcomes = async (req, res) => {
+  const collection = Tracker.db.collection("policy_contact_events");
+
+  const selectedApp =
+    typeof req.query.app === "string" && req.query.app.trim().length > 0
+      ? req.query.app.trim()
+      : "all";
+  const selectedOutcome =
+    typeof req.query.outcome === "string" && req.query.outcome.trim().length > 0
+      ? req.query.outcome.trim()
+      : "all";
+  const selectedReason =
+    typeof req.query.reason === "string" && req.query.reason.trim().length > 0
+      ? req.query.reason.trim()
+      : "all";
+
+  const parsedPage = Number.parseInt(req.query.page, 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const parsedLimit = Number.parseInt(req.query.limit, 10);
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 && parsedLimit <= 200
+      ? parsedLimit
+      : 50;
+  const skip = (page - 1) * limit;
+
+  const query = {};
+  if (selectedApp !== "all") query.appName = selectedApp;
+  if (selectedOutcome !== "all") query.outcome = selectedOutcome;
+  if (selectedReason !== "all") query.reason = selectedReason;
+
+  const [
+    totalRecords,
+    records,
+    appBuckets,
+    outcomeBuckets,
+    reasonBuckets,
+    dailyTrend,
+  ] = await Promise.all([
+    collection.countDocuments(query),
+    collection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray(),
+    collection
+      .aggregate([
+        { $group: { _id: "$appName", count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate([
+        { $group: { _id: "$outcome", count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate([
+        { $group: { _id: "$reason", count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+              day: { $dayOfMonth: "$createdAt" },
+              outcome: "$outcome",
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            date: {
+              $dateFromParts: {
+                year: "$_id.year",
+                month: "$_id.month",
+                day: "$_id.day",
+              },
+            },
+            outcome: "$_id.outcome",
+            count: 1,
+          },
+        },
+        { $sort: { date: -1, outcome: 1 } },
+        { $limit: 60 },
+      ])
+      .toArray(),
+  ]);
+
+  const appOptions = [
+    "all",
+    ...appBuckets.map((bucket) => bucket._id).filter(Boolean),
+  ];
+  const outcomeOptions = [
+    "all",
+    ...outcomeBuckets.map((bucket) => bucket._id).filter(Boolean),
+  ];
+  const reasonOptions = [
+    "all",
+    ...reasonBuckets.map((bucket) => bucket._id).filter(Boolean),
+  ];
+
+  res.render("admin/contactOutcomes", {
+    title: "Contact Outcomes",
+    records,
+    appBuckets,
+    outcomeBuckets,
+    reasonBuckets,
+    dailyTrend,
+    selectedApp,
+    selectedOutcome,
+    selectedReason,
+    appOptions,
+    outcomeOptions,
+    reasonOptions,
+    pagination: {
+      currentPage: page,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
+      limit,
+      totalRecords,
+    },
+  });
+};
+
 export const indexHealth = async (req, res) => {
   const client = Tracker.db.getClient();
   const dbName = process.env.MONGODB_DB_NAME || "longrunner-platform";

@@ -9,8 +9,10 @@ const DEFAULT_MIN_SUBMIT_MS = 4000;
 const DEFAULT_MAX_SUBMIT_MS = 1000 * 60 * 60 * 2;
 const DEFAULT_DEDUPE_WINDOW_MINUTES = 60 * 24;
 const DEFAULT_DEDUPE_RETENTION_HOURS = 24 * 7;
+const DEFAULT_CONTACT_EVENT_RETENTION_DAYS = 90;
 
 let contactIndexesInitialized = false;
+let contactEventIndexesInitialized = false;
 
 function toPositiveNumber(value, fallback) {
   const parsed = Number(value);
@@ -121,6 +123,72 @@ async function getContactSubmissionCollection() {
   return collection;
 }
 
+async function getContactEventCollection() {
+  if (!mongoose.connection?.db) {
+    return null;
+  }
+
+  const collection = mongoose.connection.collection("policy_contact_events");
+
+  if (!contactEventIndexesInitialized) {
+    await collection.createIndex({ createdAt: -1 });
+    await collection.createIndex({ appName: 1, createdAt: -1 });
+    await collection.createIndex({ outcome: 1, reason: 1, createdAt: -1 });
+    await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    contactEventIndexesInitialized = true;
+  }
+
+  return collection;
+}
+
+function inferAppNameFromDomain(domain) {
+  const normalized = String(domain || "").toLowerCase();
+  if (normalized.startsWith("blog.")) return "blog";
+  if (normalized.startsWith("quiz.")) return "quiz";
+  if (normalized.startsWith("slapp.")) return "slapp";
+  if (normalized === "longrunner.co.uk") return "landing";
+  return normalized.split(".")[0] || "unknown";
+}
+
+async function recordContactEvent(
+  req,
+  { appName, domain, outcome, reason, details = {} },
+) {
+  try {
+    const collection = await getContactEventCollection();
+    if (!collection) {
+      return;
+    }
+
+    const now = Date.now();
+    const retentionDays = toPositiveNumber(
+      process.env.CONTACT_EVENT_RETENTION_DAYS,
+      DEFAULT_CONTACT_EVENT_RETENTION_DAYS,
+    );
+    const expiresAt = new Date(now + retentionDays * 24 * 60 * 60 * 1000);
+
+    const emailHash = hashValue(normalizeValue(req.body?.email));
+    const messageHash = hashValue(normalizeValue(req.body?.message));
+
+    await collection.insertOne({
+      appName,
+      domain,
+      outcome,
+      reason,
+      createdAt: new Date(now),
+      expiresAt,
+      ip: req.ip || "UNKNOWN",
+      host: req.get("Host") || "UNKNOWN",
+      userAgent: req.get("User-Agent") || "UNKNOWN",
+      emailHash,
+      messageHash,
+      details,
+    });
+  } catch {
+    // Keep contact flow resilient even if logging fails
+  }
+}
+
 async function isDuplicateSubmission({ domain, email, message }) {
   const collection = await getContactSubmissionCollection();
   if (!collection) {
@@ -194,6 +262,7 @@ export function createPolicyController(config = {}) {
     ...defaultPolicyContent,
     ...policyContent,
   };
+  const appName = inferAppNameFromDomain(domain);
 
   return {
     cookiePolicy: (req, res) => {
@@ -223,6 +292,12 @@ export function createPolicyController(config = {}) {
         req.body?.[CONTACT_HONEYPOT_FIELD] || "",
       ).trim();
       if (honeypotValue) {
+        await recordContactEvent(req, {
+          appName,
+          domain,
+          outcome: "blocked",
+          reason: "honeypot",
+        });
         req.flash("error", "Unable to send message, please try again.");
         return res.redirect("/policy/tandc");
       }
@@ -247,6 +322,13 @@ export function createPolicyController(config = {}) {
         submitAge > maxSubmitMs;
 
       if (invalidSubmitWindow) {
+        await recordContactEvent(req, {
+          appName,
+          domain,
+          outcome: "blocked",
+          reason: "submit_time",
+          details: { submitAge, minSubmitMs, maxSubmitMs },
+        });
         req.flash("error", "Unable to send message, please try again.");
         return res.redirect("/policy/tandc");
       }
@@ -257,11 +339,32 @@ export function createPolicyController(config = {}) {
         req.ip,
       );
       if (!turnstileResult.success) {
+        await recordContactEvent(req, {
+          appName,
+          domain,
+          outcome: "blocked",
+          reason: "turnstile_fail",
+          details: {
+            errorCodes: Array.isArray(turnstileResult["error-codes"])
+              ? turnstileResult["error-codes"]
+              : [],
+          },
+        });
         req.flash("error", "Captcha validation failed, please try again.");
         return res.redirect("/policy/tandc");
       }
 
       if (!isHostnameValid(turnstileResult.hostname, req.hostname)) {
+        await recordContactEvent(req, {
+          appName,
+          domain,
+          outcome: "blocked",
+          reason: "turnstile_hostname",
+          details: {
+            verifiedHostname: turnstileResult.hostname || null,
+            requestHostname: req.hostname || null,
+          },
+        });
         req.flash("error", "Captcha validation failed, please try again.");
         return res.redirect("/policy/tandc");
       }
@@ -273,6 +376,12 @@ export function createPolicyController(config = {}) {
       });
 
       if (duplicate) {
+        await recordContactEvent(req, {
+          appName,
+          domain,
+          outcome: "blocked",
+          reason: "duplicate",
+        });
         req.flash(
           "error",
           "Duplicate message detected. Please try again later.",
@@ -304,6 +413,13 @@ export function createPolicyController(config = {}) {
           "\n\n" +
           `Body: ${req.body.message}`,
       );
+
+      await recordContactEvent(req, {
+        appName,
+        domain,
+        outcome: "sent",
+        reason: "accepted",
+      });
 
       req.flash("success", "Message sent.");
       return res.redirect("/policy/tandc");
