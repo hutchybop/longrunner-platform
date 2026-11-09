@@ -1,5 +1,23 @@
 # DEVELOPMENT LOG
 
+## Session 27
+
+### Monday November 9th
+<br>
+
+**Summary:** This session added contact email validation to the shared policy package, including suppression-list checks, disposable-address detection, typo suggestions, and DNS-based domain verification. It also documented the new contact settings and suppression list, and refreshed related dependencies.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+71a7142
+
+**Session git history:**
+
+- add email domain checks 20261109-2046 - *Added contact email suppression, disposable-address and typo checks, DNS validation, configuration, and documentation*
+
+---
+<br>
+
 ## Session 26
 
 ### Sunday November 8th
