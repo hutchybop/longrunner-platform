@@ -1,0 +1,11 @@
+# One email (or whole domain) per line.
+# Lines starting with # are comments.
+#
+# Example blocked addresses:
+# bounced-user@example.com
+# hardbounce@broken-domain.test
+#
+# Optional domain-level suppression:
+# @broken-domain.test
+
+@ultraleadgeneration.com

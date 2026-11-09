@@ -90,6 +90,9 @@ Core variables:
 - `CONTACT_MAX_SUBMIT_MS`
 - `CONTACT_DEDUPE_WINDOW_MINUTES`
 - `CONTACT_DEDUPE_RETENTION_HOURS`
+- `CONTACT_DNS_TIMEOUT_MS`
+- `CONTACT_SUPPRESSION_FILE`
+- `CONTACT_EVENT_RETENTION_DAYS`
 - `EMAIL_USER`
 - `ALIAS_EMAIL`
 - `ZOHOPW`
@@ -108,6 +111,12 @@ Additional app-specific variables used from `.env.shared`:
 - `TRACKER_EVENT_RETENTION_DAYS`
 - `TRACKER_BLOCKED_IP_CACHE_TTL_MS`
 - `TRACKER_AUTO_RECONCILE_INDEXES`
+
+Contact form suppression list:
+
+- Default file: `packages/shared-policy/config/suppressed-emails.txt`
+- Add one email per line (or `@domain.com` to block an entire domain)
+- Override path with `CONTACT_SUPPRESSION_FILE`
 
 ## Docker + GHCR
 

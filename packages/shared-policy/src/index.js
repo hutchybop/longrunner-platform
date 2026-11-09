@@ -2,6 +2,7 @@ import mail from "@longrunner/shared-utils/mail.js";
 import crypto from "node:crypto";
 import { URLSearchParams } from "node:url";
 import { mongoose } from "mongoose";
+import { validateContactEmailAddress } from "./emailValidation.js";
 
 const CONTACT_FORM_SESSION_KEY = "policyContactFormIssuedAt";
 const CONTACT_HONEYPOT_FIELD = "website";
@@ -385,6 +386,23 @@ export function createPolicyController(config = {}) {
         req.flash(
           "error",
           "Duplicate message detected. Please try again later.",
+        );
+        return res.redirect("/policy/tandc");
+      }
+
+      const emailValidation = await validateContactEmailAddress(req.body.email);
+      if (!emailValidation.ok) {
+        await recordContactEvent(req, {
+          appName,
+          domain,
+          outcome: "blocked",
+          reason: emailValidation.reason || "email_validation_failed",
+          details: emailValidation.details || {},
+        });
+        req.flash(
+          "error",
+          emailValidation.message ||
+            "Unable to validate your email address. Please try again.",
         );
         return res.redirect("/policy/tandc");
       }
