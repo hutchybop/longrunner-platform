@@ -8,4 +8,3 @@
 # Optional domain-level suppression:
 # @broken-domain.test
 
-@ultraleadgeneration.com
