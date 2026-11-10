@@ -10,6 +10,9 @@ services:
     environment:
       NODE_ENV: production
 
+    volumes:
+      - ./runtime/suppressed-emails.txt:/run/config/suppressed-emails.txt:ro # Ensure runtime/suppressed-emails.txt esists docker folder root
+
     healthcheck:
       test:
         [

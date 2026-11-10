@@ -114,9 +114,11 @@ Additional app-specific variables used from `.env.shared`:
 
 Contact form suppression list:
 
-- Default file: `packages/shared-policy/config/suppressed-emails.txt`
+- Recommended server file: `./runtime/suppressed-emails.txt`
+- Mount target in container: `/run/config/suppressed-emails.txt`
 - Add one email per line (or `@domain.com` to block an entire domain)
-- Override path with `CONTACT_SUPPRESSION_FILE`
+- Set `CONTACT_SUPPRESSION_FILE` to an **absolute** path
+- Example template file: `runtime/suppressed-emails.example.txt`
 
 ## Docker + GHCR
 

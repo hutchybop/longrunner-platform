@@ -2,19 +2,10 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { resolve4, resolve6, resolveMx } from "node:dns/promises";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 import * as MailcheckModule from "mailcheck";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
-const DEFAULT_SUPPRESSION_FILE = path.resolve(
-  __dirname,
-  "..",
-  "config",
-  "suppressed-emails.txt",
-);
 const DEFAULT_DNS_TIMEOUT_MS = 2500;
 
 const DNS_TEMPORARY_ERROR_CODES = new Set([
@@ -33,6 +24,7 @@ const suppressionCache = {
   emailSet: new Set(),
   domainSet: new Set(),
 };
+const suppressionWarnings = new Set();
 
 const mailcheck = MailcheckModule.default || MailcheckModule;
 
@@ -144,7 +136,16 @@ async function loadSuppressionList(filePath) {
     suppressionCache.domainSet = parsed.domainSet;
 
     return suppressionCache;
-  } catch {
+  } catch (error) {
+    const code = String(error?.code || "unknown");
+    const warningKey = `load:${filePath}:${code}`;
+    if (!suppressionWarnings.has(warningKey)) {
+      console.warn(
+        `[contact-suppression] Unable to load suppression file at '${filePath}'. Code: ${code}.`,
+      );
+      suppressionWarnings.add(warningKey);
+    }
+
     suppressionCache.filePath = filePath;
     suppressionCache.mtimeMs = -1;
     suppressionCache.emailSet = new Set();
@@ -157,17 +158,40 @@ function getSuppressionFilePath() {
   const configuredPath = String(
     process.env.CONTACT_SUPPRESSION_FILE || "",
   ).trim();
-  if (configuredPath) {
-    return path.resolve(configuredPath);
+  if (!configuredPath) {
+    const warningKey = "config:missing";
+    if (!suppressionWarnings.has(warningKey)) {
+      console.warn(
+        "[contact-suppression] CONTACT_SUPPRESSION_FILE is not set. Suppression list is disabled.",
+      );
+      suppressionWarnings.add(warningKey);
+    }
+    return null;
   }
 
-  return DEFAULT_SUPPRESSION_FILE;
+  if (!path.isAbsolute(configuredPath)) {
+    const warningKey = `config:not-absolute:${configuredPath}`;
+    if (!suppressionWarnings.has(warningKey)) {
+      console.warn(
+        `[contact-suppression] CONTACT_SUPPRESSION_FILE must be an absolute path. Current value: '${configuredPath}'. Suppression list is disabled.`,
+      );
+      suppressionWarnings.add(warningKey);
+    }
+    return null;
+  }
+
+  return configuredPath;
 }
 
 async function findSuppressionMatch(email) {
   const normalizedEmail = normalizeEmail(email);
   const domain = getDomainFromEmail(normalizedEmail);
-  const list = await loadSuppressionList(getSuppressionFilePath());
+  const suppressionFilePath = getSuppressionFilePath();
+  if (!suppressionFilePath) {
+    return null;
+  }
+
+  const list = await loadSuppressionList(suppressionFilePath);
 
   if (list.emailSet.has(normalizedEmail)) {
     return { type: "email", value: normalizedEmail };
