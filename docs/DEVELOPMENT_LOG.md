@@ -1,5 +1,23 @@
 # DEVELOPMENT LOG
 
+## Session 28
+
+### Tuesday November 10th
+<br>
+
+**Summary:** This session moved the contact-email suppression list out of the package and into a runtime-mounted configuration file, with an absolute-path requirement and one-time warnings when configuration or file loading fails. It also updated the Docker example and documentation for the mounted list, and refreshed the dotenv dependency.
+
+**Git Branch:** main <br>
+**Git commits:** <br>
+36cc898
+
+**Session git history:**
+
+- update suppressed email file location 20261110-1017 - *Moved the suppression list to a runtime-mounted file, enforced absolute path configuration, added warnings for unavailable configuration/files, and updated Docker/docs and dotenv*
+
+---
+<br>
+
 ## Session 27
 
 ### Monday November 9th
